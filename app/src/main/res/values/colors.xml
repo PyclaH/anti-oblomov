@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Палитра из презентации проекта -->
+    <color name="paper">#FFFAF7F0</color>
+    <color name="ink">#FF1F2A37</color>
+    <color name="terracotta">#FFB4502A</color>
+
+    <color name="ic_launcher_background">#FFB4502A</color>
+</resources>

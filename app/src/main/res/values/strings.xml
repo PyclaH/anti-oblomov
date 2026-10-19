@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Анти-Обломов</string>
+
+    <string name="tab_home">Главная</string>
+    <string name="tab_schedule">Расписание</string>
+    <string name="tab_timer">Таймер</string>
+    <string name="tab_apps">Приложения</string>
+
+    <string name="soon">Скоро здесь</string>
+</resources>

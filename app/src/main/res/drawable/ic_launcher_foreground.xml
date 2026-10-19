@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Временная иконка: песочные часы. Потом заменим на логотип проекта. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Верхняя и нижняя планки -->
+    <path
+        android:fillColor="#FAF7F0"
+        android:pathData="M36,32 L72,32 L72,37 L36,37 Z" />
+    <path
+        android:fillColor="#FAF7F0"
+        android:pathData="M36,71 L72,71 L72,76 L36,76 Z" />
+
+    <!-- Колба -->
+    <path
+        android:fillColor="#FAF7F0"
+        android:pathData="M40,37 L68,37 L56,54 L68,71 L40,71 L52,54 Z" />
+
+    <!-- Песок -->
+    <path
+        android:fillColor="#1F2A37"
+        android:pathData="M46,41 L62,41 L55.5,50 L52.5,50 Z" />
+    <path
+        android:fillColor="#1F2A37"
+        android:pathData="M45,68 L54,60 L63,68 Z" />
+</vector>

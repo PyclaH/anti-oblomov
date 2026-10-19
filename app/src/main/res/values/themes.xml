@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+        Тема окна до того, как Compose нарисует интерфейс.
+        Основные цвета задаются в ui/theme/Theme.kt.
+    -->
+    <style name="Theme.AntiOblomov" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/paper</item>
+    </style>
+</resources>
