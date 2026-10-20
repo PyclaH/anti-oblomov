@@ -30,6 +30,7 @@ fun HomeScreen(modifier: Modifier = Modifier) = PlaceholderScreen(
     planned = listOf(
         "Статус: «Сейчас учёба, до 14:00» или «Свободное время»",
         "Сравнение «было / стало»: время в соцсетях до установки и сейчас",
+        "Если время сэкономлено — предложение поблагодарить автора (ThankAuthorCard)",
     ),
     modifier = modifier,
 )
