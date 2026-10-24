@@ -5,9 +5,18 @@ import android.content.Intent
 import android.media.AudioAttributes
 import android.media.AudioFocusRequest
 import android.media.AudioManager
+import android.os.Handler
+import android.os.Looper
 import android.os.SystemClock
 import android.util.Log
 import android.view.accessibility.AccessibilityEvent
+import ru.shashkov.antioblomov.data.SettingsStore
+import ru.shashkov.antioblomov.rules.BlockRules
+import ru.shashkov.antioblomov.rules.BlockStatus
+import ru.shashkov.antioblomov.rules.Settings
+import java.time.Duration
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
 
 /**
  * Служба блокировки на основе специальных возможностей Android.
@@ -16,25 +25,38 @@ import android.view.accessibility.AccessibilityEvent
  * на переднем плане (и есть ли на экране мини-плеер «картинка в картинке»),
  * и использует ТОЛЬКО название приложения — текст и содержимое экрана не читаются.
  *
- * Если на переднем плане заблокированное приложение:
+ * Блокировать ли — решают правила (rules/BlockRules) по настройкам из памяти
+ * телефона (data/SettingsStore): список приложений, расписание, таймер.
+ *
+ * Если на переднем плане приложение, которое сейчас нужно блокировать:
  * 1) показываем поверх всего экран блокировки (BlockOverlay);
  * 2) ставим воспроизведение на паузу (забираем аудиофокус);
  * 3) отправляем пользователя на рабочий стол.
  *
  * Если заблокированное приложение висит мини-плеером — ставим его на паузу;
  * а если мини-плеер развернуть, сработает пункт выше.
+ *
+ * Блокировка может начаться, когда пользователь уже сидит в YouTube и окна
+ * не меняются. Поэтому служба заводит проверку на ближайший момент, когда
+ * блокировка начнётся или закончится.
  */
 class BlockingService : AccessibilityService() {
 
     private lateinit var overlay: BlockOverlay
     private lateinit var audioManager: AudioManager
+    private lateinit var store: SettingsStore
+    private val handler = Handler(Looper.getMainLooper())
+    private val boundaryCheck = Runnable { onBoundary() }
+    private var scheduledFor: ZonedDateTime? = null
     private var focusRequest: AudioFocusRequest? = null
     private var lastPipPauseAt = 0L
 
     override fun onServiceConnected() {
         audioManager = getSystemService(AudioManager::class.java)
         overlay = BlockOverlay(this, onHidden = ::releaseAudioFocus)
+        store = SettingsStore(this)
         Log.i(TAG, "Служба блокировки подключена")
+        scheduleBoundaryCheck(store.read(), ZonedDateTime.now())
     }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
@@ -43,12 +65,47 @@ class BlockingService : AccessibilityService() {
             event.eventType != AccessibilityEvent.TYPE_WINDOWS_CHANGED
         ) return
 
+        val settings = store.read()
+        val now = ZonedDateTime.now()
+        scheduleBoundaryCheck(settings, now)
+
         val foreground = foregroundPackage() ?: event.packageName?.toString()
-        if (foreground != null && foreground != packageName && foreground in SpikeConfig.BLOCKED_PACKAGES) {
-            block(foreground, event)
+        if (foreground != null && foreground != packageName &&
+            BlockRules.shouldBlock(foreground, settings, now)
+        ) {
+            block(foreground, settings, now, event)
             return
         }
-        checkPictureInPicture()
+        checkPictureInPicture(settings, now)
+    }
+
+    /** Наступил момент, когда блокировка начинается или заканчивается. */
+    private fun onBoundary() {
+        scheduledFor = null
+        val settings = store.read()
+        val now = ZonedDateTime.now()
+        Log.i(TAG, "Проверка по времени: ${BlockRules.status(settings, now)}")
+        val foreground = foregroundPackage()
+        if (foreground != null && foreground != packageName &&
+            BlockRules.shouldBlock(foreground, settings, now)
+        ) {
+            block(foreground, settings, now, event = null)
+        } else {
+            checkPictureInPicture(settings, now)
+        }
+        scheduleBoundaryCheck(settings, now)
+    }
+
+    /** Завести проверку на ближайшую смену состояния (если она ещё не заведена на то же время). */
+    private fun scheduleBoundaryCheck(settings: Settings, now: ZonedDateTime) {
+        val next = BlockRules.nextChange(settings, now)
+        if (next == scheduledFor) return
+        handler.removeCallbacks(boundaryCheck)
+        scheduledFor = next
+        if (next == null) return
+        val delayMs = Duration.between(now, next).toMillis().coerceAtLeast(0) + BOUNDARY_SLACK_MS
+        handler.postDelayed(boundaryCheck, delayMs)
+        Log.d(TAG, "Следующая проверка в ${next.format(TIME)}")
     }
 
     /** Приложение активного (основного) окна. */
@@ -57,29 +114,31 @@ class BlockingService : AccessibilityService() {
         return root.packageName?.toString()
     }
 
-    private fun block(pkg: String, event: AccessibilityEvent) {
-        if (event.eventType == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) {
+    private fun block(pkg: String, settings: Settings, now: ZonedDateTime, event: AccessibilityEvent?) {
+        if (event?.eventType == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) {
             // Сколько прошло от события Android до нашей реакции — для NFR-04
             val reactionMs = SystemClock.uptimeMillis() - event.eventTime
             Log.i(TAG, "Блокирую $pkg, реакция $reactionMs мс")
         } else {
-            Log.i(TAG, "Блокирую $pkg (смена окон)")
+            Log.i(TAG, "Блокирую $pkg")
         }
-        overlay.show(appLabel(pkg))
+        val until = (BlockRules.status(settings, now) as? BlockStatus.Blocked)?.until
+        overlay.show(appLabel(pkg), until?.let { untilText(it, now) })
         pausePlayback()
         performGlobalAction(GLOBAL_ACTION_HOME)
     }
 
     /** Мини-плеер заблокированного приложения — ставим на паузу (не чаще раза в 2 с). */
-    private fun checkPictureInPicture() {
-        val now = SystemClock.elapsedRealtime()
-        if (now - lastPipPauseAt < PIP_DEBOUNCE_MS) return
+    private fun checkPictureInPicture(settings: Settings, now: ZonedDateTime) {
+        if (BlockRules.status(settings, now) !is BlockStatus.Blocked) return
+        val t = SystemClock.elapsedRealtime()
+        if (t - lastPipPauseAt < PIP_DEBOUNCE_MS) return
         val blockedPip = windows.any { window ->
             window.isInPictureInPictureMode &&
-                window.root?.packageName?.toString() in SpikeConfig.BLOCKED_PACKAGES
+                window.root?.packageName?.toString() in settings.blockedPackages
         }
         if (blockedPip) {
-            lastPipPauseAt = now
+            lastPipPauseAt = t
             Log.i(TAG, "Мини-плеер заблокированного приложения — пауза")
             pausePlayback()
         }
@@ -119,6 +178,7 @@ class BlockingService : AccessibilityService() {
     }
 
     override fun onDestroy() {
+        handler.removeCallbacks(boundaryCheck)
         if (::overlay.isInitialized) overlay.hide()
         Log.i(TAG, "Служба блокировки остановлена")
         super.onDestroy()
@@ -128,5 +188,16 @@ class BlockingService : AccessibilityService() {
         /** Фильтр для Logcat в Android Studio. */
         const val TAG = "AntiOblomov"
         private const val PIP_DEBOUNCE_MS = 2_000L
+
+        /** Проверяем чуть позже границы, чтобы точно попасть внутрь интервала. */
+        private const val BOUNDARY_SLACK_MS = 500L
+
+        private val TIME = DateTimeFormatter.ofPattern("HH:mm")
+        private val DATE_TIME = DateTimeFormatter.ofPattern("dd.MM HH:mm")
+
+        /** «до 14:00», а если блокировка кончается не сегодня — «до 27.10 10:00». */
+        fun untilText(until: ZonedDateTime, now: ZonedDateTime): String =
+            if (until.toLocalDate() == now.toLocalDate()) "до ${until.format(TIME)}"
+            else "до ${until.format(DATE_TIME)}"
     }
 }

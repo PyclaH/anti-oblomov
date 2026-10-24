@@ -19,6 +19,7 @@ import androidx.compose.ui.unit.dp
 import ru.shashkov.antioblomov.R
 import ru.shashkov.antioblomov.blocking.ServiceState
 import ru.shashkov.antioblomov.ui.components.BlockingSpikeCard
+import ru.shashkov.antioblomov.ui.components.RulesTestPanel
 
 /*
  * Заглушки четырёх разделов. Каждую будем по очереди заменять настоящим экраном
@@ -35,7 +36,10 @@ fun HomeScreen(serviceState: ServiceState, modifier: Modifier = Modifier) = Plac
         "Если время сэкономлено — предложение поблагодарить автора (ThankAuthorCard)",
     ),
     modifier = modifier,
-    header = { BlockingSpikeCard(state = serviceState) },
+    header = {
+        BlockingSpikeCard(state = serviceState)
+        RulesTestPanel()
+    },
 )
 
 @Composable

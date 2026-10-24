@@ -40,9 +40,10 @@ class BlockOverlay(
 
     val isShowing: Boolean get() = view != null
 
-    fun show(appName: String) {
+    /** @param until «до 14:00» — когда закончится блокировка (FR-12); null — не показывать */
+    fun show(appName: String, until: String? = null) {
         if (view != null) return
-        val v = buildView(appName, Quotes.random())
+        val v = buildView(appName, until, Quotes.random())
         windowManager.addView(v, fullScreenParams())
         view = v
     }
@@ -78,7 +79,7 @@ class BlockOverlay(
         }
     }
 
-    private fun buildView(appName: String, quote: Quote): View {
+    private fun buildView(appName: String, until: String?, quote: Quote): View {
         val ctx = service
 
         val logo = FrameLayout(ctx).apply {
@@ -92,7 +93,7 @@ class BlockOverlay(
             )
         }
 
-        val title = text("$appName на паузе", 18f, PAPER_DIM)
+        val title = text(listOfNotNull("$appName на паузе", until).joinToString(" "), 18f, PAPER_DIM)
 
         val quoteView = text("«${quote.text}»", quoteSize(quote.text), PAPER).apply {
             typeface = Typeface.SERIF
