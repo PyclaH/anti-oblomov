@@ -1,10 +1,12 @@
 package ru.shashkov.antioblomov.blocking
 
+import android.accessibilityservice.AccessibilityServiceInfo
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.provider.Settings
+import android.view.accessibility.AccessibilityManager
 
 /** Состояние службы блокировки. */
 enum class ServiceState {
@@ -20,8 +22,24 @@ enum class ServiceState {
 
 fun blockingServiceState(context: Context): ServiceState = when {
     !isEnabledInSettings(context) -> ServiceState.OFF
-    BlockingService.isRunning -> ServiceState.RUNNING
+    isConnected(context) -> ServiceState.RUNNING
     else -> ServiceState.STOPPED
+}
+
+/**
+ * Подключена ли служба к системе прямо сейчас.
+ * Служба живёт в отдельном процессе, поэтому спрашиваем у системы:
+ * этот список содержит только реально подключённые службы.
+ */
+private fun isConnected(context: Context): Boolean {
+    val manager = context.getSystemService(AccessibilityManager::class.java) ?: return false
+    val ours = ComponentName(context, BlockingService::class.java)
+    return manager
+        .getEnabledAccessibilityServiceList(AccessibilityServiceInfo.FEEDBACK_ALL_MASK)
+        .any { info ->
+            val s = info.resolveInfo.serviceInfo
+            ComponentName(s.packageName, s.name) == ours
+        }
 }
 
 private fun isEnabledInSettings(context: Context): Boolean {

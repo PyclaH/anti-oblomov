@@ -32,7 +32,6 @@ class BlockingService : AccessibilityService() {
     private var lastPipPauseAt = 0L
 
     override fun onServiceConnected() {
-        isRunning = true
         audioManager = getSystemService(AudioManager::class.java)
         overlay = BlockOverlay(this, onHidden = ::releaseAudioFocus)
         Log.i(TAG, "Служба блокировки подключена")
@@ -115,13 +114,11 @@ class BlockingService : AccessibilityService() {
     override fun onInterrupt() = Unit
 
     override fun onUnbind(intent: Intent?): Boolean {
-        isRunning = false
         Log.i(TAG, "Служба блокировки отключена")
         return super.onUnbind(intent)
     }
 
     override fun onDestroy() {
-        isRunning = false
         if (::overlay.isInitialized) overlay.hide()
         Log.i(TAG, "Служба блокировки остановлена")
         super.onDestroy()
@@ -131,14 +128,5 @@ class BlockingService : AccessibilityService() {
         /** Фильтр для Logcat в Android Studio. */
         const val TAG = "AntiOblomov"
         private const val PIP_DEBOUNCE_MS = 2_000L
-
-        /**
-         * Работает ли служба прямо сейчас в этом процессе.
-         * Отличается от «включена в настройках»: HyperOS может остановить службу,
-         * а в настройках она останется включённой.
-         */
-        @Volatile
-        var isRunning: Boolean = false
-            private set
     }
 }

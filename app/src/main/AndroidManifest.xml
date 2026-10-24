@@ -9,6 +9,13 @@
         <package android:name="com.google.android.youtube" />
     </queries>
 
+    <!--
+        Приёмник загрузки. На HyperOS настройка «Автозапуск» обычно показывается
+        только у приложений, которые реагируют на системные события, — проверяем,
+        появится ли она.
+    -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
@@ -29,12 +36,16 @@
         <!--
             Служба блокировки. Подключить её может только система
             (разрешение BIND_ACCESSIBILITY_SERVICE есть только у Android).
+            Работает в отдельном процессе «:blocking»: когда приложение смахивают
+            из недавних, система закрывает процесс интерфейса — служба при этом
+            может уцелеть (проверка шага 1, раунд 3).
         -->
         <service
             android:name=".blocking.BlockingService"
             android:exported="true"
             android:label="@string/accessibility_service_label"
-            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"
+            android:process=":blocking">
             <intent-filter>
                 <action android:name="android.accessibilityservice.AccessibilityService" />
             </intent-filter>
@@ -42,6 +53,15 @@
                 android:name="android.accessibilityservice"
                 android:resource="@xml/accessibility_service_config" />
         </service>
+
+        <receiver
+            android:name=".blocking.BootReceiver"
+            android:exported="true"
+            android:process=":blocking">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
 
     </application>
 

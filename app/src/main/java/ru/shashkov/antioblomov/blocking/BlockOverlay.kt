@@ -4,9 +4,11 @@ import android.accessibilityservice.AccessibilityService
 import android.graphics.PixelFormat
 import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
+import android.os.Build
 import android.util.TypedValue
 import android.view.Gravity
 import android.view.View
+import android.view.WindowInsets
 import android.view.WindowManager
 import android.widget.FrameLayout
 import android.widget.ImageView
@@ -20,8 +22,11 @@ import kotlin.math.roundToInt
  * (окно типа TYPE_ACCESSIBILITY_OVERLAY).
  *
  * Почему не отдельная Activity: HyperOS не даёт приложениям открывать экраны
- * из фона (проверка шага 1). Окно спецвозможностей этому запрету не подчиняется
- * и не требует дополнительных разрешений.
+ * из фона (проверка шага 1, раунд 1). Окно спецвозможностей этому запрету
+ * не подчиняется и не требует дополнительных разрешений.
+ *
+ * Окно растянуто на весь экран, включая строку состояния, панель навигации
+ * и вырез камеры; содержимое отодвинуто от них отступами.
  *
  * Интерфейс собран из обычных Android View, а не Compose: Compose внутри службы
  * требует лишней обвязки, а экран простой.
@@ -37,16 +42,8 @@ class BlockOverlay(
 
     fun show(appName: String) {
         if (view != null) return
-        val v = buildView(appName)
-        val params = WindowManager.LayoutParams(
-            WindowManager.LayoutParams.MATCH_PARENT,
-            WindowManager.LayoutParams.MATCH_PARENT,
-            WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
-            WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or
-                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
-            PixelFormat.OPAQUE,
-        )
-        windowManager.addView(v, params)
+        val v = buildView(appName, Quotes.random())
+        windowManager.addView(v, fullScreenParams())
         view = v
     }
 
@@ -57,7 +54,31 @@ class BlockOverlay(
         onHidden()
     }
 
-    private fun buildView(appName: String): View {
+    private fun fullScreenParams() = WindowManager.LayoutParams(
+        WindowManager.LayoutParams.MATCH_PARENT,
+        WindowManager.LayoutParams.MATCH_PARENT,
+        WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
+        WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or
+            WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS or
+            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
+        PixelFormat.OPAQUE,
+    ).apply {
+        gravity = Gravity.TOP or Gravity.START
+        // Заходить под вырез камеры
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
+        }
+        // Android 11+: по умолчанию окно ужимается, чтобы не залезать на системные
+        // панели, — отсюда были полосы по краям. Отключаем.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            fitInsetsTypes = 0
+            fitInsetsSides = 0
+        }
+    }
+
+    private fun buildView(appName: String, quote: Quote): View {
         val ctx = service
 
         val logo = FrameLayout(ctx).apply {
@@ -73,11 +94,11 @@ class BlockOverlay(
 
         val title = text("$appName на паузе", 18f, PAPER_DIM)
 
-        val quote = text("«Теперь или никогда!»", 32f, PAPER).apply {
+        val quoteView = text("«${quote.text}»", quoteSize(quote.text), PAPER).apply {
             typeface = Typeface.SERIF
             setLineSpacing(0f, 1.15f)
         }
-        val author = text("И. А. Гончаров, «Обломов»", 15f, PAPER_DIM)
+        val author = text(quote.source, 15f, PAPER_DIM)
 
         val button = text("Вернуться к делу", 17f, INK).apply {
             typeface = Typeface.DEFAULT_BOLD
@@ -90,23 +111,50 @@ class BlockOverlay(
             setOnClickListener { hide() }
         }
 
-        return LinearLayout(ctx).apply {
+        val root = LinearLayout(ctx).apply {
             orientation = LinearLayout.VERTICAL
             gravity = Gravity.CENTER_HORIZONTAL
             setBackgroundColor(INK)
-            setPadding(dp(28), dp(72), dp(28), dp(56))
 
-            addView(logo, LinearLayout.LayoutParams(dp(104), dp(104)))
-            addView(title, wrap(topMargin = dp(20)))
+            addView(logo, LinearLayout.LayoutParams(dp(104), dp(104)).apply { topMargin = dp(32) })
+            addView(title, fullWidth(topMargin = dp(20)))
             addView(spacer())
-            addView(quote, wrap())
-            addView(author, wrap(topMargin = dp(12)))
+            addView(quoteView, fullWidth())
+            addView(author, fullWidth(topMargin = dp(16)))
             addView(spacer())
-            addView(
-                button,
-                LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT),
+            addView(button, fullWidth(bottomMargin = dp(24)))
+        }
+
+        // Отступы = базовые поля + высота системных панелей и выреза,
+        // чтобы фон был на весь экран, а текст и кнопка не прятались под панелями.
+        root.setOnApplyWindowInsetsListener { v, insets ->
+            val (left, top, right, bottom) = systemInsets(insets)
+            v.setPadding(dp(28) + left, dp(24) + top, dp(28) + right, dp(24) + bottom)
+            insets
+        }
+        root.setPadding(dp(28), dp(48), dp(28), dp(48)) // до прихода отступов
+        return root
+    }
+
+    private fun systemInsets(insets: WindowInsets): List<Int> =
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            val i = insets.getInsets(WindowInsets.Type.systemBars() or WindowInsets.Type.displayCutout())
+            listOf(i.left, i.top, i.right, i.bottom)
+        } else {
+            @Suppress("DEPRECATION")
+            listOf(
+                insets.systemWindowInsetLeft,
+                insets.systemWindowInsetTop,
+                insets.systemWindowInsetRight,
+                insets.systemWindowInsetBottom,
             )
         }
+
+    /** Длинные цитаты — мельче, чтобы помещались. */
+    private fun quoteSize(text: String): Float = when {
+        text.length <= 40 -> 32f
+        text.length <= 90 -> 26f
+        else -> 22f
     }
 
     private fun text(value: String, sizeSp: Float, color: Int) = TextView(service).apply {
@@ -116,10 +164,13 @@ class BlockOverlay(
         gravity = Gravity.CENTER
     }
 
-    private fun wrap(topMargin: Int = 0) = LinearLayout.LayoutParams(
+    private fun fullWidth(topMargin: Int = 0, bottomMargin: Int = 0) = LinearLayout.LayoutParams(
+        LinearLayout.LayoutParams.MATCH_PARENT,
         LinearLayout.LayoutParams.WRAP_CONTENT,
-        LinearLayout.LayoutParams.WRAP_CONTENT,
-    ).apply { this.topMargin = topMargin }
+    ).apply {
+        this.topMargin = topMargin
+        this.bottomMargin = bottomMargin
+    }
 
     private fun spacer() = View(service).apply {
         layoutParams = LinearLayout.LayoutParams(0, 0, 1f)
