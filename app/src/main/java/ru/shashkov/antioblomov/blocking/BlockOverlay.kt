@@ -111,10 +111,9 @@ class BlockOverlay(
             setOnClickListener { hide() }
         }
 
-        val root = LinearLayout(ctx).apply {
+        val content = LinearLayout(ctx).apply {
             orientation = LinearLayout.VERTICAL
             gravity = Gravity.CENTER_HORIZONTAL
-            setBackgroundColor(INK)
 
             addView(logo, LinearLayout.LayoutParams(dp(104), dp(104)).apply { topMargin = dp(32) })
             addView(title, fullWidth(topMargin = dp(20)))
@@ -127,13 +126,25 @@ class BlockOverlay(
 
         // Отступы = базовые поля + высота системных панелей и выреза,
         // чтобы фон был на весь экран, а текст и кнопка не прятались под панелями.
-        root.setOnApplyWindowInsetsListener { v, insets ->
+        content.setOnApplyWindowInsetsListener { v, insets ->
             val (left, top, right, bottom) = systemInsets(insets)
             v.setPadding(dp(28) + left, dp(24) + top, dp(28) + right, dp(24) + bottom)
             insets
         }
-        root.setPadding(dp(28), dp(48), dp(28), dp(48)) // до прихода отступов
-        return root
+        content.setPadding(dp(28), dp(48), dp(28), dp(48)) // до прихода отступов
+
+        // Фон-картинка под цитату (SceneBackground.kt), поверх — прежнее содержимое
+        return FrameLayout(ctx).apply {
+            setBackgroundColor(INK)
+            addView(
+                SceneBackgroundView(ctx, quote.scene, seed = quote.text.hashCode()),
+                FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT),
+            )
+            addView(
+                content,
+                FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT),
+            )
+        }
     }
 
     private fun systemInsets(insets: WindowInsets): List<Int> =
