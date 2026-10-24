@@ -26,7 +26,7 @@ import ru.shashkov.antioblomov.ui.theme.Lake
 import ru.shashkov.antioblomov.ui.theme.Terracotta
 
 /**
- * Временная карточка шага 1: работает ли служба блокировки и как её включить.
+ * Временная карточка: работает ли служба блокировки и как её включить.
  * На шаге 6 её заменит полноценный онбординг.
  */
 @Composable
@@ -41,14 +41,14 @@ fun BlockingSpikeCard(state: ServiceState, modifier: Modifier = Modifier) {
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             Text(
-                text = "Пробная блокировка (шаг 1)",
+                text = "Служба блокировки",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
             )
             when (state) {
                 ServiceState.RUNNING -> {
                     Status("Служба работает", ok = true)
-                    Body("Сейчас YouTube блокируется всегда. Откройте его, чтобы проверить.")
+                    Body("YouTube блокируется по расписанию и таймеру — проверка ниже.")
                     OutlinedButton(onClick = { openAccessibilitySettings(context) }) {
                         Text("Настройки спецвозможностей")
                     }
