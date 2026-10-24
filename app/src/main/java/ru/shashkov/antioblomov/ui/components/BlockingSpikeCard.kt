@@ -16,17 +16,19 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import ru.shashkov.antioblomov.blocking.ServiceState
 import ru.shashkov.antioblomov.blocking.openAccessibilitySettings
+import ru.shashkov.antioblomov.blocking.openAppSettings
 import ru.shashkov.antioblomov.ui.theme.AntiOblomovTheme
 import ru.shashkov.antioblomov.ui.theme.Lake
 import ru.shashkov.antioblomov.ui.theme.Terracotta
 
 /**
- * Временная карточка шага 1: включена ли служба блокировки и как её включить.
+ * Временная карточка шага 1: работает ли служба блокировки и как её включить.
  * На шаге 6 её заменит полноценный онбординг.
  */
 @Composable
-fun BlockingSpikeCard(serviceEnabled: Boolean, modifier: Modifier = Modifier) {
+fun BlockingSpikeCard(state: ServiceState, modifier: Modifier = Modifier) {
     val context = LocalContext.current
     Card(
         modifier = modifier.fillMaxWidth(),
@@ -41,47 +43,64 @@ fun BlockingSpikeCard(serviceEnabled: Boolean, modifier: Modifier = Modifier) {
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
             )
-            if (serviceEnabled) {
-                Text(
-                    text = "Служба включена",
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = Lake,
-                )
-                Text(
-                    text = "Сейчас YouTube блокируется всегда. Откройте его, чтобы проверить.",
-                    style = MaterialTheme.typography.bodyMedium,
-                )
-                OutlinedButton(onClick = { openAccessibilitySettings(context) }) {
-                    Text("Настройки спецвозможностей")
+            when (state) {
+                ServiceState.RUNNING -> {
+                    Status("Служба работает", ok = true)
+                    Body("Сейчас YouTube блокируется всегда. Откройте его, чтобы проверить.")
+                    OutlinedButton(onClick = { openAccessibilitySettings(context) }) {
+                        Text("Настройки спецвозможностей")
+                    }
                 }
-            } else {
-                Text(
-                    text = "Служба выключена",
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = Terracotta,
-                )
-                Text(
-                    text = "В «Специальных возможностях» найдите в списке служб " +
-                        "«Анти-Обломов: блокировка» и включите её.",
-                    style = MaterialTheme.typography.bodyMedium,
-                )
-                Button(onClick = { openAccessibilitySettings(context) }) {
-                    Text("Открыть настройки")
+
+                ServiceState.STOPPED -> {
+                    Status("Служба включена, но не работает", ok = false)
+                    Body(
+                        "Её остановила система. Выключите и снова включите " +
+                            "«Анти-Обломов: блокировка» в спецвозможностях. Чтобы это не повторялось, " +
+                            "в настройках приложения включите «Автозапуск»."
+                    )
+                    Button(onClick = { openAccessibilitySettings(context) }) {
+                        Text("Спецвозможности")
+                    }
+                    OutlinedButton(onClick = { openAppSettings(context) }) {
+                        Text("Настройки приложения")
+                    }
+                }
+
+                ServiceState.OFF -> {
+                    Status("Служба выключена", ok = false)
+                    Body(
+                        "В «Специальных возможностях» найдите в списке служб " +
+                            "«Анти-Обломов: блокировка» и включите её."
+                    )
+                    Button(onClick = { openAccessibilitySettings(context) }) {
+                        Text("Открыть настройки")
+                    }
                 }
             }
         }
     }
 }
 
+@Composable
+private fun Status(text: String, ok: Boolean) = Text(
+    text = text,
+    style = MaterialTheme.typography.bodyLarge,
+    fontWeight = FontWeight.Bold,
+    color = if (ok) Lake else Terracotta,
+)
+
+@Composable
+private fun Body(text: String) = Text(text = text, style = MaterialTheme.typography.bodyMedium)
+
 @Preview(showBackground = true)
 @Composable
 private fun BlockingSpikeCardPreview() {
     AntiOblomovTheme {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-            BlockingSpikeCard(serviceEnabled = false)
-            BlockingSpikeCard(serviceEnabled = true)
+            BlockingSpikeCard(state = ServiceState.OFF)
+            BlockingSpikeCard(state = ServiceState.STOPPED)
+            BlockingSpikeCard(state = ServiceState.RUNNING)
         }
     }
 }

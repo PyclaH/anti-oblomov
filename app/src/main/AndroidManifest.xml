@@ -26,14 +26,6 @@
             </intent-filter>
         </activity>
 
-        <!-- Экран блокировки: отдельная задача, не виден в списке недавних -->
-        <activity
-            android:name=".blocking.BlockActivity"
-            android:exported="false"
-            android:excludeFromRecents="true"
-            android:launchMode="singleInstance"
-            android:taskAffinity="" />
-
         <!--
             Служба блокировки. Подключить её может только система
             (разрешение BIND_ACCESSIBILITY_SERVICE есть только у Android).

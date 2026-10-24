@@ -17,6 +17,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import ru.shashkov.antioblomov.R
+import ru.shashkov.antioblomov.blocking.ServiceState
 import ru.shashkov.antioblomov.ui.components.BlockingSpikeCard
 
 /*
@@ -25,7 +26,7 @@ import ru.shashkov.antioblomov.ui.components.BlockingSpikeCard
  */
 
 @Composable
-fun HomeScreen(serviceEnabled: Boolean, modifier: Modifier = Modifier) = PlaceholderScreen(
+fun HomeScreen(serviceState: ServiceState, modifier: Modifier = Modifier) = PlaceholderScreen(
     title = stringResource(R.string.app_name),
     description = "Главный экран: идёт ли сейчас блокировка и сколько времени сэкономлено.",
     planned = listOf(
@@ -34,7 +35,7 @@ fun HomeScreen(serviceEnabled: Boolean, modifier: Modifier = Modifier) = Placeho
         "Если время сэкономлено — предложение поблагодарить автора (ThankAuthorCard)",
     ),
     modifier = modifier,
-    header = { BlockingSpikeCard(serviceEnabled = serviceEnabled) },
+    header = { BlockingSpikeCard(state = serviceState) },
 )
 
 @Composable

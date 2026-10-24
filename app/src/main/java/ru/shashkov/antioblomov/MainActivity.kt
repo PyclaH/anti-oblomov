@@ -9,7 +9,8 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import ru.shashkov.antioblomov.blocking.isBlockingServiceEnabled
+import ru.shashkov.antioblomov.blocking.ServiceState
+import ru.shashkov.antioblomov.blocking.blockingServiceState
 import ru.shashkov.antioblomov.ui.AntiOblomovApp
 import ru.shashkov.antioblomov.ui.theme.AntiOblomovTheme
 
@@ -18,8 +19,8 @@ import ru.shashkov.antioblomov.ui.theme.AntiOblomovTheme
  */
 class MainActivity : ComponentActivity() {
 
-    /** Включена ли служба блокировки. Обновляется при каждом возврате в приложение. */
-    private var serviceEnabled by mutableStateOf(false)
+    /** Состояние службы блокировки. Обновляется при каждом возврате в приложение. */
+    private var serviceState by mutableStateOf(ServiceState.OFF)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -31,7 +32,7 @@ class MainActivity : ComponentActivity() {
         )
         setContent {
             AntiOblomovTheme {
-                AntiOblomovApp(serviceEnabled = serviceEnabled)
+                AntiOblomovApp(serviceState = serviceState)
             }
         }
     }
@@ -39,6 +40,6 @@ class MainActivity : ComponentActivity() {
     override fun onResume() {
         super.onResume()
         // Пользователь мог только что включить службу в настройках
-        serviceEnabled = isBlockingServiceEnabled(this)
+        serviceState = blockingServiceState(this)
     }
 }
