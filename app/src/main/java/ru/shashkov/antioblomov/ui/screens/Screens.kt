@@ -17,6 +17,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import ru.shashkov.antioblomov.R
+import ru.shashkov.antioblomov.ui.components.BlockingSpikeCard
 
 /*
  * Заглушки четырёх разделов. Каждую будем по очереди заменять настоящим экраном
@@ -24,7 +25,7 @@ import ru.shashkov.antioblomov.R
  */
 
 @Composable
-fun HomeScreen(modifier: Modifier = Modifier) = PlaceholderScreen(
+fun HomeScreen(serviceEnabled: Boolean, modifier: Modifier = Modifier) = PlaceholderScreen(
     title = stringResource(R.string.app_name),
     description = "Главный экран: идёт ли сейчас блокировка и сколько времени сэкономлено.",
     planned = listOf(
@@ -33,6 +34,7 @@ fun HomeScreen(modifier: Modifier = Modifier) = PlaceholderScreen(
         "Если время сэкономлено — предложение поблагодарить автора (ThankAuthorCard)",
     ),
     modifier = modifier,
+    header = { BlockingSpikeCard(serviceEnabled = serviceEnabled) },
 )
 
 @Composable
@@ -77,6 +79,7 @@ private fun PlaceholderScreen(
     description: String,
     planned: List<String>,
     modifier: Modifier = Modifier,
+    header: @Composable () -> Unit = {},
 ) {
     Column(
         modifier = modifier
@@ -91,6 +94,7 @@ private fun PlaceholderScreen(
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
+        header()
         Card(
             modifier = Modifier.fillMaxWidth(),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),

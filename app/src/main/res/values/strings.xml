@@ -8,4 +8,7 @@
     <string name="tab_apps">Приложения</string>
 
     <string name="soon">Скоро здесь</string>
+
+    <string name="accessibility_service_label">Анти-Обломов: блокировка</string>
+    <string name="accessibility_service_description">Определяет, какое приложение открыто, чтобы показать экран блокировки в учебное время. Содержимое экрана не читается, данные никуда не передаются.</string>
 </resources>

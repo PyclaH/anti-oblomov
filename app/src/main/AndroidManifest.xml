@@ -2,9 +2,12 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <!--
-        Разрешения (спецвозможности, статистика использования) добавим,
-        когда дойдём до блокировки и раздела «Было / стало».
+        Шаг 1: чтобы узнать название YouTube для экрана блокировки.
+        На шаге 3 заменим на видимость всех приложений с иконкой на рабочем столе.
     -->
+    <queries>
+        <package android:name="com.google.android.youtube" />
+    </queries>
 
     <application
         android:allowBackup="true"
@@ -22,6 +25,31 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- Экран блокировки: отдельная задача, не виден в списке недавних -->
+        <activity
+            android:name=".blocking.BlockActivity"
+            android:exported="false"
+            android:excludeFromRecents="true"
+            android:launchMode="singleInstance"
+            android:taskAffinity="" />
+
+        <!--
+            Служба блокировки. Подключить её может только система
+            (разрешение BIND_ACCESSIBILITY_SERVICE есть только у Android).
+        -->
+        <service
+            android:name=".blocking.BlockingService"
+            android:exported="true"
+            android:label="@string/accessibility_service_label"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/accessibility_service_config" />
+        </service>
 
     </application>
 
