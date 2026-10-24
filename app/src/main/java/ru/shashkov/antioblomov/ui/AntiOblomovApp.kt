@@ -22,6 +22,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import ru.shashkov.antioblomov.R
+import ru.shashkov.antioblomov.blocking.ServiceState
 import ru.shashkov.antioblomov.ui.screens.AppsScreen
 import ru.shashkov.antioblomov.ui.screens.HomeScreen
 import ru.shashkov.antioblomov.ui.screens.ScheduleScreen
@@ -40,7 +41,7 @@ enum class Tab(@StringRes val title: Int, val icon: ImageVector) {
  * Корневой экран: нижнее меню и содержимое выбранной вкладки.
  */
 @Composable
-fun AntiOblomovApp() {
+fun AntiOblomovApp(serviceState: ServiceState) {
     // rememberSaveable — выбранная вкладка не сбросится при повороте экрана
     var current by rememberSaveable { mutableStateOf(Tab.HOME) }
 
@@ -60,7 +61,7 @@ fun AntiOblomovApp() {
     ) { innerPadding ->
         val modifier = Modifier.padding(innerPadding)
         when (current) {
-            Tab.HOME -> HomeScreen(modifier)
+            Tab.HOME -> HomeScreen(serviceState = serviceState, modifier = modifier)
             Tab.SCHEDULE -> ScheduleScreen(modifier)
             Tab.TIMER -> TimerScreen(modifier)
             Tab.APPS -> AppsScreen(modifier)
@@ -71,5 +72,5 @@ fun AntiOblomovApp() {
 @Preview(showBackground = true)
 @Composable
 private fun AntiOblomovAppPreview() {
-    AntiOblomovTheme { AntiOblomovApp() }
+    AntiOblomovTheme { AntiOblomovApp(serviceState = ServiceState.OFF) }
 }

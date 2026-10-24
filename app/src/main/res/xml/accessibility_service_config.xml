@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Настройки службы блокировки.
+    - typeWindowStateChanged: открылось новое окно приложения;
+    - typeWindowsChanged + flagRetrieveInteractiveWindows: изменился набор окон,
+      в том числе развернули мини-плеер «картинка в картинке»;
+    - canRetrieveWindowContent: нужно, чтобы узнать, КАКОМУ приложению принадлежит
+      окно. Используется только название приложения, текст экрана не читается.
+    - notificationTimeout = 0: реагируем без задержки.
+-->
+<accessibility-service xmlns:android="http://schemas.android.com/apk/res/android"
+    android:accessibilityEventTypes="typeWindowStateChanged|typeWindowsChanged"
+    android:accessibilityFeedbackType="feedbackGeneric"
+    android:accessibilityFlags="flagRetrieveInteractiveWindows"
+    android:canRetrieveWindowContent="true"
+    android:description="@string/accessibility_service_description"
+    android:notificationTimeout="0" />
