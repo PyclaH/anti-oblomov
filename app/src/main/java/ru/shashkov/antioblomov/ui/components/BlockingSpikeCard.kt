@@ -17,8 +17,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import ru.shashkov.antioblomov.blocking.ServiceState
+import ru.shashkov.antioblomov.blocking.isXiaomi
 import ru.shashkov.antioblomov.blocking.openAccessibilitySettings
 import ru.shashkov.antioblomov.blocking.openAppSettings
+import ru.shashkov.antioblomov.blocking.openXiaomiAutostart
 import ru.shashkov.antioblomov.ui.theme.AntiOblomovTheme
 import ru.shashkov.antioblomov.ui.theme.Lake
 import ru.shashkov.antioblomov.ui.theme.Terracotta
@@ -50,21 +52,31 @@ fun BlockingSpikeCard(state: ServiceState, modifier: Modifier = Modifier) {
                     OutlinedButton(onClick = { openAccessibilitySettings(context) }) {
                         Text("Настройки спецвозможностей")
                     }
+                    if (isXiaomi) {
+                        OutlinedButton(onClick = { openXiaomiAutostart(context) }) {
+                            Text("Автозапуск (Xiaomi)")
+                        }
+                    }
                 }
 
                 ServiceState.STOPPED -> {
                     Status("Служба включена, но не работает", ok = false)
                     Body(
-                        "Её остановила система. Выключите и снова включите " +
-                            "«Анти-Обломов: блокировка» в спецвозможностях. Чтобы это не повторялось: " +
-                            "закрепите «Анти-Обломов» замком в списке недавних и, если есть, " +
-                            "включите «Автозапуск» в настройках приложения."
+                        "Её остановила система — например, после перезагрузки. Выключите и снова " +
+                            "включите «Анти-Обломов: блокировка» в спецвозможностях." +
+                            if (isXiaomi) " Чтобы служба запускалась сама, разрешите «Анти-Обломову» автозапуск." else ""
                     )
                     Button(onClick = { openAccessibilitySettings(context) }) {
                         Text("Спецвозможности")
                     }
-                    OutlinedButton(onClick = { openAppSettings(context) }) {
-                        Text("Настройки приложения")
+                    if (isXiaomi) {
+                        OutlinedButton(onClick = { openXiaomiAutostart(context) }) {
+                            Text("Автозапуск (Xiaomi)")
+                        }
+                    } else {
+                        OutlinedButton(onClick = { openAppSettings(context) }) {
+                            Text("Настройки приложения")
+                        }
                     }
                 }
 

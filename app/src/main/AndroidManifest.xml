@@ -24,8 +24,14 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.AntiOblomov">
 
+        <!--
+            excludeFromRecents: приложения нет в списке недавних, поэтому его нельзя
+            смахнуть — на HyperOS смахивание останавливает службу блокировки
+            (проверка шага 1, раунд 3). Открывается только с иконки.
+        -->
         <activity
             android:name=".MainActivity"
+            android:excludeFromRecents="true"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
