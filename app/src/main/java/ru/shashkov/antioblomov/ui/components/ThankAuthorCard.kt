@@ -8,6 +8,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -45,9 +46,8 @@ const val SPONSR_URL = "https://sponsr.ru/anti_oblomov/"
 const val THANK_THRESHOLD_MINUTES = 15
 
 /**
- * Панель «Поблагодарить автора» на главной — всегда, ненавязчиво: под «Было / стало»,
- * над карточкой службы (решение от 25.10.2026, вместо показа только на вехах).
- * Если экономия уже заметна (≥ 15 мин в день) — упоминаем её.
+ * «Поблагодарить автора» на главной — всегда, ненавязчиво (решение от 25.10.2026): одна строка
+ * под «Было / стало», над «Системой» (редизайн R2). Если экономия ≥ 15 мин в день — упоминаем её.
  *
  * Важно (правила Sponsr п. 5.18 и RuStore п. 6.1, 7.3): донат ничего не открывает,
  * ни на что в приложении не влияет и не связан с отзывом — приложение полностью бесплатное.
@@ -61,56 +61,42 @@ fun ThankAuthorCard(
     url: String = SPONSR_URL,
 ) {
     val context = LocalContext.current
+    val open = {
+        try {
+            context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
+        } catch (e: ActivityNotFoundException) {
+            Toast.makeText(context, "Не найден браузер, чтобы открыть ссылку", Toast.LENGTH_LONG).show()
+        }
+    }
 
-    Card(
-        modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = Surface2, contentColor = TextPrimary),
-    ) {
-        Row(
-            modifier = Modifier.padding(16.dp),
-            horizontalArrangement = Arrangement.spacedBy(14.dp),
-            verticalAlignment = Alignment.Top,
-        ) {
+    AppCard(modifier = modifier, onClick = open, padding = PaddingValues(horizontal = 14.dp, vertical = 12.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             // Логотип — песочные часы на графите, как иконка приложения
             Box(
                 modifier = Modifier
-                    .size(48.dp)
-                    .clip(RoundedCornerShape(14.dp))
+                    .size(36.dp)
+                    .clip(RoundedCornerShape(10.dp))
                     .background(Night0),
                 contentAlignment = Alignment.Center,
             ) {
                 Image(
                     painter = painterResource(R.drawable.ic_launcher_foreground),
                     contentDescription = null,
-                    modifier = Modifier.size(64.dp),
+                    modifier = Modifier.size(52.dp),
                 )
             }
-            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                Text("Поблагодарить автора", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text("Поблагодарить автора", style = MaterialTheme.typography.titleSmall)
                 Text(
                     text = savedMinutesPerDay
                         ?.takeIf { it >= THANK_THRESHOLD_MINUTES }
-                        ?.let { "Ты возвращаешь себе ${formatMinutes(it)} в день. " }
-                        .orEmpty() +
-                        "«Анти-Обломов» бесплатный и без рекламы — таким и останется. " +
-                        "Если он помогает, можно поддержать школьный проект Руслана Шашкова.",
-                    style = MaterialTheme.typography.bodyMedium,
+                        ?.let { "Ты возвращаешь себе ${formatMinutes(it)} в день" }
+                        ?: "Приложение бесплатное и без рекламы",
+                    style = MaterialTheme.typography.bodySmall,
                     color = TextMuted,
                 )
-                OutlinedButton(
-                    onClick = {
-                        try {
-                            context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
-                        } catch (e: ActivityNotFoundException) {
-                            Toast.makeText(context, "Не найден браузер, чтобы открыть ссылку", Toast.LENGTH_LONG).show()
-                        }
-                    },
-                    border = BorderStroke(1.dp, Accent),
-                    colors = ButtonDefaults.outlinedButtonColors(contentColor = Accent),
-                ) {
-                    Text("Поддержать на Sponsr")
-                }
             }
+            Text("Sponsr ›", style = MaterialTheme.typography.bodySmall, color = Accent)
         }
     }
 }

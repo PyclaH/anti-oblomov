@@ -33,10 +33,19 @@ import ru.shashkov.antioblomov.rules.StatsApps
 import ru.shashkov.antioblomov.rules.StatsChoice
 import ru.shashkov.antioblomov.ui.theme.Accent
 
+/** Подпись к кнопке списка: «Как в списке блокировки: 3», «Выбрано: 5», «Все, кроме системных». */
+fun statsAppsSummary(choice: StatsChoice, tracked: Set<String>): String = when {
+    choice.all -> "Все, кроме системных"
+    tracked.isEmpty() -> "Не выбраны"
+    choice.chosen == null -> "Как в списке блокировки: ${tracked.size}"
+    else -> "Выбрано: ${tracked.size}"
+}
+
 /**
- * Выпадающий список «Приложения для статистики» в блоке «Было / стало» (решение от 25.10.2026).
+ * Раскрытая часть списка «Приложения для статистики» (кнопку-заголовок рисует «Было / стало»).
  * Как на вкладке «Приложения», но короче: только включённые и те, что нашлись поиском.
  * «Активировать все» — все несистемные приложения; список тогда скрывается.
+ * Поиск сбрасывается, когда список сворачивают: этот блок тогда уходит с экрана вместе со своим состоянием.
  *
  * @param apps установленные приложения; null — ещё загружаются
  */
@@ -48,41 +57,9 @@ fun StatsAppsPicker(
     tracked: Set<String>,
     onChoice: (StatsChoice) -> Unit,
 ) {
-    var expanded by rememberSaveable { mutableStateOf(false) }
     var query by rememberSaveable { mutableStateOf("") }
 
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable {
-                    expanded = !expanded
-                    if (!expanded) query = "" // свернули — набранный поиск сбрасываем
-                }
-                .padding(vertical = 4.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Column(Modifier.weight(1f)) {
-                Text("Приложения для статистики", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-                Text(
-                    text = when {
-                        choice.all -> "Все, кроме системных"
-                        tracked.isEmpty() -> "Не выбраны"
-                        choice.chosen == null -> "Как в списке блокировки: ${tracked.size}"
-                        else -> "Выбрано: ${tracked.size}"
-                    },
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = if (tracked.isEmpty() && !choice.all) Accent else MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-            Icon(
-                imageVector = if (expanded) Icons.Filled.KeyboardArrowUp else Icons.Filled.KeyboardArrowDown,
-                contentDescription = if (expanded) "Свернуть" else "Развернуть",
-            )
-        }
-
-        if (!expanded) return@Column
-
         Row(
             modifier = Modifier
                 .fillMaxWidth()

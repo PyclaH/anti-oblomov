@@ -41,8 +41,13 @@ object TimerRules {
     fun extend(settings: Settings, minutes: Int, now: ZonedDateTime): Settings {
         require(minutes in MIN_MINUTES..MAX_MINUTES) { "Продлить можно от 1 минуты до 12 часов" }
         val nowMs = now.toInstant().toEpochMilli()
-        val base = maxOf(settings.timerEndsAt ?: nowMs, nowMs)
-        return settings.copy(timerEndsAt = base + minutes * 60_000L)
+        val running = (settings.timerEndsAt ?: 0L) > nowMs
+        val base = if (running) settings.timerEndsAt!! else nowMs
+        return settings.copy(
+            timerEndsAt = base + minutes * 60_000L,
+            // Продление идущего таймера начало не меняет; кончившийся — запускается заново
+            timerStartedAt = if (running) settings.timerStartedAt ?: nowMs else nowMs,
+        )
     }
 
     fun stop(settings: Settings): Settings = BlockRules.stopTimer(settings)

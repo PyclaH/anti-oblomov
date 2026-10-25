@@ -46,6 +46,22 @@ object SetupChecklist {
     /** Что ещё не сделано — показываем на главной. */
     fun missing(state: SetupState): List<SetupItem> = items(state.brand).filterNot { isDone(it, state) }
 
+    /**
+     * Строка «Система» на главной (редизайн R2): «всё в порядке», «служба не работает»
+     * или «2 настройки пропущены».
+     */
+    fun summary(state: SetupState): String {
+        if (!state.serviceRunning) return "служба не работает"
+        val n = missing(state).size
+        return when {
+            n == 0 -> "всё в порядке"
+            n % 100 in 11..14 -> "$n настроек пропущено"
+            n % 10 == 1 -> "$n настройка пропущена"
+            n % 10 in 2..4 -> "$n настройки пропущены"
+            else -> "$n настроек пропущено"
+        }
+    }
+
     /** Подпись к названию пункта для главной: что именно нужно, если не сделано. */
     fun autostartTitle(brand: PhoneBrand): String = SetupGuide.autostart(brand)?.title ?: SetupItem.AUTOSTART.title
 }
