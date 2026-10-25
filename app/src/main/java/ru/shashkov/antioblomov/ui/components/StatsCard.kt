@@ -33,8 +33,8 @@ private val DATE = DateTimeFormatter.ofPattern("dd.MM")
 
 /**
  * «Было / стало» на главной (FR-14…FR-16, решения от 25.10.2026):
- * каждый день — сегодня, в среднем до установки и сэкономлено сегодня;
- * с первого полного дня — в среднем после и всего вернул себе; рядом — всё экранное время;
+ * до установки, после и сэкономлено — всё в среднем за день (в первый день «после» — за сегодня);
+ * всего вернул себе; рядом — всё экранное время до и после;
  * с 7 дней — сравнение по вехам. Честно: отрицательная экономия не скрывается.
  *
  * @param report null — данных ещё нет (доступ только что выдан)
@@ -91,55 +91,41 @@ private fun Report(r: SavingsReport, startDate: LocalDate, noAppsSelected: Boole
         )
     }
 
-    // Каждый день: сегодня — до установки — сэкономлено
+    // До установки — после — сэкономлено, всё в среднем за день (решение от 25.10.2026)
     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        Figure("Сегодня", UsageText.minutes(r.todayMinutes), Ink, Modifier.weight(1f))
-        Figure("До установки, в день", r.beforeAvgMinutes?.let(UsageText::minutes) ?: "—", Ink, Modifier.weight(1f))
-        val saved = r.savedTodayMinutes
+        Figure("До, в день", r.beforeAvgMinutes?.let(UsageText::minutes) ?: "—", Ink, Modifier.weight(1f))
+        Figure("После, в день", UsageText.minutes(r.perDayAfterMinutes), Ink, Modifier.weight(1f))
+        val saved = r.perDaySavedMinutes
         Figure(
-            title = if (saved != null && saved < 0) "Больше обычного" else "Сэкономлено",
-            value = saved?.let { if (it < 0) UsageText.minutes(-it) else UsageText.minutes(it) } ?: "—",
+            title = if (saved != null && saved < 0) "Больше, в день" else "Сэкономлено, в день",
+            value = saved?.let { UsageText.minutes(kotlin.math.abs(it)) } ?: "—",
             color = if (saved != null && saved < 0) Terracotta else Lake,
             modifier = Modifier.weight(1f),
         )
     }
     Caption(
-        when {
-            r.beforeDays > 0 ->
-                "«До установки» — в среднем по ${UsageText.days(r.beforeDays)} до ${startDate.format(DATE)}. " +
-                    "«Сегодня» — с полуночи, к вечеру цифра вырастет."
-            else -> "Истории до ${startDate.format(DATE)} в телефоне не нашлось — сравнивать не с чем, считаем только «после»."
-        }
+        (if (r.beforeDays > 0) "«До» — в среднем по ${UsageText.days(r.beforeDays)} до ${startDate.format(DATE)}. "
+        else "Истории до ${startDate.format(DATE)} в телефоне не нашлось — сравнивать не с чем. ") +
+            (if (r.firstDay) "«После» — пока только за сегодня, с полуночи: со второго дня здесь будет среднее."
+            else "«После» — в среднем по ${UsageText.days(r.afterDays)} после установки; день установки не считается.")
     )
 
-    if (r.afterDays > 0) {
-        HorizontalDivider()
-        Line("С установки, в среднем в день", r.afterAvgMinutes?.let(UsageText::minutes) ?: "—")
-        r.savedPerDayMinutes?.let { saved ->
+    r.totalSavedMinutes?.let { total ->
+        if (total > 0) {
+            HorizontalDivider()
+            val days = Savings.schoolDays(total)
             Line(
-                if (saved >= 0) "Сэкономлено в среднем в день" else "В среднем в день больше, чем до установки",
-                UsageText.minutes(kotlin.math.abs(saved)),
-                if (saved >= 0) Lake else Terracotta,
+                "Всего ты вернул себе",
+                UsageText.minutes(total) + if (days > 0) " · ${UsageText.schoolDays(days)}" else "",
+                Lake,
             )
         }
-        r.totalSavedMinutes?.let { total ->
-            if (total > 0) {
-                val days = Savings.schoolDays(total)
-                Line(
-                    "Всего ты вернул себе",
-                    UsageText.minutes(total) + if (days > 0) " · ${UsageText.schoolDays(days)}" else "",
-                    Lake,
-                )
-            }
-        }
-        Caption("По ${UsageText.days(r.afterDays)} после установки; день установки не считается.")
     }
 
     // Честность цифр (FR-16): если общее время не снизилось, время просто перетекло в другие приложения
     HorizontalDivider()
-    Line("Всё экранное время сегодня", UsageText.minutes(r.screenTodayMinutes))
-    r.screenBeforeAvgMinutes?.let { Line("…до установки, в среднем в день", UsageText.minutes(it)) }
-    r.screenAfterAvgMinutes?.let { Line("…после установки, в среднем в день", UsageText.minutes(it)) }
+    r.screenBeforeAvgMinutes?.let { Line("Всё экранное время до, в день", UsageText.minutes(it)) }
+    Line("Всё экранное время после, в день", UsageText.minutes(r.screenPerDayAfterMinutes))
 
     r.milestone?.let { MilestoneBlock(it) }
 }

@@ -116,4 +116,20 @@ class SavingsTest {
         assertEquals("21 учебный день", UsageText.schoolDays(21))
         assertEquals("−20 мин", UsageText.saved(-20))
     }
+
+    // ---------- «После, в день» (решение от 25.10.2026) ----------
+
+    @Test fun `после в день — среднее по дням после установки`() {
+        val r = report(3, todayUsage = mapOf(yt to min(200)))
+        assertEquals(90, r.perDayAfterMinutes)
+        assertEquals(150, r.perDaySavedMinutes)
+        assertEquals(130, r.screenPerDayAfterMinutes)
+    }
+
+    @Test fun `в первый день после — за сегодня`() {
+        val r = Savings.report(history(0), start, mapOf(yt to min(20)), setOf(yt, vk), setOf(launcher))
+        assertEquals(true, r.firstDay)
+        assertEquals(20, r.perDayAfterMinutes)
+        assertEquals(220, r.perDaySavedMinutes)
+    }
 }

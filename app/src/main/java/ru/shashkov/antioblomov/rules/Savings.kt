@@ -51,7 +51,22 @@ data class SavingsReport(
     val screenTodayMinutes: Int,
     /** Последняя достигнутая веха (от 7 дней). */
     val milestone: Milestone?,
-)
+) {
+    /**
+     * «После, в день» на главной (решение от 25.10.2026): среднее по полным дням после установки;
+     * в первый день, пока полных дней нет, — время за сегодня.
+     */
+    val perDayAfterMinutes: Int get() = afterAvgMinutes ?: todayMinutes
+
+    /** «Сэкономлено, в день»: до − после в среднем; в первый день — до − сегодня. */
+    val perDaySavedMinutes: Int? get() = savedPerDayMinutes ?: savedTodayMinutes
+
+    /** Экранное время «после, в день» — так же. */
+    val screenPerDayAfterMinutes: Int get() = screenAfterAvgMinutes ?: screenTodayMinutes
+
+    /** Пока полных дней после установки нет — «после» считается по сегодняшнему дню. */
+    val firstDay: Boolean get() = afterDays == 0
+}
 
 /**
  * Расчёт «Было / стало» (FR-14…FR-16, решения от 25.10.2026):
