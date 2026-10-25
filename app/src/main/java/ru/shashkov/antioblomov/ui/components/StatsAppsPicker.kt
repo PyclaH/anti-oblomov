@@ -32,6 +32,11 @@ import ru.shashkov.antioblomov.data.InstalledApp
 import ru.shashkov.antioblomov.rules.StatsApps
 import ru.shashkov.antioblomov.rules.StatsChoice
 import ru.shashkov.antioblomov.ui.theme.Accent
+import ru.shashkov.antioblomov.ui.theme.Line
+import ru.shashkov.antioblomov.ui.theme.Night1
+import ru.shashkov.antioblomov.ui.theme.TextMuted
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.OutlinedTextFieldDefaults
 
 /** Подпись к кнопке списка: «Как в списке блокировки: 3», «Выбрано: 5», «Все, кроме системных». */
 fun statsAppsSummary(choice: StatsChoice, tracked: Set<String>): String = when {
@@ -71,7 +76,7 @@ fun StatsAppsPicker(
                 Text(
                     "Считать все приложения, кроме системных",
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = TextMuted,
                 )
             }
             Switch(checked = choice.all, onCheckedChange = { onChoice(choice.copy(all = it)) })
@@ -84,18 +89,29 @@ fun StatsAppsPicker(
             onValueChange = { query = it },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
-            placeholder = { Text("Найти и добавить приложение") },
-            leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
+            shape = RoundedCornerShape(16.dp),
+            placeholder = { Text("Найти и добавить приложение", color = TextMuted) },
+            leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null, tint = TextMuted) },
             trailingIcon = {
                 if (query.isNotEmpty()) {
-                    IconButton(onClick = { query = "" }) { Icon(Icons.Filled.Clear, contentDescription = "Очистить поиск") }
+                    IconButton(onClick = { query = "" }) {
+                        Icon(Icons.Filled.Clear, contentDescription = "Очистить поиск", tint = TextMuted)
+                    }
                 }
             },
+            // Как поиск на вкладке «Приложения» (R4), только на фоне карточки
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedContainerColor = Night1,
+                unfocusedContainerColor = Night1,
+                focusedBorderColor = TextMuted,
+                unfocusedBorderColor = Line,
+                cursorColor = Accent,
+            ),
         )
 
         if (apps == null) {
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
-                CircularProgressIndicator(modifier = Modifier.padding(4.dp))
+                CircularProgressIndicator(modifier = Modifier.padding(4.dp), color = Accent)
                 Text("Загружаю список приложений…", style = MaterialTheme.typography.bodyMedium)
             }
             return@Column
@@ -110,7 +126,7 @@ fun StatsAppsPicker(
                 text = if (query.isBlank()) "Пока ничего не выбрано — найдите приложение поиском и включите"
                 else "Ничего не найдено",
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = TextMuted,
             )
         }
         // Список короткий (включённые + найденные), поэтому обычная колонка, без ленивого списка
