@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -38,10 +39,14 @@ import ru.shashkov.antioblomov.ui.theme.Warn
 
 /**
  * Кольцо-циферблат на главной (редизайн R2): дуга — какая часть идущей блокировки прошла,
- * в центре — до какого времени. За кольцом мягкое свечение: тёплое во время блокировки,
- * холодное в свободное время, янтарное, если служба не работает.
+ * в центре — до какого времени. За кольцом свечение (R4, правка 25.10.2026):
+ * - блокировка — спокойная терракота, шире кольца, чуть выходит за циферблат;
+ * - свободно, впереди блокировка — светлая бирюза, заметнее прежнего;
+ * - свободно и ничего не запланировано («∞») — ещё светлее и ярче;
+ * - служба не работает — янтарное, как раньше.
  *
  * @param progress 0..1 — блокировка идёт; null — свободное время (дуги нет)
+ * @param nothingPlanned нет ни расписания впереди, ни таймера
  * @param timerLeft «1:24:07», если идёт таймер
  * @param description что прочитает экранный диктор
  */
@@ -49,6 +54,7 @@ import ru.shashkov.antioblomov.ui.theme.Warn
 fun StatusRing(
     text: RingText,
     progress: Float?,
+    nothingPlanned: Boolean,
     serviceWorks: Boolean,
     timerLeft: String?,
     description: String,
@@ -66,6 +72,34 @@ fun StatusRing(
     )
     val sweep by animateFloatAsState(progress ?: 0f, tween(600), label = "ring-sweep")
 
+    // Свечение: свой цвет, яркость и размер для каждого состояния, переходы плавные
+    val glow by animateColorAsState(
+        targetValue = when {
+            !serviceWorks -> Warn
+            blocked -> GLOW_BLOCK
+            nothingPlanned -> GLOW_IDLE
+            else -> GLOW_FREE
+        },
+        animationSpec = tween(400),
+        label = "glow-tone",
+    )
+    val glowAlpha by animateFloatAsState(
+        targetValue = when {
+            !serviceWorks -> 0.24f
+            blocked -> 0.30f
+            nothingPlanned -> 0.42f
+            else -> 0.34f
+        },
+        animationSpec = tween(400),
+        label = "glow-alpha",
+    )
+    // Доля радиуса, где свечение гаснет: у кольца радиус ~0.68 от радиуса холста (122 из 180 dp)
+    val glowReach by animateFloatAsState(
+        targetValue = if (blocked && serviceWorks) 0.98f else 0.74f,
+        animationSpec = tween(500),
+        label = "glow-reach",
+    )
+
     Box(
         modifier = modifier
             .fillMaxWidth()
@@ -74,12 +108,12 @@ fun StatusRing(
         contentAlignment = Alignment.Center,
     ) {
         // Свечение
-        Canvas(Modifier.size(340.dp)) {
+        Canvas(Modifier.requiredSize(360.dp)) {
             drawCircle(
                 brush = Brush.radialGradient(
-                    0f to tone.copy(alpha = 0.24f),
-                    0.45f to tone.copy(alpha = 0.06f),
-                    0.7f to Color.Transparent,
+                    0f to glow.copy(alpha = glowAlpha),
+                    glowReach * 0.6f to glow.copy(alpha = glowAlpha * 0.35f),
+                    glowReach to Color.Transparent,
                     center = center,
                     radius = size.minDimension / 2,
                 ),
@@ -119,3 +153,12 @@ fun StatusRing(
         }
     }
 }
+
+/** Спокойная терракота — свечение во время блокировки (мягче акцента). */
+private val GLOW_BLOCK = Color(0xFFC8643F)
+
+/** Светлая бирюза — свободное время, впереди блокировка. */
+private val GLOW_FREE = Color(0xFF7CCFC1)
+
+/** Ещё светлее — свободно и ничего не запланировано. */
+private val GLOW_IDLE = Color(0xFFA6E3D8)

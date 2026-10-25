@@ -134,14 +134,14 @@ fun AppsScreen(modifier: Modifier = Modifier) {
             modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 24.dp, bottom = 4.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    text = stringResource(R.string.tab_apps),
-                    style = MaterialTheme.typography.headlineMedium,
-                    modifier = Modifier.weight(1f),
-                )
-                count?.let { CountChip(it) }
-            }
+            // Заголовок — во всю ширину строки, счётчик — под ним (R4, замечание п. 1: «я» переносилась)
+            Text(
+                text = stringResource(R.string.tab_apps),
+                style = MaterialTheme.typography.headlineMedium,
+                maxLines = 1,
+                modifier = Modifier.fillMaxWidth(),
+            )
+            count?.let { CountChip(it) }
             Text(
                 text = if (count == 0)
                     "Ничего не выбрано — расписание и таймер ничего не блокируют. Отметь, что блокировать."

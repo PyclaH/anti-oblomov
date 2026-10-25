@@ -68,7 +68,7 @@ class RedesignHomeTest {
         assertEquals(RingText("СВОБОДНОЕ ВРЕМЯ", "16:00", "следующая блокировка"), HomeStatusText.ring(BlockRules.status(today, at(11)), at(11)))
         val tomorrow = Settings(schedule = mapOf(TUESDAY to listOf(lesson)))
         assertEquals("следующая · завтра", HomeStatusText.ring(BlockRules.status(tomorrow, at(15)), at(15)).sub)
-        assertEquals(RingText("СВОБОДНОЕ ВРЕМЯ", "—", "по расписанию блокировок нет"), HomeStatusText.ring(BlockRules.status(Settings(), at(15)), at(15)))
+        assertEquals(RingText("СВОБОДНОЕ ВРЕМЯ", "∞", "по расписанию блокировок нет"), HomeStatusText.ring(BlockRules.status(Settings(), at(15)), at(15)))
     }
 
     // ---------- плитки и «Система» ----------
