@@ -23,6 +23,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
+import ru.shashkov.antioblomov.data.InstalledApps
 import ru.shashkov.antioblomov.data.SettingsStore
 import ru.shashkov.antioblomov.rules.BlockRules
 import ru.shashkov.antioblomov.rules.BlockStatus
@@ -103,10 +104,14 @@ fun RulesTestPanel(modifier: Modifier = Modifier) {
                     ?.let { "до ${it.format(TIME_SEC)}" } ?: "не запущен"),
                 style = MaterialTheme.typography.bodyMedium,
             )
+            val names = remember(settings.blockedPackages) {
+                settings.blockedPackages.map { InstalledApps.label(context, it) }.sorted()
+            }
             Text(
-                text = "Блокируется: YouTube (выбор приложений — на шаге 3)",
+                text = if (names.isEmpty()) "Блокируется: ничего — выберите на вкладке «Приложения»"
+                else "Блокируется: " + names.joinToString(", "),
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = if (names.isEmpty()) Terracotta else MaterialTheme.colorScheme.onSurfaceVariant,
             )
 
             Button(

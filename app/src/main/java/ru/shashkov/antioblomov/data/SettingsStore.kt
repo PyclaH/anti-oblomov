@@ -65,8 +65,8 @@ class SettingsStore(context: Context) {
         private const val TAG = "AntiOblomov"
         private const val FILE_NAME = "settings.json"
 
-        /** Шаг 2: пока нет экрана «Приложения», по умолчанию блокируется YouTube. */
-        val DEFAULT = Settings(blockedPackages = setOf("com.google.android.youtube"))
+        /** По умолчанию ничего не выбрано — пользователь сам отмечает приложения (решение от 25.10.2026). */
+        val DEFAULT = Settings()
 
         // Формат: {"blocked":[...], "timerEndsAt":123, "schedule":{"MONDAY":[[600,840],[900,1200]]}}
 
