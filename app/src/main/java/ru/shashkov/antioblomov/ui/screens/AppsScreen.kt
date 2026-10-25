@@ -127,8 +127,8 @@ fun AppsScreen(modifier: Modifier = Modifier) {
         )
     }
 
-    // Фон (R6): сетка «иконок», гаснет к середине
-    SceneBox(scene = Scene.ICONS, anchor = null, modifier = modifier) {
+    // Фон (R6b): созвездия, гаснут к середине
+    SceneBox(scene = Scene.STARS, anchor = null, modifier = modifier) {
     Column(modifier = Modifier.fillMaxSize()) {
         // Сколько выбрано (null — список ещё грузится)
         val count = apps?.let { loaded -> AppList.selectedCount(loaded.map { it.entry }, protected, blocked) }

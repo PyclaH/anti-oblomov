@@ -157,10 +157,10 @@ fun ScheduleScreen(modifier: Modifier = Modifier) {
     val intervals = settings.intervalsOn(selectedDay)
     val dayName = ScheduleEditor.fullName(selectedDay)
 
-    // Фон (R6): сетка часов, линии совпадают с полосой суток
+    // Фон (R6b): путь солнца над полосой суток, солнце — где оно сейчас
     val barAnchor = rememberSceneAnchor()
 
-    SceneBox(scene = Scene.HOURS, anchor = barAnchor, modifier = modifier) {
+    SceneBox(scene = Scene.SUN_PATH, anchor = barAnchor, modifier = modifier, hour = now.hour + now.minute / 60f) {
     Column(
         modifier = Modifier
             .fillMaxSize()

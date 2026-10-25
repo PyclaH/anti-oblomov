@@ -22,10 +22,10 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import ru.shashkov.antioblomov.ui.theme.Accent
 import ru.shashkov.antioblomov.ui.theme.BigNumber
 import ru.shashkov.antioblomov.ui.theme.Calm
-import ru.shashkov.antioblomov.ui.theme.Overline
 import ru.shashkov.antioblomov.ui.theme.PtSerif
 import ru.shashkov.antioblomov.ui.theme.TABULAR
 import android.graphics.drawable.ColorDrawable
@@ -133,28 +133,26 @@ fun WaitDialog(title: String, onConfirm: () -> Unit, onDismiss: () -> Unit) {
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
-                Text(
-                    text = "ПАУЗА · ИДЁТ БЛОКИРОВКА",
-                    modifier = Modifier.padding(top = 24.dp),
-                    style = Overline,
-                    color = Accent,
-                )
-                Text(
-                    text = title,
-                    modifier = Modifier.fillMaxWidth(),
-                    style = MaterialTheme.typography.titleLarge,
-                    color = TextPrimary,
-                    textAlign = TextAlign.Center,
-                )
+                // Сверху — только «Подумай 15 секунд» (R6b): что меняется и что идёт блокировка,
+                // и так понятно. Вопрос (title) зачитывает экранный диктор.
                 Text(
                     text = "Подумай ${ChangeGuard.WAIT_SECONDS} секунд — точно нужно?",
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 24.dp)
+                        .semantics { contentDescription = "$title Подумай ${ChangeGuard.WAIT_SECONDS} секунд — точно нужно?" },
                     style = MaterialTheme.typography.bodyMedium,
                     color = TextPrimary.copy(alpha = 0.7f),
                     textAlign = TextAlign.Center,
                 )
 
                 Spacer(Modifier.weight(1f))
+
+                // Кольцо — над цитатой, одной группой с ней по центру экрана (R6b, макет «Окно паузы»):
+                // внизу, над кнопками, оно закрывало каплю на сцене «вода»
+                CountdownRing(left = left, total = ChangeGuard.WAIT_SECONDS)
+
+                Spacer(Modifier.height(18.dp))
 
                 Text(
                     text = "«${quote.text}»",
@@ -174,10 +172,6 @@ fun WaitDialog(title: String, onConfirm: () -> Unit, onDismiss: () -> Unit) {
                 )
 
                 Spacer(Modifier.weight(1f))
-
-                CountdownRing(left = left, total = ChangeGuard.WAIT_SECONDS)
-
-                Spacer(Modifier.height(8.dp))
 
                 OutlinedButton(
                     modifier = Modifier.fillMaxWidth().height(56.dp),
@@ -226,7 +220,7 @@ private fun CountdownRing(left: Int, total: Int) {
 
     Box(
         modifier = Modifier
-            .size(76.dp)
+            .size(88.dp)
             .clearAndSetSemantics {
                 contentDescription = if (done) "Можно подтвердить" else "Осталось $left секунд"
             },
@@ -248,11 +242,11 @@ private fun CountdownRing(left: Int, total: Int) {
             )
         }
         if (done) {
-            Icon(Icons.Filled.Check, contentDescription = null, tint = Calm, modifier = Modifier.size(30.dp))
+            Icon(Icons.Filled.Check, contentDescription = null, tint = Calm, modifier = Modifier.size(34.dp))
         } else {
             Text(
                 text = left.toString(),
-                style = BigNumber.copy(fontSize = 26.sp, lineHeight = 28.sp),
+                style = BigNumber.copy(fontSize = 28.sp, lineHeight = 30.sp),
                 color = TextPrimary,
             )
         }
