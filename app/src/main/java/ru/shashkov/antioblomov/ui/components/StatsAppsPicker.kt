@@ -55,7 +55,10 @@ fun StatsAppsPicker(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable { expanded = !expanded }
+                .clickable {
+                    expanded = !expanded
+                    if (!expanded) query = "" // свернули — набранный поиск сбрасываем
+                }
                 .padding(vertical = 4.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {

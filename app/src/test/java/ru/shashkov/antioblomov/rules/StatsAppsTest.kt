@@ -32,10 +32,10 @@ class StatsAppsTest {
         assertEquals(listOf(vk), StatsApps.visible(apps, protected, setOf(vk.packageName), ""))
     }
 
-    @Test fun `при поиске — включённые и найденные, системных нет`() {
+    @Test fun `при поиске — сначала найденные, включённые внизу, системных нет`() {
         val shown = StatsApps.visible(apps, protected, setOf(vk.packageName), "т")
         // русская «т»: «Калькулятор» найден, «Telegram» (латиница) — нет; «Настройки» защищённые — не показываем
-        assertEquals(listOf(vk, calc), shown)
+        assertEquals(listOf(calc, vk), shown)
     }
 
     @Test fun `найденных не больше лимита`() {
