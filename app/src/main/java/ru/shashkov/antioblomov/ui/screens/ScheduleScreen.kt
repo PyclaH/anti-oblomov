@@ -70,13 +70,13 @@ import ru.shashkov.antioblomov.rules.IntervalCheck
 import ru.shashkov.antioblomov.rules.ScheduleEditor
 import ru.shashkov.antioblomov.rules.Settings
 import ru.shashkov.antioblomov.rules.TimeInput
+import ru.shashkov.antioblomov.rules.TimeText
 import ru.shashkov.antioblomov.rules.TimeInterval
 import ru.shashkov.antioblomov.ui.components.WaitDialog
 import ru.shashkov.antioblomov.ui.theme.Lake
 import ru.shashkov.antioblomov.ui.theme.Terracotta
 import java.time.DayOfWeek
 import java.time.ZonedDateTime
-import java.time.format.DateTimeFormatter
 
 /** Что редактируем в диалоге: [old] = null — новый интервал. */
 private data class EditState(val old: TimeInterval?, val start: Int, val end: Int)
@@ -498,9 +498,5 @@ private object ColonTransformation : VisualTransformation {
     }
 }
 
-private val TIME = DateTimeFormatter.ofPattern("HH:mm")
-
-/** «14:00» сегодня, «Пн 10:00» в другой день. */
-private fun dayTime(t: ZonedDateTime, now: ZonedDateTime): String =
-    if (t.toLocalDate() == now.toLocalDate()) t.format(TIME)
-    else "${ScheduleEditor.shortName(t.dayOfWeek)} ${t.format(TIME)}"
+/** «14:00» сегодня, «завтра 09:00», «Пн 10:00» в другой день. */
+private fun dayTime(t: ZonedDateTime, now: ZonedDateTime): String = TimeText.at(t, now)

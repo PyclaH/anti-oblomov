@@ -6,9 +6,10 @@ import java.time.ZonedDateTime
  * Пауза перед ослаблением блокировки, пока она идёт (решения от 25.10.2026).
  *
  * Если блокировка уже идёт, а изменение её ослабляет — из сегодняшнего расписания
- * пропадает хоть одна ещё не прошедшая минута блокировки или из списка убирается
- * приложение, — сначала 15 секунд ожидания с цитатой, потом подтверждение.
- * Усиление (новый интервал, удлинение, новое приложение) сохраняется сразу.
+ * пропадает хоть одна ещё не прошедшая минута блокировки, из списка убирается
+ * приложение или таймер останавливается досрочно, — сначала 15 секунд ожидания с цитатой, потом подтверждение.
+ * Усиление (новый интервал, удлинение, новое приложение, запуск
+ * или продление таймера) сохраняется сразу.
  */
 object ChangeGuard {
 
@@ -18,7 +19,15 @@ object ChangeGuard {
     fun needsWait(before: Settings, after: Settings, now: ZonedDateTime): Boolean {
         if (BlockRules.status(before, now) !is BlockStatus.Blocked) return false
         val appRemoved = !after.blockedPackages.containsAll(before.blockedPackages)
-        return appRemoved || todayWeakened(before, after, now)
+        return appRemoved || timerShortened(before, after, now) || todayWeakened(before, after, now)
+    }
+
+    /** Таймер шёл, а теперь остановлен или кончится раньше (досрочная остановка, FR-10). */
+    private fun timerShortened(before: Settings, after: Settings, now: ZonedDateTime): Boolean {
+        val end = before.timerEndsAt ?: return false
+        if (end <= now.toInstant().toEpochMilli()) return false
+        val newEnd = after.timerEndsAt ?: return true
+        return newEnd < end
     }
 
     /** Есть ли минута с текущей до полуночи, которая была под блокировкой, а теперь нет. */

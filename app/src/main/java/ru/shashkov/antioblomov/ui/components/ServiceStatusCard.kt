@@ -26,11 +26,11 @@ import ru.shashkov.antioblomov.ui.theme.Lake
 import ru.shashkov.antioblomov.ui.theme.Terracotta
 
 /**
- * Временная карточка: работает ли служба блокировки и как её включить.
- * На шаге 6 её заменит полноценный онбординг.
+ * Карточка на главной: работает ли служба блокировки и как её включить.
+ * На шаге 6 к ней добавится полноценный онбординг.
  */
 @Composable
-fun BlockingSpikeCard(state: ServiceState, modifier: Modifier = Modifier) {
+fun ServiceStatusCard(state: ServiceState, modifier: Modifier = Modifier) {
     val context = LocalContext.current
     Card(
         modifier = modifier.fillMaxWidth(),
@@ -48,7 +48,7 @@ fun BlockingSpikeCard(state: ServiceState, modifier: Modifier = Modifier) {
             when (state) {
                 ServiceState.RUNNING -> {
                     Status("Служба работает", ok = true)
-                    Body("Выбранные приложения блокируются по расписанию и таймеру — проверка ниже.")
+                    Body("Выбранные приложения блокируются по расписанию и таймеру.")
                     OutlinedButton(onClick = { openAccessibilitySettings(context) }) {
                         Text("Настройки спецвозможностей")
                     }
@@ -108,12 +108,12 @@ private fun Body(text: String) = Text(text = text, style = MaterialTheme.typogra
 
 @Preview(showBackground = true)
 @Composable
-private fun BlockingSpikeCardPreview() {
+private fun ServiceStatusCardPreview() {
     AntiOblomovTheme {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-            BlockingSpikeCard(state = ServiceState.OFF)
-            BlockingSpikeCard(state = ServiceState.STOPPED)
-            BlockingSpikeCard(state = ServiceState.RUNNING)
+            ServiceStatusCard(state = ServiceState.OFF)
+            ServiceStatusCard(state = ServiceState.STOPPED)
+            ServiceStatusCard(state = ServiceState.RUNNING)
         }
     }
 }

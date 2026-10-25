@@ -15,6 +15,7 @@ import ru.shashkov.antioblomov.data.SettingsStore
 import ru.shashkov.antioblomov.rules.BlockRules
 import ru.shashkov.antioblomov.rules.BlockStatus
 import ru.shashkov.antioblomov.rules.Settings
+import ru.shashkov.antioblomov.rules.TimeText
 import java.time.Duration
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
@@ -61,7 +62,10 @@ class BlockingService : AccessibilityService() {
         store = SettingsStore(this)
         protectedApps = ProtectedApps.of(this)
         Log.i(TAG, "Служба блокировки подключена")
-        scheduleBoundaryCheck(store.read(), ZonedDateTime.now())
+        val settings = store.read()
+        scheduleBoundaryCheck(settings, ZonedDateTime.now())
+        // После перезагрузки уведомление таймера пропадает — возвращаем его
+        TimerNotification.update(this, settings)
     }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
@@ -199,11 +203,8 @@ class BlockingService : AccessibilityService() {
         private const val BOUNDARY_SLACK_MS = 500L
 
         private val TIME = DateTimeFormatter.ofPattern("HH:mm")
-        private val DATE_TIME = DateTimeFormatter.ofPattern("dd.MM HH:mm")
 
-        /** «до 14:00», а если блокировка кончается не сегодня — «до 27.10 10:00». */
-        fun untilText(until: ZonedDateTime, now: ZonedDateTime): String =
-            if (until.toLocalDate() == now.toLocalDate()) "до ${until.format(TIME)}"
-            else "до ${until.format(DATE_TIME)}"
+        /** «до 14:00», «до завтра 01:30», «до Чт 10:00». */
+        fun untilText(until: ZonedDateTime, now: ZonedDateTime): String = "до ${TimeText.at(until, now)}"
     }
 }
