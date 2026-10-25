@@ -2,6 +2,28 @@ package ru.shashkov.antioblomov.ui.screens
 
 import android.widget.Toast
 import androidx.compose.foundation.background
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.border
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material.icons.outlined.Lock
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.unit.sp
+import ru.shashkov.antioblomov.rules.TimerRules
+import ru.shashkov.antioblomov.ui.components.CardShape
+import ru.shashkov.antioblomov.ui.theme.Line
+import ru.shashkov.antioblomov.ui.theme.Night0
+import ru.shashkov.antioblomov.ui.theme.Surface1
+import ru.shashkov.antioblomov.ui.theme.Surface2
+import ru.shashkov.antioblomov.ui.theme.TABULAR
+import ru.shashkov.antioblomov.ui.theme.TextMuted
+import ru.shashkov.antioblomov.ui.theme.TextPrimary
+import ru.shashkov.antioblomov.ui.theme.Warn
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -136,38 +158,80 @@ fun ScheduleScreen(modifier: Modifier = Modifier) {
         modifier = modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .padding(horizontal = 20.dp, vertical = 24.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
+            .padding(horizontal = 20.dp)
+            .padding(top = 24.dp, bottom = 24.dp),
+        verticalArrangement = Arrangement.spacedBy(18.dp),
     ) {
-        Text(text = "Расписание", style = MaterialTheme.typography.headlineMedium)
-        Text(
-            text = "Когда блокировать выбранные приложения. Между интервалами — перерыв, всё открыто.",
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
+        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Text(text = "Расписание", style = MaterialTheme.typography.headlineMedium)
+            Text(
+                text = "Когда блокировать выбранные приложения. Между интервалами — перерыв, всё открыто.",
+                style = MaterialTheme.typography.bodySmall,
+                color = TextMuted,
+            )
+        }
+        if (settings.blockedPackages.isEmpty()) {
+            Text(
+                text = "Приложения для блокировки не выбраны — отметь их на вкладке «Приложения»",
+                style = MaterialTheme.typography.bodySmall,
+                color = Warn,
+            )
+        }
 
-        StatusLine(settings, now)
+        DaySegment(selected = selectedDay, settings = settings, onSelect = { selectedDay = it })
 
-        DayRow(selected = selectedDay, settings = settings, onSelect = { selectedDay = it })
+        // Название дня, статус «сейчас» (для сегодня) и меню «⋯» с копированием на будни
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text(dayName, style = MaterialTheme.typography.titleMedium)
+                if (selectedDay == now.dayOfWeek) StatusLine(settings, now)
+            }
+            Box {
+                var menu by remember { mutableStateOf(false) }
+                IconButton(
+                    onClick = { menu = true },
+                    modifier = Modifier
+                        .size(44.dp)
+                        .clip(CircleShape)
+                        .background(Surface1)
+                        .border(1.dp, Line, CircleShape),
+                ) {
+                    Icon(Icons.Filled.MoreVert, contentDescription = "Ещё: копировать на будни", tint = TextPrimary)
+                }
+                DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
+                    DropdownMenuItem(
+                        text = { Text("Копировать на будни (Пн–Пт)") },
+                        enabled = intervals.isNotEmpty(),
+                        onClick = {
+                            menu = false
+                            val overwrite = ScheduleEditor.weekdaysToOverwrite(settings, selectedDay)
+                            if (overwrite.isEmpty()) {
+                                save("Изменить расписание на сегодня?", { ScheduleEditor.copyToWeekdays(it, selectedDay) }, copied)
+                            } else {
+                                confirmCopy = overwrite
+                            }
+                        },
+                    )
+                }
+            }
+        }
 
-        Text(
-            text = dayName + if (selectedDay == now.dayOfWeek) " · сегодня" else "",
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold,
-        )
+        DayBar(intervals = intervals, nowMinute = if (selectedDay == now.dayOfWeek) now.hour * 60 + now.minute else null)
 
         if (intervals.isEmpty()) {
             Text(
                 text = "В этот день блокировки нет",
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                style = MaterialTheme.typography.bodyMedium,
+                color = TextMuted,
             )
         } else {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 val breaks = ScheduleEditor.breaks(intervals)
+                val nowMinute = if (selectedDay == now.dayOfWeek) now.hour * 60 + now.minute else -1
                 intervals.forEach { interval ->
                     IntervalRow(
                         interval = interval,
+                        active = nowMinute in interval,
                         onClick = { editing = EditState(interval, interval.startMinute, interval.endMinute) },
                         onDelete = {
                             save("Удалить интервал $interval?", { ScheduleEditor.remove(it, selectedDay, interval) })
@@ -179,11 +243,12 @@ fun ScheduleScreen(modifier: Modifier = Modifier) {
         }
 
         Button(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().height(56.dp),
+            shape = RoundedCornerShape(18.dp),
             onClick = {
                 val suggestion = ScheduleEditor.suggestNew(intervals)
                 if (suggestion == null) {
-                    Toast.makeText(context, "$dayName занят до полуночи — измените существующий интервал", Toast.LENGTH_LONG).show()
+                    Toast.makeText(context, "$dayName занят до полуночи — измени существующий интервал", Toast.LENGTH_LONG).show()
                 } else {
                     editing = EditState(old = null, start = suggestion.first, end = suggestion.second)
                 }
@@ -191,21 +256,8 @@ fun ScheduleScreen(modifier: Modifier = Modifier) {
         ) {
             Icon(Icons.Filled.Add, contentDescription = null)
             Spacer(Modifier.size(8.dp))
-            Text("Интервал")
+            Text("Интервал", style = MaterialTheme.typography.labelLarge)
         }
-
-        OutlinedButton(
-            modifier = Modifier.fillMaxWidth(),
-            enabled = intervals.isNotEmpty(),
-            onClick = {
-                val overwrite = ScheduleEditor.weekdaysToOverwrite(settings, selectedDay)
-                if (overwrite.isEmpty()) {
-                    save("Изменить расписание на сегодня?", { ScheduleEditor.copyToWeekdays(it, selectedDay) }, copied)
-                } else {
-                    confirmCopy = overwrite
-                }
-            },
-        ) { Text("Копировать на будни (Пн–Пт)") }
     }
 
     editing?.let { state ->
@@ -225,7 +277,8 @@ fun ScheduleScreen(modifier: Modifier = Modifier) {
     confirmCopy?.let { days ->
         AlertDialog(
             onDismissRequest = { confirmCopy = null },
-            title = { Text("Копировать на будни?") },
+            containerColor = Surface1,
+            title = { Text("Копировать на будни?", style = MaterialTheme.typography.titleLarge) },
             text = {
                 Text(
                     "Расписание на " + days.joinToString(", ") { ScheduleEditor.fullName(it).lowercase() } +
@@ -255,88 +308,156 @@ fun ScheduleScreen(modifier: Modifier = Modifier) {
     }
 }
 
-/** «Сейчас: блокировка до 14:00» или «свободное время». */
+/** «блокировка до 14:00» (терракота) или «свободно · следующая в 16:00» (бирюза) — только для сегодня. */
 @Composable
 private fun StatusLine(settings: Settings, now: ZonedDateTime) {
     val (text, color) = when (val status = BlockRules.status(settings, now)) {
-        is BlockStatus.Blocked -> "Сейчас: блокировка до ${dayTime(status.until, now)}" to Accent
-        is BlockStatus.Free -> ("Сейчас: свободное время" +
-            (status.nextBlockAt?.let { " · следующая блокировка ${dayTime(it, now)}" } ?: "")) to Calm
+        is BlockStatus.Blocked -> "сейчас блокировка до ${dayTime(status.until, now)}" to Accent
+        is BlockStatus.Free -> ("сегодня · сейчас свободно" +
+            (status.nextBlockAt?.let { " · следующая ${dayTime(it, now)}" } ?: "")) to Calm
     }
-    Text(text = text, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold, color = color)
-    if (settings.blockedPackages.isEmpty()) {
-        Text(
-            text = "Приложения для блокировки не выбраны — отметьте их на вкладке «Приложения»",
-            style = MaterialTheme.typography.bodyMedium,
-            color = Accent,
-        )
-    }
+    Text(text = text, style = MaterialTheme.typography.bodySmall, color = color)
 }
 
-/** Кнопки Пн…Вс; точка под днём — в этот день есть расписание. */
+/**
+ * Дни недели — одна строка-«пилюля» (редизайн R3): выбранный день светлый,
+ * точка под буквами — в этот день есть расписание.
+ */
 @Composable
-private fun DayRow(selected: DayOfWeek, settings: Settings, onSelect: (DayOfWeek) -> Unit) {
-    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+private fun DaySegment(selected: DayOfWeek, settings: Settings, onSelect: (DayOfWeek) -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(22.dp))
+            .background(Surface1)
+            .border(1.dp, Line, RoundedCornerShape(22.dp))
+            .padding(4.dp),
+        horizontalArrangement = Arrangement.spacedBy(2.dp),
+    ) {
         DayOfWeek.values().forEach { day ->
             val isSelected = day == selected
+            val weekend = day == DayOfWeek.SATURDAY || day == DayOfWeek.SUNDAY
+            val hasSchedule = settings.intervalsOn(day).isNotEmpty()
             Column(
-                modifier = Modifier.weight(1f),
+                modifier = Modifier
+                    .weight(1f)
+                    .height(48.dp)
+                    .clip(RoundedCornerShape(18.dp))
+                    .background(if (isSelected) TextPrimary else Color.Transparent)
+                    .clickable { onSelect(day) },
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(6.dp),
+                verticalArrangement = Arrangement.Center,
             ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(44.dp)
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant)
-                        .clickable { onSelect(day) },
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Text(
-                        text = ScheduleEditor.shortName(day),
-                        style = MaterialTheme.typography.labelLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface,
-                    )
-                }
+                Text(
+                    text = ScheduleEditor.shortName(day),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = when {
+                        isSelected -> Night0
+                        weekend -> TextMuted
+                        else -> TextPrimary
+                    },
+                )
                 Box(
                     Modifier
-                        .size(6.dp)
+                        .padding(top = 3.dp)
+                        .size(4.dp)
                         .clip(CircleShape)
-                        .background(if (settings.intervalsOn(day).isNotEmpty()) Accent else Color.Transparent)
+                        .background(
+                            when {
+                                !hasSchedule -> Color.Transparent
+                                isSelected -> Night0
+                                else -> Accent
+                            }
+                        )
                 )
             }
         }
     }
 }
 
+/**
+ * Полоса суток 0–24 ч (редизайн R3): интервалы — терракотовыми отрезками,
+ * текущий момент (для сегодня) — тонкой светлой меткой. Те же данные, но день виден целиком.
+ */
 @Composable
-private fun IntervalRow(interval: TimeInterval, onClick: () -> Unit, onDelete: () -> Unit) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
-            .background(MaterialTheme.colorScheme.primaryContainer)
-            .clickable(onClick = onClick)
-            .padding(start = 16.dp, end = 4.dp, top = 4.dp, bottom = 4.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        Icon(Icons.Filled.Lock, contentDescription = null, tint = Accent)
-        Text(
-            text = interval.toString(),
-            modifier = Modifier.weight(1f),
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold,
-        )
-        IconButton(onClick = onDelete) {
-            Icon(Icons.Filled.Delete, contentDescription = "Удалить интервал $interval")
+private fun DayBar(intervals: List<TimeInterval>, nowMinute: Int?) {
+    val day = TimeInterval.MINUTES_IN_DAY.toFloat()
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Canvas(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(24.dp)
+                .semantics {
+                    contentDescription = if (intervals.isEmpty()) "Полоса суток: блокировки нет"
+                    else "Полоса суток: " + intervals.joinToString(", ")
+                },
+        ) {
+            val barH = 12.dp.toPx()
+            val top = (size.height - barH) / 2
+            val r = CornerRadius(barH / 2)
+            drawRoundRect(Surface2, topLeft = Offset(0f, top), size = Size(size.width, barH), cornerRadius = r)
+            intervals.forEach { iv ->
+                val x0 = size.width * iv.startMinute / day
+                val x1 = size.width * iv.endMinute / day
+                val done = nowMinute != null && nowMinute >= iv.endMinute
+                drawRoundRect(
+                    color = if (done) Accent.copy(alpha = 0.45f) else Accent,
+                    topLeft = Offset(x0, top),
+                    size = Size((x1 - x0).coerceAtLeast(barH / 2), barH),
+                    cornerRadius = r,
+                )
+            }
+            if (nowMinute != null) {
+                val x = size.width * nowMinute / day
+                drawRoundRect(
+                    color = TextPrimary,
+                    topLeft = Offset(x - 1.dp.toPx(), 0f),
+                    size = Size(2.dp.toPx(), size.height),
+                    cornerRadius = CornerRadius(1.dp.toPx()),
+                )
+            }
+        }
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            listOf("0", "6", "12", "18", "24").forEach {
+                Text(it, style = MaterialTheme.typography.labelSmall.copy(fontFeatureSettings = TABULAR), color = TextMuted)
+            }
         }
     }
 }
 
-/** Перерыв — пунктирная рамка: в это время всё открыто. */
+/** Интервал: замок, время крупно, длительность, удалить. Идущий сейчас — с терракотовым замком. */
+@Composable
+private fun IntervalRow(interval: TimeInterval, active: Boolean, onClick: () -> Unit, onDelete: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(CardShape)
+            .background(Surface1)
+            .border(1.dp, if (active) Accent.copy(alpha = 0.6f) else Line, CardShape)
+            .clickable(onClick = onClick)
+            .padding(start = 16.dp, end = 4.dp, top = 8.dp, bottom = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Icon(Icons.Outlined.Lock, contentDescription = null, tint = if (active) Accent else TextMuted, modifier = Modifier.size(20.dp))
+        Text(
+            text = "${TimeInterval.hhmm(interval.startMinute)} — ${TimeInterval.hhmm(interval.endMinute)}",
+            modifier = Modifier.weight(1f),
+            style = MaterialTheme.typography.headlineSmall.copy(fontSize = 20.sp),
+            maxLines = 1,
+        )
+        Text(
+            TimerRules.durationText(interval.endMinute - interval.startMinute),
+            style = MaterialTheme.typography.bodySmall,
+            color = TextMuted,
+        )
+        IconButton(onClick = onDelete) {
+            Icon(Icons.Outlined.Delete, contentDescription = "Удалить интервал $interval", tint = TextMuted)
+        }
+    }
+}
+
+/** Перерыв — тонкая пунктирная строка между интервалами: в это время всё открыто. */
 @Composable
 private fun BreakRow(gap: TimeInterval) {
     Box(
@@ -344,20 +465,20 @@ private fun BreakRow(gap: TimeInterval) {
             .fillMaxWidth()
             .drawBehind {
                 drawRoundRect(
-                    color = Calm,
+                    color = Line,
                     cornerRadius = CornerRadius(16.dp.toPx()),
                     style = Stroke(
-                        width = 1.5.dp.toPx(),
-                        pathEffect = PathEffect.dashPathEffect(floatArrayOf(10.dp.toPx(), 6.dp.toPx())),
+                        width = 1.dp.toPx(),
+                        pathEffect = PathEffect.dashPathEffect(floatArrayOf(8.dp.toPx(), 6.dp.toPx())),
                     ),
                 )
             }
-            .padding(horizontal = 16.dp, vertical = 12.dp),
+            .padding(horizontal = 16.dp, vertical = 10.dp),
     ) {
         Text(
             text = "$gap · перерыв, всё открыто",
-            style = MaterialTheme.typography.bodyLarge,
-            color = Calm,
+            style = MaterialTheme.typography.bodySmall,
+            color = TextMuted,
         )
     }
 }
@@ -395,7 +516,9 @@ private fun IntervalDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(if (state.old == null) "Новый интервал" else "Интервал") },
+        containerColor = Surface1,
+        shape = RoundedCornerShape(28.dp),
+        title = { Text(if (state.old == null) "Новый интервал" else "Интервал", style = MaterialTheme.typography.titleLarge) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -438,7 +561,7 @@ private fun IntervalDialog(
                     is IntervalCheck.Error -> Text(
                         text = check.message,
                         style = MaterialTheme.typography.bodyMedium,
-                        color = Accent,
+                        color = Warn,
                     )
                 }
             }
@@ -468,7 +591,8 @@ private fun TimeField(
         modifier = modifier,
         label = { Text(label) },
         singleLine = true,
-        textStyle = MaterialTheme.typography.titleLarge,
+        textStyle = MaterialTheme.typography.headlineSmall,
+        shape = RoundedCornerShape(16.dp),
         visualTransformation = ColonTransformation,
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = imeAction),
         keyboardActions = KeyboardActions(onNext = { onIme() }, onDone = { onIme() }),

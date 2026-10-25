@@ -7,6 +7,37 @@ import android.os.Build
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
+import ru.shashkov.antioblomov.ui.components.AppCard
+import ru.shashkov.antioblomov.ui.theme.BigNumber
+import ru.shashkov.antioblomov.ui.theme.Line
+import ru.shashkov.antioblomov.ui.theme.Overline
+import ru.shashkov.antioblomov.ui.theme.Surface2
+import ru.shashkov.antioblomov.ui.theme.TextMuted
+import ru.shashkov.antioblomov.ui.theme.Warn
+import kotlin.math.cos
+import kotlin.math.sin
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -107,34 +138,54 @@ fun TimerScreen(modifier: Modifier = Modifier) {
     val remaining = TimerRules.remainingMillis(settings, now)
     val endsAt = settings.timerEndsAt?.let { Instant.ofEpochMilli(it).atZone(now.zone) }
 
+    // Сколько осталось от всего срока таймера — дуга циферблата убывает
+    val fraction = if (remaining != null && endsAt != null) {
+        val start = settings.timerStartedAt ?: (settings.timerEndsAt!! - remaining)
+        val total = (settings.timerEndsAt!! - start).coerceAtLeast(1L)
+        (remaining.toFloat() / total).coerceIn(0f, 1f)
+    } else null
+
     Column(
         modifier = modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .padding(horizontal = 20.dp, vertical = 24.dp),
+            .padding(horizontal = 20.dp)
+            .padding(top = 24.dp, bottom = 24.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        Text(text = "Таймер", style = MaterialTheme.typography.headlineMedium)
-        Text(
-            text = "Разовая блокировка выбранных приложений. Действует поверх расписания и не меняет его.",
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
+        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Text(text = "Таймер", style = MaterialTheme.typography.headlineMedium)
+            Text(
+                text = "Разовая блокировка выбранных приложений. Действует поверх расписания и не меняет его.",
+                style = MaterialTheme.typography.bodySmall,
+                color = TextMuted,
+            )
+        }
         if (settings.blockedPackages.isEmpty()) {
             Text(
-                text = "Приложения для блокировки не выбраны — отметьте их на вкладке «Приложения»",
-                style = MaterialTheme.typography.bodyMedium,
-                color = Accent,
+                text = "Приложения для блокировки не выбраны — отметь их на вкладке «Приложения»",
+                style = MaterialTheme.typography.bodySmall,
+                color = Warn,
             )
         }
 
+        TimerDial(
+            fraction = fraction,
+            countdown = remaining?.let(TimerRules::countdown),
+            until = endsAt?.let { "до ${TimeText.at(it, now)}" },
+        )
+
         if (remaining != null && endsAt != null) {
-            Countdown(remaining = remaining, until = TimeText.at(endsAt, now))
-            Button(modifier = Modifier.fillMaxWidth().height(56.dp), onClick = { dialog = TimerDialog.EXTEND }) {
-                Text("Продлить", fontSize = 17.sp)
-            }
-            OutlinedButton(
+            Button(
                 modifier = Modifier.fillMaxWidth().height(56.dp),
+                shape = RoundedCornerShape(18.dp),
+                onClick = { dialog = TimerDialog.EXTEND },
+            ) { Text("Продлить", style = MaterialTheme.typography.labelLarge) }
+            OutlinedButton(
+                modifier = Modifier.fillMaxWidth().height(48.dp),
+                shape = RoundedCornerShape(18.dp),
+                border = BorderStroke(1.dp, Line),
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = TextPrimary),
                 onClick = {
                     val before = store.read()
                     if (ChangeGuard.needsWait(before, TimerRules.stop(before), ZonedDateTime.now())) {
@@ -143,18 +194,19 @@ fun TimerScreen(modifier: Modifier = Modifier) {
                         commit { TimerRules.stop(it) }
                     }
                 },
-            ) { Text("Остановить", fontSize = 17.sp) }
+            ) { Text("Остановить · через 15 с", style = MaterialTheme.typography.bodyMedium) }
         } else {
-            Text("На сколько заблокировать?", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
+            Text("НА СКОЛЬКО", style = Overline, color = TextMuted)
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
                 TimerRules.PRESETS_MINUTES.forEach { minutes ->
-                    Button(modifier = Modifier.weight(1f).height(64.dp), onClick = { start(minutes) }) {
-                        Text(TimerRules.durationText(minutes), fontSize = 20.sp, fontWeight = FontWeight.Bold)
-                    }
+                    Chip(
+                        text = TimerRules.durationText(minutes),
+                        strong = true,
+                        modifier = Modifier.weight(1f),
+                        onClick = { start(minutes) },
+                    )
                 }
-            }
-            OutlinedButton(modifier = Modifier.fillMaxWidth().height(56.dp), onClick = { dialog = TimerDialog.CUSTOM }) {
-                Text("Своё время", fontSize = 17.sp)
+                Chip(text = "Своё", strong = false, modifier = Modifier.weight(1.3f), onClick = { dialog = TimerDialog.CUSTOM })
             }
         }
 
@@ -213,37 +265,109 @@ fun TimerScreen(modifier: Modifier = Modifier) {
     }
 }
 
-/** Крупный обратный отсчёт. */
+/**
+ * Циферблат таймера (редизайн R3): пока таймер идёт, терракотовая дуга убывает,
+ * в центре крупно отсчёт и «до 18:30»; не идёт — пустое кольцо.
+ *
+ * @param fraction какая часть срока осталась, 0..1; null — таймер не идёт
+ */
 @Composable
-private fun Countdown(remaining: Long, until: String) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = Surface1, contentColor = TextPrimary),
+private fun TimerDial(fraction: Float?, countdown: String?, until: String?) {
+    val running = fraction != null
+    // Дуга меняется раз в секунду — плавно, без рывков
+    val sweep by animateFloatAsState(fraction ?: 0f, tween(1000, easing = LinearEasing), label = "dial")
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(320.dp)
+            .clearAndSetSemantics {
+                contentDescription = if (running) "Таймер: осталось $countdown, $until" else "Таймер не запущен"
+            },
+        contentAlignment = Alignment.Center,
     ) {
-        Column(
-            modifier = Modifier.fillMaxWidth().padding(vertical = 28.dp, horizontal = 20.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            Text("Блокировка по таймеру", style = MaterialTheme.typography.titleMedium, color = TextPrimary.copy(alpha = 0.75f))
-            Text(
-                text = TimerRules.countdown(remaining),
-                fontSize = 56.sp,
-                fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Center,
-            )
-            Text("до $until", style = MaterialTheme.typography.titleMedium, color = TextPrimary.copy(alpha = 0.75f))
+        if (running) {
+            Canvas(Modifier.size(350.dp)) {
+                drawCircle(
+                    brush = Brush.radialGradient(
+                        0f to Accent.copy(alpha = 0.20f),
+                        0.45f to Accent.copy(alpha = 0.05f),
+                        0.7f to Color.Transparent,
+                        center = center,
+                        radius = size.minDimension / 2,
+                    ),
+                )
+            }
         }
+        Canvas(Modifier.size(286.dp)) {
+            val stroke = 8.dp.toPx()
+            val radius = (size.minDimension - stroke) / 2
+            drawCircle(Surface2, radius = radius, style = Stroke(stroke))
+            // Четыре метки по краю — как на циферблате
+            val tick = 8.dp.toPx()
+            for (i in 0 until 4) {
+                val angle = Math.toRadians(i * 90.0 - 90.0)
+                val outer = size.minDimension / 2
+                val inner = outer - tick
+                drawLine(
+                    color = Line,
+                    start = Offset(center.x + (inner * cos(angle)).toFloat(), center.y + (inner * sin(angle)).toFloat()),
+                    end = Offset(center.x + (outer * cos(angle)).toFloat(), center.y + (outer * sin(angle)).toFloat()),
+                    strokeWidth = 2.dp.toPx(),
+                    cap = StrokeCap.Round,
+                )
+            }
+            if (running) {
+                drawArc(
+                    color = Accent,
+                    startAngle = -90f,
+                    sweepAngle = 360f * sweep,
+                    useCenter = false,
+                    topLeft = Offset(stroke / 2, stroke / 2),
+                    size = Size(size.width - stroke, size.height - stroke),
+                    style = Stroke(stroke, cap = StrokeCap.Round),
+                )
+            }
+        }
+        Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            if (running) {
+                Text("ПО ТАЙМЕРУ", style = Overline, color = Accent)
+                Text(countdown.orEmpty(), style = BigNumber.copy(fontSize = 44.sp, lineHeight = 48.sp))
+                Text(until.orEmpty(), style = MaterialTheme.typography.bodyMedium, color = TextMuted)
+            } else {
+                Text("НЕ ЗАПУЩЕН", style = Overline, color = TextMuted)
+                Text("выбери ниже, на сколько", style = MaterialTheme.typography.bodySmall, color = TextMuted)
+            }
+        }
+    }
+}
+
+/** Чип выбора: 1 ч · 2 ч · 3 ч (крупно, на поверхности) и «Своё» (тише, только рамка). */
+@Composable
+private fun Chip(text: String, strong: Boolean, modifier: Modifier, onClick: () -> Unit) {
+    Box(
+        modifier = modifier
+            .height(52.dp)
+            .clip(RoundedCornerShape(26.dp))
+            .background(if (strong) Surface1 else Color.Transparent)
+            .border(1.dp, Line, RoundedCornerShape(26.dp))
+            .clickable(role = Role.Button, onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            text,
+            style = if (strong) MaterialTheme.typography.headlineSmall.copy(fontSize = 16.sp) else MaterialTheme.typography.bodyMedium,
+            color = if (strong) TextPrimary else TextMuted,
+        )
     }
 }
 
 @Composable
 private fun NotificationsOff(onEnable: () -> Unit) {
-    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+    AppCard {
         Text(
             text = "Уведомление с обратным отсчётом выключено — таймер работает и без него.",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            style = MaterialTheme.typography.bodySmall,
+            color = TextMuted,
         )
         TextButton(onClick = onEnable) { Text("Включить уведомления") }
     }
