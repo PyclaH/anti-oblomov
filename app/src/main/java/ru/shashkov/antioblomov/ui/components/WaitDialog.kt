@@ -1,5 +1,33 @@
 package ru.shashkov.antioblomov.ui.components
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
+import ru.shashkov.antioblomov.ui.theme.Accent
+import ru.shashkov.antioblomov.ui.theme.BigNumber
+import ru.shashkov.antioblomov.ui.theme.Calm
+import ru.shashkov.antioblomov.ui.theme.Overline
+import ru.shashkov.antioblomov.ui.theme.PtSerif
+import ru.shashkov.antioblomov.ui.theme.TABULAR
 import android.graphics.drawable.ColorDrawable
 import android.os.Build
 import android.view.Gravity
@@ -18,7 +46,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
-import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -30,8 +57,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -48,7 +73,7 @@ import ru.shashkov.antioblomov.ui.theme.TextPrimary
 /**
  * Пауза перед изменением настроек во время блокировки (ChangeGuard):
  * во весь экран — цитата на фоне-картинке, как на экране блокировки,
- * и обратный отсчёт. «Подтвердить» становится доступна через 15 секунд.
+ * и кольцо обратного отсчёта (редизайн R5: PT Serif, Onest, «стеклянная» кнопка). «Подтвердить» становится доступна через 15 секунд.
  * «Отмена» и кнопка «Назад» — ничего не меняют.
  */
 @Composable
@@ -88,27 +113,44 @@ fun WaitDialog(title: String, onConfirm: () -> Unit, onDismiss: () -> Unit) {
                 modifier = Modifier.fillMaxSize(),
                 factory = { ctx -> SceneBackgroundView(ctx, quote.scene, seed = quote.text.hashCode()) },
             )
+            // Затемнение, как на экране блокировки
+            Box(
+                Modifier
+                    .fillMaxSize()
+                    .background(
+                        Brush.verticalGradient(
+                            0f to Color(0x26080A10),
+                            0.45f to Color(0x8C080A10),
+                            1f to Color(0xBF080A10),
+                        )
+                    )
+            )
             Column(
                 modifier = Modifier
                     .fillMaxSize()
                     .safeDrawingPadding()
                     .padding(horizontal = 28.dp, vertical = 24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(12.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
                 Text(
+                    text = "ПАУЗА · ИДЁТ БЛОКИРОВКА",
+                    modifier = Modifier.padding(top = 24.dp),
+                    style = Overline,
+                    color = Accent,
+                )
+                Text(
                     text = title,
-                    modifier = Modifier.fillMaxWidth().padding(top = 24.dp),
+                    modifier = Modifier.fillMaxWidth(),
+                    style = MaterialTheme.typography.titleLarge,
                     color = TextPrimary,
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold,
                     textAlign = TextAlign.Center,
                 )
                 Text(
-                    text = "Сейчас идёт блокировка. Подумай ${ChangeGuard.WAIT_SECONDS} секунд — точно нужно?",
+                    text = "Подумай ${ChangeGuard.WAIT_SECONDS} секунд — точно нужно?",
                     modifier = Modifier.fillMaxWidth(),
+                    style = MaterialTheme.typography.bodyMedium,
                     color = TextPrimary.copy(alpha = 0.7f),
-                    fontSize = 16.sp,
                     textAlign = TextAlign.Center,
                 )
 
@@ -118,40 +160,101 @@ fun WaitDialog(title: String, onConfirm: () -> Unit, onDismiss: () -> Unit) {
                     text = "«${quote.text}»",
                     modifier = Modifier.fillMaxWidth(),
                     color = TextPrimary,
-                    fontFamily = FontFamily.Serif,
+                    fontFamily = PtSerif,
                     fontSize = quoteSize(quote.text),
                     lineHeight = quoteSize(quote.text) * 1.2f,
                     textAlign = TextAlign.Center,
                 )
                 Text(
                     text = quote.source,
-                    modifier = Modifier.fillMaxWidth(),
-                    color = TextPrimary.copy(alpha = 0.7f),
-                    fontSize = 15.sp,
+                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = TextPrimary.copy(alpha = 0.65f),
                     textAlign = TextAlign.Center,
                 )
 
                 Spacer(Modifier.weight(1f))
 
-                Button(
-                    modifier = Modifier.fillMaxWidth(),
+                CountdownRing(left = left, total = ChangeGuard.WAIT_SECONDS)
+
+                Spacer(Modifier.height(8.dp))
+
+                OutlinedButton(
+                    modifier = Modifier.fillMaxWidth().height(56.dp),
                     onClick = onDismiss,
-                    colors = ButtonDefaults.buttonColors(containerColor = TextPrimary, contentColor = Night0),
+                    shape = RoundedCornerShape(18.dp),
+                    border = BorderStroke(1.dp, TextPrimary.copy(alpha = 0.35f)),
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        containerColor = TextPrimary.copy(alpha = 0.08f),
+                        contentColor = TextPrimary,
+                    ),
                 ) {
-                    Text("Не менять", fontSize = 17.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(vertical = 6.dp))
+                    Text("Не менять", style = MaterialTheme.typography.titleMedium)
                 }
                 TextButton(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().height(48.dp),
                     enabled = left == 0,
                     onClick = onConfirm,
                     colors = ButtonDefaults.textButtonColors(
                         contentColor = TextPrimary,
-                        disabledContentColor = TextPrimary.copy(alpha = 0.5f),
+                        disabledContentColor = TextPrimary.copy(alpha = 0.45f),
                     ),
                 ) {
-                    Text(if (left > 0) "Подтвердить через $left с" else "Подтвердить", fontSize = 16.sp)
+                    Text(
+                        if (left > 0) "Подтвердить через $left с" else "Подтвердить",
+                        style = MaterialTheme.typography.bodyLarge.copy(fontFeatureSettings = TABULAR),
+                    )
                 }
             }
+        }
+    }
+}
+
+/**
+ * Кольцо обратного отсчёта (R5): дуга плавно убывает за 15 секунд, в центре — секунды.
+ * Когда время вышло — вместо цифры галочка, кольцо бирюзовое: «Подтвердить» доступна.
+ */
+@Composable
+private fun CountdownRing(left: Int, total: Int) {
+    // Дуга убывает плавно и непрерывно — одна анимация от полной до нуля за все 15 секунд
+    val fraction = remember { Animatable(1f) }
+    LaunchedEffect(Unit) {
+        fraction.animateTo(0f, tween(durationMillis = total * 1_000, easing = LinearEasing))
+    }
+    val done = left == 0
+    val tone by animateColorAsState(if (done) Calm else Accent, tween(300), label = "wait-tone")
+
+    Box(
+        modifier = Modifier
+            .size(76.dp)
+            .clearAndSetSemantics {
+                contentDescription = if (done) "Можно подтвердить" else "Осталось $left секунд"
+            },
+        contentAlignment = Alignment.Center,
+    ) {
+        Canvas(Modifier.fillMaxSize()) {
+            val stroke = 4.dp.toPx()
+            val inset = stroke / 2
+            val arc = Size(size.width - stroke, size.height - stroke)
+            drawCircle(color = TextPrimary.copy(alpha = 0.15f), radius = (size.minDimension - stroke) / 2, style = Stroke(stroke))
+            drawArc(
+                color = tone,
+                startAngle = -90f,
+                sweepAngle = if (done) 360f else 360f * fraction.value,
+                useCenter = false,
+                topLeft = Offset(inset, inset),
+                size = arc,
+                style = Stroke(stroke, cap = StrokeCap.Round),
+            )
+        }
+        if (done) {
+            Icon(Icons.Filled.Check, contentDescription = null, tint = Calm, modifier = Modifier.size(30.dp))
+        } else {
+            Text(
+                text = left.toString(),
+                style = BigNumber.copy(fontSize = 26.sp, lineHeight = 28.sp),
+                color = TextPrimary,
+            )
         }
     }
 }

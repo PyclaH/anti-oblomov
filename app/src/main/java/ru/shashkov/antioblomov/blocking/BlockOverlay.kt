@@ -30,6 +30,10 @@ import kotlin.math.roundToInt
  *
  * Интерфейс собран из обычных Android View, а не Compose: Compose внутри службы
  * требует лишней обвязки, а экран простой.
+ *
+ * Редизайн R5: поверх картинки — затемнение сверху вниз, логотип меньше,
+ * цитата — PT Serif, остальное — Onest, кнопка «стеклянная» (полупрозрачная с рамкой),
+ * содержимое плавно проявляется.
  */
 class BlockOverlay(
     private val service: AccessibilityService,
@@ -87,29 +91,33 @@ class BlockOverlay(
                 GradientDrawable.Orientation.TOP_BOTTOM,
                 intArrayOf(ICON_TOP, ICON_BOTTOM), // как фон иконки приложения («Тёмная терракота»)
             ).apply {
-                cornerRadius = dp(28).toFloat()
+                cornerRadius = dp(14).toFloat()
             }
             addView(
                 ImageView(ctx).apply { setImageResource(R.drawable.ic_launcher_foreground) },
-                FrameLayout.LayoutParams(dp(104), dp(104)),
+                FrameLayout.LayoutParams(dp(52), dp(52)),
             )
         }
 
-        val title = text(listOfNotNull("$appName на паузе", until).joinToString(" "), 18f, PAPER_DIM)
+        val title = text(listOfNotNull("$appName на паузе", until).joinToString(" "), 15f, PAPER_70).apply {
+            typeface = onest
+        }
 
         val quoteView = text("«${quote.text}»", quoteSize(quote.text), PAPER).apply {
-            typeface = Typeface.SERIF
-            setLineSpacing(0f, 1.15f)
+            typeface = serif
+            setLineSpacing(0f, 1.2f)
         }
-        val author = text(quote.source, 15f, PAPER_DIM)
+        val author = text(quote.source, 14f, PAPER_65).apply { typeface = onest }
 
-        val button = text("Вернуться к делу", 17f, INK).apply {
-            typeface = Typeface.DEFAULT_BOLD
+        val button = text("Вернуться к делу", 16f, PAPER).apply {
+            typeface = onestBold
             background = GradientDrawable().apply {
-                setColor(PAPER)
-                cornerRadius = dp(28).toFloat()
+                setColor(GLASS)
+                setStroke(dp(1), GLASS_LINE)
+                cornerRadius = dp(18).toFloat()
             }
-            setPadding(dp(24), dp(16), dp(24), dp(16))
+            minHeight = dp(56)
+            setPadding(dp(24), dp(14), dp(24), dp(14))
             isClickable = true
             setOnClickListener { hide() }
         }
@@ -118,13 +126,13 @@ class BlockOverlay(
             orientation = LinearLayout.VERTICAL
             gravity = Gravity.CENTER_HORIZONTAL
 
-            addView(logo, LinearLayout.LayoutParams(dp(104), dp(104)).apply { topMargin = dp(32) })
-            addView(title, fullWidth(topMargin = dp(20)))
+            addView(logo, LinearLayout.LayoutParams(dp(52), dp(52)).apply { topMargin = dp(24) })
+            addView(title, fullWidth(topMargin = dp(14)))
             addView(spacer())
             addView(quoteView, fullWidth())
-            addView(author, fullWidth(topMargin = dp(16)))
+            addView(author, fullWidth(topMargin = dp(18)))
             addView(spacer())
-            addView(button, fullWidth(bottomMargin = dp(24)))
+            addView(button, fullWidth(bottomMargin = dp(16)))
         }
 
         // Отступы = базовые поля + высота системных панелей и выреза,
@@ -143,10 +151,21 @@ class BlockOverlay(
                 SceneBackgroundView(ctx, quote.scene, seed = quote.text.hashCode()),
                 FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT),
             )
+            // Затемнение: картинку видно сверху, внизу темнее — текст и кнопка читаются на любой сцене
+            addView(
+                View(ctx).apply {
+                    background = GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM, intArrayOf(SCRIM_TOP, SCRIM_MID, SCRIM_BOTTOM))
+                },
+                FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT),
+            )
             addView(
                 content,
                 FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT),
             )
+            // Плавное появление текста и кнопки (фон — сразу, чтобы приложение под ним не мелькало)
+            content.alpha = 0f
+            content.translationY = dp(12).toFloat()
+            content.animate().alpha(1f).translationY(0f).setDuration(320).start()
         }
     }
 
@@ -166,10 +185,17 @@ class BlockOverlay(
 
     /** Длинные цитаты — мельче, чтобы помещались. */
     private fun quoteSize(text: String): Float = when {
-        text.length <= 40 -> 32f
-        text.length <= 90 -> 26f
+        text.length <= 40 -> 34f
+        text.length <= 90 -> 27f
         else -> 22f
     }
+
+    // Шрифты из res/font (те же, что в приложении); если не загрузились — системные
+    private val serif: Typeface by lazy { font(R.font.pt_serif_regular) ?: Typeface.SERIF }
+    private val onest: Typeface by lazy { font(R.font.onest_regular) ?: Typeface.DEFAULT }
+    private val onestBold: Typeface by lazy { font(R.font.onest_semibold) ?: Typeface.DEFAULT_BOLD }
+
+    private fun font(id: Int): Typeface? = runCatching { service.resources.getFont(id) }.getOrNull()
 
     private fun text(value: String, sizeSp: Float, color: Int) = TextView(service).apply {
         text = value
@@ -194,9 +220,15 @@ class BlockOverlay(
 
     private companion object {
         // Цвета из ui/theme/Color.kt (здесь нужны в формате Android View)
-        val INK = 0xFF1F2A37.toInt()
-        val PAPER = 0xFFFAF7F0.toInt()
-        val PAPER_DIM = 0x99FAF7F0.toInt()
+        val INK = 0xFF0B0D12.toInt() // Night0 — пока картинка не нарисовалась
+        val PAPER = 0xFFF2EFE8.toInt() // TextPrimary
+        val PAPER_70 = 0xB3F2EFE8.toInt()
+        val PAPER_65 = 0xA6F2EFE8.toInt()
+        val GLASS = 0x14F2EFE8.toInt() // кнопка: 8 % светлого
+        val GLASS_LINE = 0x59F2EFE8.toInt() // рамка кнопки: 35 %
+        val SCRIM_TOP = 0x26080A10
+        val SCRIM_MID = 0x8C080A10.toInt()
+        val SCRIM_BOTTOM = 0xBF080A10.toInt()
         val ICON_TOP = 0xFF6E3019.toInt()
         val ICON_BOTTOM = 0xFF34150A.toInt()
     }
