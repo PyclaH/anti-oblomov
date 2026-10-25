@@ -3,6 +3,7 @@ package ru.shashkov.antioblomov.ui
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.padding
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -10,6 +11,8 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -45,6 +48,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -163,13 +167,34 @@ private fun BottomCapsule(current: Tab, onSelect: (Tab) -> Unit) {
             Tab.entries.forEach { tab ->
                 val selected = tab == current
                 val title = stringResource(tab.title)
+                // Подсветка нажатия — та же подложка, что у выбранной вкладки, во всю кнопку.
+                // Стандартная «волна» не годится: при нажатии вкладка расширяется под подпись,
+                // а волна остаётся размером со старую кнопку — края не подсвечивались.
+                val interaction = remember { MutableInteractionSource() }
+                val pressed by interaction.collectIsPressedAsState()
+                val fill by animateColorAsState(
+                    targetValue = when {
+                        selected -> Surface2
+                        pressed -> Surface2.copy(alpha = 0.7f)
+                        else -> Color.Transparent
+                    },
+                    animationSpec = tween(150),
+                    label = "tab-fill",
+                )
                 Row(
                     modifier = Modifier
-                        .clip(RoundedCornerShape(22.dp))
-                        .selectable(selected = selected, role = Role.Tab, onClick = { onSelect(tab) })
-                        .background(if (selected) Surface2 else Color.Transparent)
                         .animateContentSize(tween(200))
-                        .padding(horizontal = if (selected) 14.dp else 12.dp, vertical = 10.dp)
+                        .height(48.dp)
+                        .clip(RoundedCornerShape(24.dp))
+                        .background(fill)
+                        .selectable(
+                            selected = selected,
+                            role = Role.Tab,
+                            interactionSource = interaction,
+                            indication = null,
+                            onClick = { onSelect(tab) },
+                        )
+                        .padding(horizontal = if (selected) 16.dp else 14.dp)
                         .semantics { contentDescription = title },
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(6.dp),
