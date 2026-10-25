@@ -24,29 +24,23 @@ import ru.shashkov.antioblomov.blocking.openAccessibilitySettings
 import ru.shashkov.antioblomov.blocking.openAppSettings
 import ru.shashkov.antioblomov.ui.theme.AntiOblomovTheme
 import ru.shashkov.antioblomov.ui.theme.Calm
+import ru.shashkov.antioblomov.ui.theme.Warn
 import ru.shashkov.antioblomov.ui.theme.Accent
 
 /**
- * Карточка на главной: работает ли служба блокировки и как её включить.
+ * Часть блока «Система» на главной (редизайн R2): работает ли служба блокировки и как её включить.
  * Остальные разрешения — в мастере настройки и карточке «Настройка телефона» (SetupCard).
  */
 @Composable
 fun ServiceStatusCard(state: ServiceState, modifier: Modifier = Modifier) {
     val context = LocalContext.current
     val autostart = SetupGuide.autostart(phoneBrand)
-    Card(
-        modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-    ) {
+    run {
         Column(
-            modifier = Modifier.padding(20.dp),
+            modifier = modifier.fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            Text(
-                text = "Служба блокировки",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-            )
+            Text(text = "Служба блокировки", style = MaterialTheme.typography.titleSmall)
             when (state) {
                 ServiceState.RUNNING -> {
                     Status("Служба работает", ok = true)
@@ -97,7 +91,7 @@ private fun Status(text: String, ok: Boolean) = Text(
     text = text,
     style = MaterialTheme.typography.bodyLarge,
     fontWeight = FontWeight.Bold,
-    color = if (ok) Calm else Accent,
+    color = if (ok) Calm else Warn,
 )
 
 @Composable

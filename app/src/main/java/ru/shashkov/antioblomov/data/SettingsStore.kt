@@ -68,11 +68,12 @@ class SettingsStore(context: Context) {
         /** По умолчанию ничего не выбрано — пользователь сам отмечает приложения (решение от 25.10.2026). */
         val DEFAULT = Settings()
 
-        // Формат: {"blocked":[...], "timerEndsAt":123, "schedule":{"MONDAY":[[600,840],[900,1200]]}}
+        // Формат: {"blocked":[...], "timerEndsAt":123, "timerStartedAt":100, "schedule":{"MONDAY":[[600,840],[900,1200]]}}
 
         fun toJson(s: Settings): JSONObject = JSONObject().apply {
             put("blocked", JSONArray(s.blockedPackages.sorted()))
             s.timerEndsAt?.let { put("timerEndsAt", it) }
+            s.timerStartedAt?.let { put("timerStartedAt", it) }
             put("schedule", JSONObject().apply {
                 for ((day, intervals) in s.schedule) {
                     put(day.name, JSONArray().apply {
@@ -89,6 +90,7 @@ class SettingsStore(context: Context) {
                 ?.let { arr -> (0 until arr.length()).map { arr.getString(it) }.toSet() }
                 ?: DEFAULT.blockedPackages
             val timer = if (json.has("timerEndsAt")) json.getLong("timerEndsAt") else null
+            val timerStarted = if (json.has("timerStartedAt")) json.getLong("timerStartedAt") else null
             val schedule = mutableMapOf<DayOfWeek, List<TimeInterval>>()
             json.optJSONObject("schedule")?.let { obj ->
                 for (day in DayOfWeek.values()) {
@@ -100,7 +102,7 @@ class SettingsStore(context: Context) {
                     }
                 }
             }
-            return Settings(schedule = schedule, blockedPackages = blocked, timerEndsAt = timer)
+            return Settings(schedule = schedule, blockedPackages = blocked, timerEndsAt = timer, timerStartedAt = timerStarted)
         }
     }
 }

@@ -36,11 +36,13 @@ data class TimeInterval(val startMinute: Int, val endMinute: Int) {
  * @property schedule интервалы блокировки по дням недели (перерыв — промежуток между ними)
  * @property blockedPackages приложения, которые блокируются
  * @property timerEndsAt когда закончится разовая блокировка по таймеру (мс с 1970 г.), null — таймер не запущен
+ * @property timerStartedAt когда таймер запустили (мс) — для кольца на главной (редизайн R2); продление его не меняет
  */
 data class Settings(
     val schedule: Map<DayOfWeek, List<TimeInterval>> = emptyMap(),
     val blockedPackages: Set<String> = emptySet(),
     val timerEndsAt: Long? = null,
+    val timerStartedAt: Long? = null,
 ) {
     fun intervalsOn(day: DayOfWeek): List<TimeInterval> =
         schedule[day].orEmpty().sortedBy { it.startMinute }

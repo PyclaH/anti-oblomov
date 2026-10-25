@@ -166,6 +166,12 @@ object UsageText {
     /** «Сэкономлено 40 мин» или честно «на 20 мин больше». */
     fun saved(m: Int): String = if (m >= 0) minutes(m) else "−${minutes(-m)}"
 
+    /** Для плиток: 45 → («45», «мин»), 135 → («2:15», «ч»), −20 → («20», «мин») — знак показывает подпись. */
+    fun compact(m: Int): Pair<String, String> {
+        val a = kotlin.math.abs(m)
+        return if (a < 60) a.toString() to "мин" else "%d:%02d".format(a / 60, a % 60) to "ч"
+    }
+
     /** 1 учебный день, 2 учебных дня, 5 учебных дней. */
     fun schoolDays(n: Int): String = "$n " + when {
         n % 100 in 11..14 -> "учебных дней"

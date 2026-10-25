@@ -24,6 +24,8 @@ import ru.shashkov.antioblomov.rules.SetupChecklist
 import ru.shashkov.antioblomov.rules.SetupItem
 import ru.shashkov.antioblomov.rules.SetupState
 import ru.shashkov.antioblomov.ui.theme.Calm
+import ru.shashkov.antioblomov.ui.theme.TextMuted
+import ru.shashkov.antioblomov.ui.theme.Warn
 import ru.shashkov.antioblomov.ui.theme.Accent
 
 /**
@@ -33,19 +35,17 @@ import ru.shashkov.antioblomov.ui.theme.Accent
 @Composable
 fun SetupCard(setup: SetupState, onOpenWizard: () -> Unit, modifier: Modifier = Modifier) {
     val missing = SetupChecklist.missing(setup)
-    Card(
-        modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-    ) {
-        Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Text("Настройка телефона", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+    run {
+        Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Text("Настройка телефона", style = MaterialTheme.typography.titleSmall)
             SetupChecklist.items(setup.brand).forEach { item ->
                 SetupRow(title = itemTitle(item, setup), done = SetupChecklist.isDone(item, setup))
             }
             if (missing.isNotEmpty()) {
                 Text(
                     text = "Без этих настроек блокировка может отключаться сама, а «Было / стало» — не считаться.",
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = TextMuted,
                 )
                 Button(onClick = onOpenWizard) { Text("Настроить") }
             } else {
@@ -61,7 +61,7 @@ fun SetupRow(title: String, done: Boolean) {
         Icon(
             imageVector = if (done) Icons.Filled.CheckCircle else Icons.Filled.Warning,
             contentDescription = if (done) "Сделано" else "Не сделано",
-            tint = if (done) Calm else Accent,
+            tint = if (done) Calm else Warn,
         )
         Text(text = title, style = MaterialTheme.typography.bodyLarge)
     }
