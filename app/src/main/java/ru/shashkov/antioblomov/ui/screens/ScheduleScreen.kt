@@ -1,5 +1,8 @@
 package ru.shashkov.antioblomov.ui.screens
 
+import ru.shashkov.antioblomov.ui.components.Scene
+import ru.shashkov.antioblomov.ui.components.SceneBox
+import ru.shashkov.antioblomov.ui.components.rememberSceneAnchor
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.Canvas
@@ -154,8 +157,12 @@ fun ScheduleScreen(modifier: Modifier = Modifier) {
     val intervals = settings.intervalsOn(selectedDay)
     val dayName = ScheduleEditor.fullName(selectedDay)
 
+    // Фон (R6): сетка часов, линии совпадают с полосой суток
+    val barAnchor = rememberSceneAnchor()
+
+    SceneBox(scene = Scene.HOURS, anchor = barAnchor, modifier = modifier) {
     Column(
-        modifier = modifier
+        modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 20.dp)
@@ -180,12 +187,9 @@ fun ScheduleScreen(modifier: Modifier = Modifier) {
 
         DaySegment(selected = selectedDay, settings = settings, onSelect = { selectedDay = it })
 
-        // Название дня, статус «сейчас» (для сегодня) и меню «⋯» с копированием на будни
+        // Название дня и меню «⋯» с копированием на будни (строка статуса убрана в R6 — видно по интервалам)
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Text(dayName, style = MaterialTheme.typography.titleMedium)
-                if (selectedDay == now.dayOfWeek) StatusLine(settings, now)
-            }
+            Text(dayName, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
             Box {
                 var menu by remember { mutableStateOf(false) }
                 IconButton(
@@ -216,7 +220,7 @@ fun ScheduleScreen(modifier: Modifier = Modifier) {
             }
         }
 
-        DayBar(intervals = intervals, nowMinute = if (selectedDay == now.dayOfWeek) now.hour * 60 + now.minute else null)
+        DayBar(intervals = intervals, nowMinute = if (selectedDay == now.dayOfWeek) now.hour * 60 + now.minute else null, barModifier = barAnchor.modifier)
 
         if (intervals.isEmpty()) {
             Text(
@@ -258,6 +262,7 @@ fun ScheduleScreen(modifier: Modifier = Modifier) {
             Spacer(Modifier.size(8.dp))
             Text("Интервал", style = MaterialTheme.typography.labelLarge)
         }
+    }
     }
 
     editing?.let { state ->
@@ -306,17 +311,6 @@ fun ScheduleScreen(modifier: Modifier = Modifier) {
             onDismiss = { pending = null },
         )
     }
-}
-
-/** «блокировка до 14:00» (терракота) или «свободно · следующая в 16:00» (бирюза) — только для сегодня. */
-@Composable
-private fun StatusLine(settings: Settings, now: ZonedDateTime) {
-    val (text, color) = when (val status = BlockRules.status(settings, now)) {
-        is BlockStatus.Blocked -> "сейчас блокировка до ${dayTime(status.until, now)}" to Accent
-        is BlockStatus.Free -> ("сегодня · сейчас свободно" +
-            (status.nextBlockAt?.let { " · следующая ${dayTime(it, now)}" } ?: "")) to Calm
-    }
-    Text(text = text, style = MaterialTheme.typography.bodySmall, color = color)
 }
 
 /**
@@ -380,13 +374,14 @@ private fun DaySegment(selected: DayOfWeek, settings: Settings, onSelect: (DayOf
  * текущий момент (для сегодня) — тонкой светлой меткой. Те же данные, но день виден целиком.
  */
 @Composable
-private fun DayBar(intervals: List<TimeInterval>, nowMinute: Int?) {
+private fun DayBar(intervals: List<TimeInterval>, nowMinute: Int?, barModifier: Modifier = Modifier) {
     val day = TimeInterval.MINUTES_IN_DAY.toFloat()
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Canvas(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(24.dp)
+                .then(barModifier)
                 .semantics {
                     contentDescription = if (intervals.isEmpty()) "Полоса суток: блокировки нет"
                     else "Полоса суток: " + intervals.joinToString(", ")
