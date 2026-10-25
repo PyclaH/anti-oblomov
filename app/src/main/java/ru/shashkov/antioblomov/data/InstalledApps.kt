@@ -61,6 +61,15 @@ object InstalledApps {
     )
 }
 
+/**
+ * Список приложений в памяти: второй раз вкладка «Приложения» и список статистики
+ * открываются сразу.
+ */
+object AppsCache {
+    var apps: List<InstalledApp>? = null
+    var protected: Set<String> = emptySet()
+}
+
 /** queryIntentActivities с учётом нового API на Android 13+. */
 internal fun PackageManager.queryActivities(intent: Intent): List<ResolveInfo> =
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {

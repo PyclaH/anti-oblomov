@@ -19,6 +19,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -28,7 +29,13 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import ru.shashkov.antioblomov.R
 import ru.shashkov.antioblomov.blocking.ServiceState
+import ru.shashkov.antioblomov.data.AppsCache
+import ru.shashkov.antioblomov.data.InstalledApps
+import ru.shashkov.antioblomov.data.ProtectedApps
 import ru.shashkov.antioblomov.data.SettingsStore
+import ru.shashkov.antioblomov.data.StatsChoiceStore
+import ru.shashkov.antioblomov.rules.StatsApps
+import ru.shashkov.antioblomov.ui.components.StatsAppsPicker
 import ru.shashkov.antioblomov.data.UsageCollector
 import ru.shashkov.antioblomov.data.UsageStore
 import ru.shashkov.antioblomov.rules.DayUsage
@@ -96,9 +103,29 @@ fun HomeScreen(
         }
     }
 
+    // Приложения для статистики — свой список (по умолчанию как список блокировки) или все несистемные
+    val statsStore = remember { StatsChoiceStore(context) }
+    var statsChoice by remember { mutableStateOf(statsStore.read()) }
+    var apps by remember { mutableStateOf(AppsCache.apps) }
+    var protectedApps by remember { mutableStateOf(AppsCache.protected) }
+    val iconPx = with(LocalDensity.current) { 40.dp.roundToPx() }
+    LaunchedEffect(Unit) {
+        val (loaded, prot) = withContext(Dispatchers.IO) {
+            InstalledApps.load(context, iconPx) to ProtectedApps.of(context)
+        }
+        AppsCache.apps = loaded
+        AppsCache.protected = prot
+        apps = loaded
+        protectedApps = prot
+    }
+    val nonSystem = remember(apps, protectedApps) {
+        apps.orEmpty().map { it.entry.packageName }.filterNot { it in protectedApps }.toSet()
+    }
+    val tracked = StatsApps.tracked(statsChoice, settings.blockedPackages, nonSystem)
+
     val today = now.toLocalDate()
-    val report = remember(history, todayUsage, settings.blockedPackages, notScreenTime, today) {
-        history?.let { Savings.report(it, today, todayUsage, settings.blockedPackages, notScreenTime) }
+    val report = remember(history, todayUsage, tracked, notScreenTime, today) {
+        history?.let { Savings.report(it, today, todayUsage, tracked, notScreenTime) }
     }
 
     val status = BlockRules.status(settings, now)
@@ -162,8 +189,17 @@ fun HomeScreen(
             hasAccess = setup.usageAccess,
             report = report,
             startDate = history?.startDate,
-            noAppsSelected = settings.blockedPackages.isEmpty(),
+            noAppsSelected = tracked.isEmpty(),
             onOpenAccess = { UsageCollector.openSettings(context) },
+            picker = {
+                StatsAppsPicker(
+                    apps = apps,
+                    protected = protectedApps,
+                    choice = statsChoice,
+                    tracked = tracked,
+                    onChoice = { statsChoice = it; statsStore.write(it) },
+                )
+            },
         )
 
         // Благодарность — всегда, под «Было / стало» и над службой (решение от 25.10.2026)

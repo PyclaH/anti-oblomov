@@ -44,12 +44,14 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import ru.shashkov.antioblomov.R
+import ru.shashkov.antioblomov.data.AppsCache
 import ru.shashkov.antioblomov.data.InstalledApp
 import ru.shashkov.antioblomov.data.InstalledApps
 import ru.shashkov.antioblomov.data.ProtectedApps
 import ru.shashkov.antioblomov.data.SettingsStore
 import ru.shashkov.antioblomov.rules.AppEntry
 import ru.shashkov.antioblomov.rules.AppList
+import ru.shashkov.antioblomov.ui.components.AppRow
 import ru.shashkov.antioblomov.rules.ChangeGuard
 import ru.shashkov.antioblomov.ui.components.WaitDialog
 import java.time.ZonedDateTime
@@ -228,48 +230,4 @@ private fun SectionHeader(title: String, modifier: Modifier = Modifier) {
         )
         HorizontalDivider(color = MaterialTheme.colorScheme.surfaceVariant)
     }
-}
-
-@Composable
-private fun AppRow(
-    app: InstalledApp?,
-    label: String,
-    checked: Boolean,
-    modifier: Modifier = Modifier,
-    onChange: (Boolean) -> Unit,
-) {
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .clickable { onChange(!checked) }
-            .padding(horizontal = 20.dp, vertical = 10.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(16.dp),
-    ) {
-        val icon = app?.icon
-        if (icon != null) {
-            Image(bitmap = icon, contentDescription = null, modifier = Modifier.size(40.dp))
-        } else {
-            Box(
-                Modifier
-                    .size(40.dp)
-                    .clip(RoundedCornerShape(10.dp))
-                    .background(MaterialTheme.colorScheme.surfaceVariant)
-            )
-        }
-        Text(
-            text = label,
-            modifier = Modifier.weight(1f),
-            style = MaterialTheme.typography.bodyLarge,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-        )
-        Switch(checked = checked, onCheckedChange = onChange)
-    }
-}
-
-/** Список приложений в памяти: второй раз вкладка открывается сразу. */
-private object AppsCache {
-    var apps: List<InstalledApp>? = null
-    var protected: Set<String> = emptySet()
 }

@@ -47,6 +47,7 @@ fun StatsCard(
     noAppsSelected: Boolean,
     onOpenAccess: () -> Unit,
     modifier: Modifier = Modifier,
+    picker: @Composable () -> Unit = {},
 ) {
     Card(
         modifier = modifier.fillMaxWidth(),
@@ -55,6 +56,11 @@ fun StatsCard(
     ) {
         Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text("Было / стало", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+
+            if (hasAccess) {
+                picker()
+                HorizontalDivider()
+            }
 
             when {
                 !hasAccess -> {
@@ -79,7 +85,7 @@ fun StatsCard(
 private fun Report(r: SavingsReport, startDate: LocalDate, noAppsSelected: Boolean) {
     if (noAppsSelected) {
         Text(
-            "Считаем время в приложениях из списка блокировки — отметьте их на вкладке «Приложения».",
+            "Выберите приложения для статистики выше — или включите «Активировать все».",
             style = MaterialTheme.typography.bodyMedium,
             color = Terracotta,
         )
