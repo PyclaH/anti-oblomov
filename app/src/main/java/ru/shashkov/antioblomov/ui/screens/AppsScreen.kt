@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -47,6 +48,7 @@ import ru.shashkov.antioblomov.data.InstalledApp
 import ru.shashkov.antioblomov.data.InstalledApps
 import ru.shashkov.antioblomov.data.ProtectedApps
 import ru.shashkov.antioblomov.data.SettingsStore
+import ru.shashkov.antioblomov.rules.AppEntry
 import ru.shashkov.antioblomov.rules.AppList
 import ru.shashkov.antioblomov.ui.theme.Terracotta
 import androidx.compose.ui.res.stringResource
@@ -54,8 +56,8 @@ import androidx.compose.ui.res.stringResource
 /**
  * Экран «Приложения»: какие приложения блокировать (FR-06, FR-07).
  *
- * Сверху — поиск и счётчик выбранных, ниже два раздела: «Часто отвлекают»
- * (известные соцсети, видео, игры) и «Все приложения». Звонилка, настройки,
+ * Сверху — поиск и счётчик выбранных, ниже разделы: «Заблокированные» (отмеченные),
+ * «Часто отвлекают» (известные соцсети, видео, игры) и «Все приложения». Звонилка, настройки,
  * рабочий стол и другие важные приложения не показываются — их блокировать нельзя.
  * Выбор сохраняется сразу; служба подхватывает его без перезапуска.
  */
@@ -144,7 +146,7 @@ fun AppsScreen(modifier: Modifier = Modifier) {
         }
 
         val byPackage = remember(loaded) { loaded.associateBy { it.entry.packageName } }
-        val sections = AppList.sections(loaded.map { it.entry }, protected, query)
+        val sections = AppList.sections(loaded.map { it.entry }, protected, query, blocked)
 
         if (sections.isEmpty) {
             Text(
@@ -156,30 +158,40 @@ fun AppsScreen(modifier: Modifier = Modifier) {
             return@Column
         }
 
+        // Ключ — имя пакета: при отметке строка плавно переезжает в «Заблокированные»
+        // и обратно (animateItem), а не исчезает и появляется заново.
         LazyColumn(modifier = Modifier.fillMaxSize()) {
-            if (sections.distracting.isNotEmpty()) {
-                item(key = "h-distracting") { SectionHeader("Часто отвлекают") }
-                items(sections.distracting, key = { "d-" + it.packageName }) { entry ->
-                    AppRow(byPackage[entry.packageName], entry.label, entry.packageName in blocked) {
-                        toggle(entry.packageName, it)
-                    }
-                }
-            }
-            if (sections.others.isNotEmpty()) {
-                item(key = "h-others") { SectionHeader("Все приложения") }
-                items(sections.others, key = { "o-" + it.packageName }) { entry ->
-                    AppRow(byPackage[entry.packageName], entry.label, entry.packageName in blocked) {
-                        toggle(entry.packageName, it)
-                    }
-                }
-            }
+            section("Заблокированные", sections.blocked, byPackage, blocked, ::toggle)
+            section("Часто отвлекают", sections.distracting, byPackage, blocked, ::toggle)
+            section("Все приложения", sections.others, byPackage, blocked, ::toggle)
         }
     }
 }
 
+private fun LazyListScope.section(
+    title: String,
+    entries: List<AppEntry>,
+    byPackage: Map<String, InstalledApp>,
+    blocked: Set<String>,
+    onToggle: (String, Boolean) -> Unit,
+) {
+    if (entries.isEmpty()) return
+    item(key = "header-$title") {
+        SectionHeader(title, Modifier.animateItem())
+    }
+    items(entries, key = { it.packageName }) { entry ->
+        AppRow(
+            app = byPackage[entry.packageName],
+            label = entry.label,
+            checked = entry.packageName in blocked,
+            modifier = Modifier.animateItem(),
+        ) { onToggle(entry.packageName, it) }
+    }
+}
+
 @Composable
-private fun SectionHeader(title: String) {
-    Column {
+private fun SectionHeader(title: String, modifier: Modifier = Modifier) {
+    Column(modifier) {
         Text(
             text = title,
             modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 16.dp, bottom = 8.dp),
@@ -192,9 +204,15 @@ private fun SectionHeader(title: String) {
 }
 
 @Composable
-private fun AppRow(app: InstalledApp?, label: String, checked: Boolean, onChange: (Boolean) -> Unit) {
+private fun AppRow(
+    app: InstalledApp?,
+    label: String,
+    checked: Boolean,
+    modifier: Modifier = Modifier,
+    onChange: (Boolean) -> Unit,
+) {
     Row(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .clickable { onChange(!checked) }
             .padding(horizontal = 20.dp, vertical = 10.dp),

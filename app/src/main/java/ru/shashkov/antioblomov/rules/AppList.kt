@@ -13,12 +13,17 @@ data class AppEntry(
     val distracting: Boolean,
 )
 
-/** Список, разбитый на разделы экрана «Приложения». */
+/**
+ * Список, разбитый на разделы экрана «Приложения» (сверху вниз).
+ * Каждое приложение — ровно в одном разделе: отмеченное уходит в «Заблокированные»,
+ * а когда отметку снимают, возвращается на своё место.
+ */
 data class AppSections(
+    val blocked: List<AppEntry>,
     val distracting: List<AppEntry>,
     val others: List<AppEntry>,
 ) {
-    val isEmpty: Boolean get() = distracting.isEmpty() && others.isEmpty()
+    val isEmpty: Boolean get() = blocked.isEmpty() && distracting.isEmpty() && others.isEmpty()
 }
 
 /**
@@ -58,10 +63,16 @@ object AppList {
     }
 
     /**
-     * Разделы для показа: без защищённых приложений (FR-07), с фильтром по поиску,
+     * Разделы для показа: «Заблокированные» (отмеченные), «Часто отвлекают», остальные.
+     * Без защищённых приложений (FR-07), с фильтром по поиску,
      * по алфавиту (по-русски: «ё» рядом с «е», латиница отдельно).
      */
-    fun sections(apps: List<AppEntry>, protected: Set<String>, query: String): AppSections {
+    fun sections(
+        apps: List<AppEntry>,
+        protected: Set<String>,
+        query: String,
+        blocked: Set<String> = emptySet(),
+    ): AppSections {
         val q = query.trim()
         val visible = apps
             .asSequence()
@@ -70,9 +81,11 @@ object AppList {
             .distinctBy { it.packageName }
             .sortedWith { a, b -> collator.compare(a.label, b.label) }
             .toList()
+        val (selected, rest) = visible.partition { it.packageName in blocked }
         return AppSections(
-            distracting = visible.filter { it.distracting },
-            others = visible.filterNot { it.distracting },
+            blocked = selected,
+            distracting = rest.filter { it.distracting },
+            others = rest.filterNot { it.distracting },
         )
     }
 

@@ -79,4 +79,29 @@ class AppListTest {
     @Test fun `по умолчанию ничего не выбрано`() {
         assertTrue(Settings().blockedPackages.isEmpty())
     }
+
+    @Test fun `отмеченные уходят в «Заблокированные» и пропадают из своего раздела`() {
+        val blocked = setOf(youtube.packageName, camera.packageName)
+        val s = AppList.sections(all, protected, "", blocked)
+        assertEquals(listOf(youtube, camera), s.blocked)
+        assertEquals(listOf(tiktok), s.distracting)
+        assertEquals(listOf(notes, calc), s.others)
+    }
+
+    @Test fun `снятая отметка возвращает приложение на своё место`() {
+        val s = AppList.sections(all, protected, "", blocked = emptySet())
+        assertTrue(s.blocked.isEmpty())
+        assertEquals(listOf(tiktok, youtube), s.distracting)
+    }
+
+    @Test fun `поиск работает и в «Заблокированных»`() {
+        val s = AppList.sections(all, protected, "you", setOf(youtube.packageName, camera.packageName))
+        assertEquals(listOf(youtube), s.blocked)
+        assertTrue(s.distracting.isEmpty() && s.others.isEmpty())
+    }
+
+    @Test fun `защищённое не попадает в «Заблокированные», даже если записано в настройках`() {
+        val s = AppList.sections(all, protected, "", setOf(settingsApp.packageName))
+        assertTrue(s.blocked.isEmpty())
+    }
 }
