@@ -31,20 +31,28 @@ import ru.shashkov.antioblomov.rules.BlockRules
 import ru.shashkov.antioblomov.rules.BlockStatus
 import ru.shashkov.antioblomov.rules.HomeStatusText
 import ru.shashkov.antioblomov.rules.TimerRules
+import ru.shashkov.antioblomov.rules.SetupState
 import ru.shashkov.antioblomov.ui.components.ServiceStatusCard
+import ru.shashkov.antioblomov.ui.components.SetupCard
 import ru.shashkov.antioblomov.ui.theme.Lake
 import ru.shashkov.antioblomov.ui.theme.Paper
 import ru.shashkov.antioblomov.ui.theme.Terracotta
 import java.time.ZonedDateTime
 
 /**
- * Главная (FR-02): крупно — идёт ли сейчас блокировка, ниже — карточка службы блокировки.
+ * Главная (FR-02): крупно — идёт ли сейчас блокировка, ниже — карточка службы блокировки
+ * и «Настройка телефона» (что пропущено в мастере, FR-08).
  * Если служба не работает, это видно сразу в статусе: блокировка по правилам есть,
  * но приложения на самом деле не блокируются.
  * На шаге 7 здесь появится «Было / стало».
  */
 @Composable
-fun HomeScreen(serviceState: ServiceState, modifier: Modifier = Modifier) {
+fun HomeScreen(
+    serviceState: ServiceState,
+    setup: SetupState,
+    onOpenOnboarding: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     val context = LocalContext.current
     val store = remember { SettingsStore(context) }
     var settings by remember { mutableStateOf(store.read()) }
@@ -118,5 +126,6 @@ fun HomeScreen(serviceState: ServiceState, modifier: Modifier = Modifier) {
         }
 
         ServiceStatusCard(state = serviceState)
+        SetupCard(setup = setup, onOpenWizard = onOpenOnboarding)
     }
 }

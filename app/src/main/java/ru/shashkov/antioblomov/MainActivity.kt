@@ -12,6 +12,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import ru.shashkov.antioblomov.blocking.ServiceState
 import ru.shashkov.antioblomov.blocking.blockingServiceState
+import ru.shashkov.antioblomov.blocking.readSetupState
+import ru.shashkov.antioblomov.data.OnboardingStore
+import ru.shashkov.antioblomov.rules.SetupState
 import ru.shashkov.antioblomov.ui.AntiOblomovApp
 import ru.shashkov.antioblomov.ui.Tab
 import ru.shashkov.antioblomov.ui.theme.AntiOblomovTheme
@@ -24,6 +27,14 @@ class MainActivity : ComponentActivity() {
     /** Состояние службы блокировки. Обновляется при каждом возврате в приложение. */
     private var serviceState by mutableStateOf(ServiceState.OFF)
 
+    private lateinit var onboarding: OnboardingStore
+
+    /** Что настроено на телефоне — для мастера и главной. Пересчитывается при каждом возврате. */
+    private var setup by mutableStateOf<SetupState?>(null)
+
+    /** Показывать мастер настройки: при первом запуске и по кнопке на главной. */
+    private var showOnboarding by mutableStateOf(false)
+
     /** Вкладка, которую нужно открыть (например, «Таймер» по нажатию на уведомление). */
     private var requestedTab by mutableStateOf<Tab?>(null)
 
@@ -35,11 +46,25 @@ class MainActivity : ComponentActivity() {
             statusBarStyle = SystemBarStyle.light(Color.TRANSPARENT, Color.TRANSPARENT),
             navigationBarStyle = SystemBarStyle.light(Color.TRANSPARENT, Color.TRANSPARENT),
         )
+        onboarding = OnboardingStore(this)
+        showOnboarding = !onboarding.completed
+        refreshSetup()
         requestedTab = tabFrom(intent)
         setContent {
             AntiOblomovTheme {
                 AntiOblomovApp(
                     serviceState = serviceState,
+                    setup = setup ?: readSetupState(this, onboarding),
+                    showOnboarding = showOnboarding,
+                    onOpenOnboarding = { showOnboarding = true },
+                    onAutostartConfirmed = { onboarding.autostartConfirmed = it; refreshSetup() },
+                    onExtraBatteryConfirmed = { onboarding.extraBatteryConfirmed = it; refreshSetup() },
+                    onRefreshSetup = ::refreshSetup,
+                    onOnboardingFinished = { openApps ->
+                        onboarding.completed = true
+                        showOnboarding = false
+                        if (openApps) requestedTab = Tab.APPS
+                    },
                     requestedTab = requestedTab,
                     onTabOpened = { requestedTab = null },
                 )
@@ -58,7 +83,12 @@ class MainActivity : ComponentActivity() {
     override fun onResume() {
         super.onResume()
         // Пользователь мог только что включить службу в настройках
+        refreshSetup()
+    }
+
+    private fun refreshSetup() {
         serviceState = blockingServiceState(this)
+        setup = readSetupState(this, onboarding)
     }
 
     companion object {

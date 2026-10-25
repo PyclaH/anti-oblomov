@@ -17,21 +17,23 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import ru.shashkov.antioblomov.blocking.ServiceState
-import ru.shashkov.antioblomov.blocking.isXiaomi
+import ru.shashkov.antioblomov.blocking.openGuide
+import ru.shashkov.antioblomov.blocking.phoneBrand
+import ru.shashkov.antioblomov.rules.SetupGuide
 import ru.shashkov.antioblomov.blocking.openAccessibilitySettings
 import ru.shashkov.antioblomov.blocking.openAppSettings
-import ru.shashkov.antioblomov.blocking.openXiaomiAutostart
 import ru.shashkov.antioblomov.ui.theme.AntiOblomovTheme
 import ru.shashkov.antioblomov.ui.theme.Lake
 import ru.shashkov.antioblomov.ui.theme.Terracotta
 
 /**
  * Карточка на главной: работает ли служба блокировки и как её включить.
- * На шаге 6 к ней добавится полноценный онбординг.
+ * Остальные разрешения — в мастере настройки и карточке «Настройка телефона» (SetupCard).
  */
 @Composable
 fun ServiceStatusCard(state: ServiceState, modifier: Modifier = Modifier) {
     val context = LocalContext.current
+    val autostart = SetupGuide.autostart(phoneBrand)
     Card(
         modifier = modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
@@ -52,11 +54,6 @@ fun ServiceStatusCard(state: ServiceState, modifier: Modifier = Modifier) {
                     OutlinedButton(onClick = { openAccessibilitySettings(context) }) {
                         Text("Настройки спецвозможностей")
                     }
-                    if (isXiaomi) {
-                        OutlinedButton(onClick = { openXiaomiAutostart(context) }) {
-                            Text("Автозапуск (Xiaomi)")
-                        }
-                    }
                 }
 
                 ServiceState.STOPPED -> {
@@ -64,14 +61,14 @@ fun ServiceStatusCard(state: ServiceState, modifier: Modifier = Modifier) {
                     Body(
                         "Её остановила система — например, после перезагрузки. Выключите и снова " +
                             "включите «Анти-Обломов: блокировка» в спецвозможностях." +
-                            if (isXiaomi) " Чтобы служба запускалась сама, разрешите «Анти-Обломову» автозапуск." else ""
+                            if (autostart != null) " Чтобы служба запускалась сама, проверьте «${autostart.title}» в настройке телефона ниже." else ""
                     )
                     Button(onClick = { openAccessibilitySettings(context) }) {
                         Text("Спецвозможности")
                     }
-                    if (isXiaomi) {
-                        OutlinedButton(onClick = { openXiaomiAutostart(context) }) {
-                            Text("Автозапуск (Xiaomi)")
+                    if (autostart != null) {
+                        OutlinedButton(onClick = { openGuide(context, autostart) }) {
+                            Text(autostart.buttonText)
                         }
                     } else {
                         OutlinedButton(onClick = { openAppSettings(context) }) {

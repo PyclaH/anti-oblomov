@@ -2,10 +2,8 @@ package ru.shashkov.antioblomov.ui.screens
 
 import android.Manifest
 import android.content.Context
-import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
-import android.provider.Settings as AndroidSettings
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -41,6 +39,7 @@ import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import kotlinx.coroutines.delay
 import ru.shashkov.antioblomov.blocking.TimerNotification
+import ru.shashkov.antioblomov.blocking.openNotificationSettings
 import ru.shashkov.antioblomov.data.SettingsStore
 import ru.shashkov.antioblomov.rules.ChangeGuard
 import ru.shashkov.antioblomov.rules.Settings
@@ -255,12 +254,3 @@ private fun needsPermission(context: Context): Boolean =
     Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
         ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) !=
         PackageManager.PERMISSION_GRANTED
-
-/** Настройки уведомлений «Анти-Обломова». */
-private fun openNotificationSettings(context: Context) {
-    context.startActivity(
-        Intent(AndroidSettings.ACTION_APP_NOTIFICATION_SETTINGS)
-            .putExtra(AndroidSettings.EXTRA_APP_PACKAGE, context.packageName)
-            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-    )
-}
