@@ -42,12 +42,18 @@ fun AppRow(
     ) {
         val icon = app?.icon
         if (icon != null) {
-            Image(bitmap = icon, contentDescription = null, modifier = Modifier.size(40.dp))
+            Image(
+                bitmap = icon,
+                contentDescription = null,
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(RoundedCornerShape(12.dp)),
+            )
         } else {
             Box(
                 Modifier
                     .size(40.dp)
-                    .clip(RoundedCornerShape(10.dp))
+                    .clip(RoundedCornerShape(12.dp))
                     .background(MaterialTheme.colorScheme.surfaceVariant)
             )
         }

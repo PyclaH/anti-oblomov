@@ -55,7 +55,15 @@ import ru.shashkov.antioblomov.ui.components.AppRow
 import ru.shashkov.antioblomov.rules.ChangeGuard
 import ru.shashkov.antioblomov.ui.components.WaitDialog
 import java.time.ZonedDateTime
+import androidx.compose.foundation.border
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import ru.shashkov.antioblomov.ui.theme.Accent
+import ru.shashkov.antioblomov.ui.theme.Line
+import ru.shashkov.antioblomov.ui.theme.Overline
+import ru.shashkov.antioblomov.ui.theme.Surface1
+import ru.shashkov.antioblomov.ui.theme.TextMuted
+import ru.shashkov.antioblomov.ui.theme.TextPrimary
+import ru.shashkov.antioblomov.ui.theme.Warn
 import androidx.compose.ui.res.stringResource
 
 /**
@@ -118,49 +126,52 @@ fun AppsScreen(modifier: Modifier = Modifier) {
     }
 
     Column(modifier = modifier.fillMaxSize()) {
+        // Сколько выбрано (null — список ещё грузится)
+        val count = apps?.let { loaded -> AppList.selectedCount(loaded.map { it.entry }, protected, blocked) }
+
+        // Шапка закреплена: заголовок, счётчик, поиск — список прокручивается под ними
         Column(
-            modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 24.dp, bottom = 8.dp),
+            modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 24.dp, bottom = 4.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Text(text = stringResource(R.string.tab_apps), style = MaterialTheme.typography.headlineMedium)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = stringResource(R.string.tab_apps),
+                    style = MaterialTheme.typography.headlineMedium,
+                    modifier = Modifier.weight(1f),
+                )
+                count?.let { CountChip(it) }
+            }
             Text(
-                text = "Отметьте, что блокировать по расписанию и таймеру.",
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                text = if (count == 0)
+                    "Ничего не выбрано — расписание и таймер ничего не блокируют. Отметь, что блокировать."
+                else "Отметь, что блокировать по расписанию и таймеру.",
+                style = MaterialTheme.typography.bodySmall,
+                color = if (count == 0) Warn else TextMuted,
             )
             OutlinedTextField(
                 value = query,
                 onValueChange = { query = it },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
-                placeholder = { Text("Поиск") },
-                leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
+                shape = RoundedCornerShape(16.dp),
+                placeholder = { Text("Поиск", color = TextMuted) },
+                leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null, tint = TextMuted) },
                 trailingIcon = {
                     if (query.isNotEmpty()) {
                         IconButton(onClick = { query = "" }) {
-                            Icon(Icons.Filled.Clear, contentDescription = "Очистить поиск")
+                            Icon(Icons.Filled.Clear, contentDescription = "Очистить поиск", tint = TextMuted)
                         }
                     }
                 },
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedContainerColor = Surface1,
+                    unfocusedContainerColor = Surface1,
+                    focusedBorderColor = TextMuted,
+                    unfocusedBorderColor = Line,
+                    cursorColor = Accent,
+                ),
             )
-            val loaded = apps
-            if (loaded != null) {
-                val count = AppList.selectedCount(loaded.map { it.entry }, protected, blocked)
-                if (count == 0) {
-                    Text(
-                        text = "Ничего не выбрано — расписание и таймер ничего не блокируют",
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = Accent,
-                    )
-                } else {
-                    Text(
-                        text = "Выбрано: $count",
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.Bold,
-                    )
-                }
-            }
         }
 
         val loaded = apps
@@ -220,14 +231,25 @@ private fun LazyListScope.section(
 
 @Composable
 private fun SectionHeader(title: String, modifier: Modifier = Modifier) {
-    Column(modifier) {
-        Text(
-            text = title,
-            modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 16.dp, bottom = 8.dp),
-            style = MaterialTheme.typography.titleSmall,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.primary,
-        )
-        HorizontalDivider(color = MaterialTheme.colorScheme.surfaceVariant)
-    }
+    Text(
+        text = title.uppercase(),
+        modifier = modifier.padding(start = 20.dp, end = 20.dp, top = 20.dp, bottom = 6.dp),
+        style = Overline,
+        color = TextMuted,
+    )
+}
+
+/** «Заблокировано: 3» — или янтарное «Ничего не выбрано». */
+@Composable
+private fun CountChip(count: Int) {
+    Text(
+        text = if (count == 0) "Ничего не выбрано" else "Заблокировано: $count",
+        style = MaterialTheme.typography.labelMedium,
+        color = if (count == 0) Warn else TextPrimary,
+        modifier = Modifier
+            .clip(RoundedCornerShape(16.dp))
+            .background(Surface1)
+            .border(1.dp, if (count == 0) Warn.copy(alpha = 0.5f) else Line, RoundedCornerShape(16.dp))
+            .padding(horizontal = 12.dp, vertical = 6.dp),
+    )
 }

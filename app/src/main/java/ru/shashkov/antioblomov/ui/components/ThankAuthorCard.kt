@@ -40,7 +40,7 @@ import ru.shashkov.antioblomov.ui.theme.Accent
 import ru.shashkov.antioblomov.ui.theme.Night0
 
 /** Страница проекта на Sponsr.ru. */
-const val SPONSR_URL = "https://sponsr.ru/anti_oblomov/"
+const val SPONSR_URL = "https://sponsr.ru/anti_oblomov/subscribe/#levels"
 
 /** С какой экономии (минут в день) упоминаем её в панели. */
 const val THANK_THRESHOLD_MINUTES = 15

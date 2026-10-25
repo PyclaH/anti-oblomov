@@ -6,6 +6,39 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.CheckCircle
+import androidx.compose.material.icons.outlined.Lock
+import androidx.compose.material.icons.outlined.Notifications
+import androidx.compose.material.icons.outlined.Refresh
+import androidx.compose.material.icons.outlined.Warning
+import androidx.compose.material3.Icon
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.sp
+import ru.shashkov.antioblomov.R
+import ru.shashkov.antioblomov.ui.components.AppCard
+import ru.shashkov.antioblomov.ui.theme.BigNumber
+import ru.shashkov.antioblomov.ui.theme.Line
+import ru.shashkov.antioblomov.ui.theme.Overline
+import ru.shashkov.antioblomov.ui.theme.Surface1
+import ru.shashkov.antioblomov.ui.theme.Surface2
+import ru.shashkov.antioblomov.ui.theme.TextMuted
+import ru.shashkov.antioblomov.ui.theme.TextPrimary
+import ru.shashkov.antioblomov.ui.theme.Warn
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -87,15 +120,7 @@ fun OnboardingScreen(
             .safeDrawingPadding()
             .padding(horizontal = 20.dp, vertical = 16.dp),
     ) {
-        Text(
-            text = "Шаг ${index + 1} из ${pages.size}",
-            style = MaterialTheme.typography.labelLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        LinearProgressIndicator(
-            progress = { (index + 1f) / pages.size },
-            modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-        )
+        StepHeader(index = index, total = pages.size)
 
         Column(
             modifier = Modifier
@@ -104,6 +129,7 @@ fun OnboardingScreen(
                 .padding(vertical = 24.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
+            PageIcon(page)
             when (page) {
                 OnboardingPage.WELCOME -> WelcomePage()
                 OnboardingPage.SERVICE -> ServicePage(setup)
@@ -116,18 +142,39 @@ fun OnboardingScreen(
         }
 
         if (page == OnboardingPage.FINISH) {
-            Button(modifier = Modifier.fillMaxWidth().height(52.dp), onClick = { onFinish(true) }) {
-                Text("Выбрать приложения")
+            Button(
+                modifier = Modifier.fillMaxWidth().height(56.dp),
+                shape = RoundedCornerShape(18.dp),
+                onClick = { onFinish(true) },
+            ) { Text("Выбрать приложения", style = MaterialTheme.typography.labelLarge) }
+            TextButton(modifier = Modifier.fillMaxWidth(), onClick = { onFinish(false) }) {
+                Text("На главную", color = TextMuted)
             }
-            TextButton(modifier = Modifier.fillMaxWidth(), onClick = { onFinish(false) }) { Text("На главную") }
         } else {
-            Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                if (index > 0) TextButton(onClick = { index-- }) { Text("Назад") }
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                if (index > 0) {
+                    TextButton(onClick = { index-- }, modifier = Modifier.height(56.dp)) { Text("Назад", color = TextMuted) }
+                }
                 Spacer(Modifier.weight(1f))
                 if (done || page == OnboardingPage.WELCOME) {
-                    Button(onClick = { index++ }) { Text(if (page == OnboardingPage.WELCOME) "Начать" else "Далее") }
+                    Button(
+                        onClick = { index++ },
+                        modifier = Modifier.height(56.dp),
+                        shape = RoundedCornerShape(18.dp),
+                        contentPadding = PaddingValues(horizontal = 28.dp),
+                    ) { Text(if (page == OnboardingPage.WELCOME) "Начать" else "Далее", style = MaterialTheme.typography.labelLarge) }
                 } else {
-                    OutlinedButton(onClick = { index++ }) { Text("Пропустить") }
+                    OutlinedButton(
+                        onClick = { index++ },
+                        modifier = Modifier.height(56.dp),
+                        shape = RoundedCornerShape(18.dp),
+                        border = BorderStroke(1.dp, Line),
+                        contentPadding = PaddingValues(horizontal = 28.dp),
+                    ) { Text("Пропустить", color = TextPrimary) }
                 }
             }
         }
@@ -306,8 +353,16 @@ private fun GuideBlock(guide: Guide, confirmed: Boolean, onConfirmed: (Boolean) 
     if (showTitle) Text(guide.title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
     Body(guide.why)
     Steps(guide.steps)
-    Button(modifier = Modifier.fillMaxWidth(), onClick = { openGuide(context, guide) }) { Text(guide.buttonText) }
-    Body("Если открылась страница «О приложении» — ищите эту настройку там.")
+    Button(
+        modifier = Modifier.fillMaxWidth().height(52.dp),
+        shape = RoundedCornerShape(18.dp),
+        onClick = { openGuide(context, guide) },
+    ) { Text(guide.buttonText) }
+    Text(
+        "Если открылась страница «О приложении» — ищи эту настройку там.",
+        style = MaterialTheme.typography.bodySmall,
+        color = TextMuted,
+    )
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -329,34 +384,129 @@ private fun Title(text: String) =
 private fun Body(text: String) =
     Text(text = text, style = MaterialTheme.typography.bodyLarge)
 
+/** Шаги инструкции — номер в кружке и текст. */
 @Composable
 private fun Steps(lines: List<String>) {
-    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         lines.forEachIndexed { i, line ->
-            Text("${i + 1}. $line", style = MaterialTheme.typography.bodyLarge)
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Box(
+                    modifier = Modifier
+                        .size(24.dp)
+                        .clip(CircleShape)
+                        .border(1.dp, Line, CircleShape),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text("${i + 1}", style = MaterialTheme.typography.labelMedium, color = TextMuted)
+                }
+                Text(line, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
+            }
         }
     }
 }
 
+/** Блок «что делает / чего не делает» — карточка с подписью мелкими прописными. */
 @Composable
 private fun InfoBox(title: String, lines: List<String>) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-    ) {
-        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Text(title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-            lines.forEach { Text("•  $it", style = MaterialTheme.typography.bodyMedium) }
+    AppCard(spacing = 6.dp) {
+        Text(title.uppercase(), style = Overline, color = TextMuted)
+        lines.forEach { Text("•  $it", style = MaterialTheme.typography.bodyMedium) }
+    }
+}
+
+/** Статус шага: ✓ бирюзовая галочка или янтарный значок. */
+@Composable
+private fun Status(ok: Boolean, okText: String, notText: String) {
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+        Icon(
+            imageVector = if (ok) Icons.Outlined.CheckCircle else Icons.Outlined.Warning,
+            contentDescription = null,
+            tint = if (ok) Calm else Warn,
+        )
+        Text(
+            text = if (ok) okText else notText,
+            style = MaterialTheme.typography.titleSmall,
+            color = if (ok) Calm else Warn,
+        )
+    }
+}
+
+/** «02 / 07» крупно и тонкая полоса прогресса (редизайн R4). */
+@Composable
+private fun StepHeader(index: Int, total: Int) {
+    val progress by animateFloatAsState((index + 1f) / total, tween(300), label = "steps")
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Row(verticalAlignment = Alignment.Bottom) {
+            Text("%02d".format(index + 1), style = BigNumber.copy(fontSize = 36.sp, lineHeight = 40.sp))
+            Text(
+                " / %02d".format(total),
+                style = MaterialTheme.typography.titleMedium,
+                color = TextMuted,
+                modifier = Modifier.padding(bottom = 4.dp),
+            )
+        }
+        Box(
+            Modifier
+                .fillMaxWidth()
+                .height(3.dp)
+                .clip(RoundedCornerShape(2.dp))
+                .background(Surface2)
+        ) {
+            Box(
+                Modifier
+                    .fillMaxWidth(progress)
+                    .height(3.dp)
+                    .background(Accent)
+            )
         }
     }
 }
 
+/** Линейная иконка шага в скруглённом квадрате. */
 @Composable
-private fun Status(ok: Boolean, okText: String, notText: String) {
-    Text(
-        text = if (ok) "✓ $okText" else notText,
-        style = MaterialTheme.typography.titleMedium,
-        fontWeight = FontWeight.Bold,
-        color = if (ok) Calm else Accent,
-    )
+private fun PageIcon(page: OnboardingPage) {
+    Box(
+        modifier = Modifier
+            .size(56.dp)
+            .clip(RoundedCornerShape(18.dp))
+            .background(Surface1)
+            .border(1.dp, Line, RoundedCornerShape(18.dp)),
+        contentAlignment = Alignment.Center,
+    ) {
+        when (page) {
+            OnboardingPage.WELCOME -> Image(
+                painterResource(R.drawable.ic_launcher_foreground),
+                contentDescription = null,
+                modifier = Modifier.size(84.dp),
+            )
+            OnboardingPage.SERVICE -> Icon(Icons.Outlined.Lock, null, tint = TextPrimary)
+            OnboardingPage.NOTIFICATIONS -> Icon(Icons.Outlined.Notifications, null, tint = TextPrimary)
+            OnboardingPage.BATTERY -> Canvas(Modifier.size(24.dp)) {
+                // Батарейка: корпус, «плюс» сверху, заряд
+                val w = size.width * 0.5f
+                val h = size.height * 0.8f
+                val left = (size.width - w) / 2
+                val top = size.height * 0.15f
+                drawRoundRect(TextPrimary, Offset(left, top), Size(w, h), CornerRadius(3.dp.toPx()), style = Stroke(1.6.dp.toPx()))
+                drawRect(TextPrimary, Offset(size.width / 2 - w / 4, top - 2.5.dp.toPx()), Size(w / 2, 2.5.dp.toPx()))
+                drawRect(Accent, Offset(left + 3.dp.toPx(), top + h * 0.45f), Size(w - 6.dp.toPx(), h * 0.55f - 3.dp.toPx()))
+            }
+            OnboardingPage.AUTOSTART -> Icon(Icons.Outlined.Refresh, null, tint = TextPrimary)
+            OnboardingPage.USAGE -> Canvas(Modifier.size(24.dp)) {
+                // Столбики статистики
+                val bw = size.width / 6
+                listOf(0.45f, 0.8f, 0.6f).forEachIndexed { i, k ->
+                    val x = size.width * 0.15f + i * bw * 1.6f
+                    val bh = size.height * k
+                    drawRoundRect(
+                        if (i == 1) Accent else TextPrimary,
+                        Offset(x, size.height - bh),
+                        Size(bw, bh),
+                        CornerRadius(1.5.dp.toPx()),
+                    )
+                }
+            }
+            OnboardingPage.FINISH -> Icon(Icons.Outlined.CheckCircle, null, tint = Calm)
+        }
+    }
 }
