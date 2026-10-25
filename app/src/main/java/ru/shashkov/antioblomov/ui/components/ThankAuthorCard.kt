@@ -28,7 +28,7 @@ import ru.shashkov.antioblomov.ui.theme.AntiOblomovTheme
  * Страница проекта на Sponsr.ru (прислана 25.10.2026, проект на модерации).
  * Пустая строка — карточка не показывается.
  */
-const val SPONSR_URL = "https://sponsr.ru/anti_olblomov/"
+const val SPONSR_URL = "https://sponsr.ru/anti_oblomov/"
 
 /**
  * Предложение поблагодарить автора — рядом с «Было / стало» (FR-17).
