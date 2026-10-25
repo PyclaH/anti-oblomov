@@ -50,6 +50,9 @@ import ru.shashkov.antioblomov.data.ProtectedApps
 import ru.shashkov.antioblomov.data.SettingsStore
 import ru.shashkov.antioblomov.rules.AppEntry
 import ru.shashkov.antioblomov.rules.AppList
+import ru.shashkov.antioblomov.rules.ChangeGuard
+import ru.shashkov.antioblomov.ui.components.WaitDialog
+import java.time.ZonedDateTime
 import ru.shashkov.antioblomov.ui.theme.Terracotta
 import androidx.compose.ui.res.stringResource
 
@@ -84,8 +87,32 @@ fun AppsScreen(modifier: Modifier = Modifier) {
         protected = prot
     }
 
-    fun toggle(packageName: String, block: Boolean) {
+    // Изменение, ждущее 15-секундной паузы (идёт блокировка — ChangeGuard)
+    var pending by remember { mutableStateOf<Pair<String, Boolean>?>(null) }
+
+    fun commit(packageName: String, block: Boolean) {
         blocked = store.update { AppList.toggle(it, packageName, block, protected) }.blockedPackages
+    }
+
+    fun toggle(packageName: String, block: Boolean) {
+        val before = store.read()
+        val after = AppList.toggle(before, packageName, block, protected)
+        if (ChangeGuard.needsWait(before, after, ZonedDateTime.now())) {
+            pending = packageName to block
+        } else {
+            commit(packageName, block)
+        }
+    }
+
+    pending?.let { (packageName, block) ->
+        WaitDialog(
+            title = if (block) "Добавить приложение в блокировку?" else "Убрать приложение из блокировки?",
+            onConfirm = {
+                commit(packageName, block)
+                pending = null
+            },
+            onDismiss = { pending = null },
+        )
     }
 
     Column(modifier = modifier.fillMaxSize()) {

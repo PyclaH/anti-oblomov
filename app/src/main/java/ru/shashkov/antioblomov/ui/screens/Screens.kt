@@ -43,18 +43,6 @@ fun HomeScreen(serviceState: ServiceState, modifier: Modifier = Modifier) = Plac
 )
 
 @Composable
-fun ScheduleScreen(modifier: Modifier = Modifier) = PlaceholderScreen(
-    title = stringResource(R.string.tab_schedule),
-    description = "Время блокировки на каждый день недели, с перерывами.",
-    planned = listOf(
-        "Выбор дня недели",
-        "Интервалы блокировки, например 10:00–14:00 и 15:00–20:00",
-        "Копирование расписания на все будни",
-    ),
-    modifier = modifier,
-)
-
-@Composable
 fun TimerScreen(modifier: Modifier = Modifier) = PlaceholderScreen(
     title = stringResource(R.string.tab_timer),
     description = "Разовая блокировка, без изменения расписания.",
