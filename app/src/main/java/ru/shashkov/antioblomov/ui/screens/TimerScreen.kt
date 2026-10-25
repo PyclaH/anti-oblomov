@@ -47,9 +47,9 @@ import ru.shashkov.antioblomov.rules.TimeText
 import ru.shashkov.antioblomov.rules.TimerRules
 import ru.shashkov.antioblomov.ui.components.DurationDialog
 import ru.shashkov.antioblomov.ui.components.WaitDialog
-import ru.shashkov.antioblomov.ui.theme.Ink
-import ru.shashkov.antioblomov.ui.theme.Paper
-import ru.shashkov.antioblomov.ui.theme.Terracotta
+import ru.shashkov.antioblomov.ui.theme.Surface1
+import ru.shashkov.antioblomov.ui.theme.TextPrimary
+import ru.shashkov.antioblomov.ui.theme.Accent
 import java.time.Instant
 import java.time.ZonedDateTime
 
@@ -124,7 +124,7 @@ fun TimerScreen(modifier: Modifier = Modifier) {
             Text(
                 text = "Приложения для блокировки не выбраны — отметьте их на вкладке «Приложения»",
                 style = MaterialTheme.typography.bodyMedium,
-                color = Terracotta,
+                color = Accent,
             )
         }
 
@@ -218,21 +218,21 @@ fun TimerScreen(modifier: Modifier = Modifier) {
 private fun Countdown(remaining: Long, until: String) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = Ink, contentColor = Paper),
+        colors = CardDefaults.cardColors(containerColor = Surface1, contentColor = TextPrimary),
     ) {
         Column(
             modifier = Modifier.fillMaxWidth().padding(vertical = 28.dp, horizontal = 20.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            Text("Блокировка по таймеру", style = MaterialTheme.typography.titleMedium, color = Paper.copy(alpha = 0.75f))
+            Text("Блокировка по таймеру", style = MaterialTheme.typography.titleMedium, color = TextPrimary.copy(alpha = 0.75f))
             Text(
                 text = TimerRules.countdown(remaining),
                 fontSize = 56.sp,
                 fontWeight = FontWeight.Bold,
                 textAlign = TextAlign.Center,
             )
-            Text("до $until", style = MaterialTheme.typography.titleMedium, color = Paper.copy(alpha = 0.75f))
+            Text("до $until", style = MaterialTheme.typography.titleMedium, color = TextPrimary.copy(alpha = 0.75f))
         }
     }
 }

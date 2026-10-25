@@ -50,9 +50,9 @@ import ru.shashkov.antioblomov.rules.TimerRules
 import ru.shashkov.antioblomov.rules.SetupState
 import ru.shashkov.antioblomov.ui.components.ServiceStatusCard
 import ru.shashkov.antioblomov.ui.components.SetupCard
-import ru.shashkov.antioblomov.ui.theme.Lake
-import ru.shashkov.antioblomov.ui.theme.Paper
-import ru.shashkov.antioblomov.ui.theme.Terracotta
+import ru.shashkov.antioblomov.ui.theme.Calm
+import ru.shashkov.antioblomov.ui.theme.Night0
+import ru.shashkov.antioblomov.ui.theme.Accent
 import java.time.ZonedDateTime
 
 /**
@@ -143,15 +143,15 @@ fun HomeScreen(
         Card(
             modifier = Modifier.fillMaxWidth(),
             colors = CardDefaults.cardColors(
-                containerColor = if (status is BlockStatus.Blocked) Terracotta else Lake,
-                contentColor = Paper,
+                containerColor = if (status is BlockStatus.Blocked) Accent else Calm,
+                contentColor = Night0,
             ),
         ) {
             Column(
                 modifier = Modifier.padding(horizontal = 20.dp, vertical = 24.dp),
                 verticalArrangement = Arrangement.spacedBy(6.dp),
             ) {
-                Text("Сейчас", style = MaterialTheme.typography.titleSmall, color = Paper.copy(alpha = 0.8f))
+                Text("Сейчас", style = MaterialTheme.typography.titleSmall, color = Night0.copy(alpha = 0.8f))
                 Text(
                     text = HomeStatusText.title(status, now),
                     fontSize = 30.sp,
@@ -163,7 +163,7 @@ fun HomeScreen(
                     Text(
                         text = "таймер: осталось ${TimerRules.countdown(left)}",
                         style = MaterialTheme.typography.titleMedium,
-                        color = Paper.copy(alpha = 0.9f),
+                        color = Night0.copy(alpha = 0.9f),
                     )
                 }
                 if (!serviceWorks) {
@@ -181,7 +181,7 @@ fun HomeScreen(
             Text(
                 text = "Приложения для блокировки не выбраны — отметьте их на вкладке «Приложения»",
                 style = MaterialTheme.typography.bodyMedium,
-                color = Terracotta,
+                color = Accent,
             )
         }
 

@@ -55,7 +55,7 @@ import ru.shashkov.antioblomov.ui.components.AppRow
 import ru.shashkov.antioblomov.rules.ChangeGuard
 import ru.shashkov.antioblomov.ui.components.WaitDialog
 import java.time.ZonedDateTime
-import ru.shashkov.antioblomov.ui.theme.Terracotta
+import ru.shashkov.antioblomov.ui.theme.Accent
 import androidx.compose.ui.res.stringResource
 
 /**
@@ -151,7 +151,7 @@ fun AppsScreen(modifier: Modifier = Modifier) {
                         text = "Ничего не выбрано — расписание и таймер ничего не блокируют",
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.Bold,
-                        color = Terracotta,
+                        color = Accent,
                     )
                 } else {
                     Text(

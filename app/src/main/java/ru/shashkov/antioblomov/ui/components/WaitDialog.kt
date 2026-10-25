@@ -42,8 +42,8 @@ import kotlinx.coroutines.delay
 import ru.shashkov.antioblomov.blocking.Quotes
 import ru.shashkov.antioblomov.blocking.SceneBackgroundView
 import ru.shashkov.antioblomov.rules.ChangeGuard
-import ru.shashkov.antioblomov.ui.theme.Ink
-import ru.shashkov.antioblomov.ui.theme.Paper
+import ru.shashkov.antioblomov.ui.theme.Night0
+import ru.shashkov.antioblomov.ui.theme.TextPrimary
 
 /**
  * Пауза перед изменением настроек во время блокировки (ChangeGuard):
@@ -83,7 +83,7 @@ fun WaitDialog(title: String, onConfirm: () -> Unit, onDismiss: () -> Unit) {
             }
         }
 
-        Box(Modifier.fillMaxSize().background(Ink)) {
+        Box(Modifier.fillMaxSize().background(Night0)) {
             AndroidView(
                 modifier = Modifier.fillMaxSize(),
                 factory = { ctx -> SceneBackgroundView(ctx, quote.scene, seed = quote.text.hashCode()) },
@@ -99,7 +99,7 @@ fun WaitDialog(title: String, onConfirm: () -> Unit, onDismiss: () -> Unit) {
                 Text(
                     text = title,
                     modifier = Modifier.fillMaxWidth().padding(top = 24.dp),
-                    color = Paper,
+                    color = TextPrimary,
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
                     textAlign = TextAlign.Center,
@@ -107,7 +107,7 @@ fun WaitDialog(title: String, onConfirm: () -> Unit, onDismiss: () -> Unit) {
                 Text(
                     text = "Сейчас идёт блокировка. Подумай ${ChangeGuard.WAIT_SECONDS} секунд — точно нужно?",
                     modifier = Modifier.fillMaxWidth(),
-                    color = Paper.copy(alpha = 0.7f),
+                    color = TextPrimary.copy(alpha = 0.7f),
                     fontSize = 16.sp,
                     textAlign = TextAlign.Center,
                 )
@@ -117,7 +117,7 @@ fun WaitDialog(title: String, onConfirm: () -> Unit, onDismiss: () -> Unit) {
                 Text(
                     text = "«${quote.text}»",
                     modifier = Modifier.fillMaxWidth(),
-                    color = Paper,
+                    color = TextPrimary,
                     fontFamily = FontFamily.Serif,
                     fontSize = quoteSize(quote.text),
                     lineHeight = quoteSize(quote.text) * 1.2f,
@@ -126,7 +126,7 @@ fun WaitDialog(title: String, onConfirm: () -> Unit, onDismiss: () -> Unit) {
                 Text(
                     text = quote.source,
                     modifier = Modifier.fillMaxWidth(),
-                    color = Paper.copy(alpha = 0.7f),
+                    color = TextPrimary.copy(alpha = 0.7f),
                     fontSize = 15.sp,
                     textAlign = TextAlign.Center,
                 )
@@ -136,7 +136,7 @@ fun WaitDialog(title: String, onConfirm: () -> Unit, onDismiss: () -> Unit) {
                 Button(
                     modifier = Modifier.fillMaxWidth(),
                     onClick = onDismiss,
-                    colors = ButtonDefaults.buttonColors(containerColor = Paper, contentColor = Ink),
+                    colors = ButtonDefaults.buttonColors(containerColor = TextPrimary, contentColor = Night0),
                 ) {
                     Text("Не менять", fontSize = 17.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(vertical = 6.dp))
                 }
@@ -145,8 +145,8 @@ fun WaitDialog(title: String, onConfirm: () -> Unit, onDismiss: () -> Unit) {
                     enabled = left == 0,
                     onClick = onConfirm,
                     colors = ButtonDefaults.textButtonColors(
-                        contentColor = Paper,
-                        disabledContentColor = Paper.copy(alpha = 0.5f),
+                        contentColor = TextPrimary,
+                        disabledContentColor = TextPrimary.copy(alpha = 0.5f),
                     ),
                 ) {
                     Text(if (left > 0) "Подтвердить через $left с" else "Подтвердить", fontSize = 16.sp)

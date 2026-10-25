@@ -32,10 +32,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.BorderStroke
 import ru.shashkov.antioblomov.R
 import ru.shashkov.antioblomov.ui.theme.AntiOblomovTheme
-import ru.shashkov.antioblomov.ui.theme.Ink
-import ru.shashkov.antioblomov.ui.theme.Sand
-import ru.shashkov.antioblomov.ui.theme.Slate
-import ru.shashkov.antioblomov.ui.theme.Terracotta
+import ru.shashkov.antioblomov.ui.theme.TextPrimary
+import ru.shashkov.antioblomov.ui.theme.Surface2
+import ru.shashkov.antioblomov.ui.theme.TextMuted
+import ru.shashkov.antioblomov.ui.theme.Accent
+import ru.shashkov.antioblomov.ui.theme.Night0
 
 /** Страница проекта на Sponsr.ru. */
 const val SPONSR_URL = "https://sponsr.ru/anti_oblomov/"
@@ -63,19 +64,19 @@ fun ThankAuthorCard(
 
     Card(
         modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = Sand, contentColor = Ink),
+        colors = CardDefaults.cardColors(containerColor = Surface2, contentColor = TextPrimary),
     ) {
         Row(
             modifier = Modifier.padding(16.dp),
             horizontalArrangement = Arrangement.spacedBy(14.dp),
             verticalAlignment = Alignment.Top,
         ) {
-            // Логотип — песочные часы на терракотовом фоне, как иконка приложения
+            // Логотип — песочные часы на графите, как иконка приложения
             Box(
                 modifier = Modifier
                     .size(48.dp)
                     .clip(RoundedCornerShape(14.dp))
-                    .background(Terracotta),
+                    .background(Night0),
                 contentAlignment = Alignment.Center,
             ) {
                 Image(
@@ -94,7 +95,7 @@ fun ThankAuthorCard(
                         "«Анти-Обломов» бесплатный и без рекламы — таким и останется. " +
                         "Если он помогает, можно поддержать школьный проект Руслана Шашкова.",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = Slate,
+                    color = TextMuted,
                 )
                 OutlinedButton(
                     onClick = {
@@ -104,8 +105,8 @@ fun ThankAuthorCard(
                             Toast.makeText(context, "Не найден браузер, чтобы открыть ссылку", Toast.LENGTH_LONG).show()
                         }
                     },
-                    border = BorderStroke(1.dp, Terracotta),
-                    colors = ButtonDefaults.outlinedButtonColors(contentColor = Terracotta),
+                    border = BorderStroke(1.dp, Accent),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = Accent),
                 ) {
                     Text("Поддержать на Sponsr")
                 }

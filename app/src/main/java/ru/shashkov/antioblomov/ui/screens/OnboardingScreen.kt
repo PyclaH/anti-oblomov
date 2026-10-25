@@ -56,8 +56,8 @@ import ru.shashkov.antioblomov.rules.SetupItem
 import ru.shashkov.antioblomov.rules.SetupState
 import ru.shashkov.antioblomov.ui.components.SetupRow
 import ru.shashkov.antioblomov.ui.components.itemTitle
-import ru.shashkov.antioblomov.ui.theme.Lake
-import ru.shashkov.antioblomov.ui.theme.Terracotta
+import ru.shashkov.antioblomov.ui.theme.Calm
+import ru.shashkov.antioblomov.ui.theme.Accent
 
 /**
  * Мастер настройки (FR-08): по шагу на каждое разрешение, с объяснением зачем.
@@ -84,7 +84,6 @@ fun OnboardingScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
             .safeDrawingPadding()
             .padding(horizontal = 20.dp, vertical = 16.dp),
     ) {
@@ -358,6 +357,6 @@ private fun Status(ok: Boolean, okText: String, notText: String) {
         text = if (ok) "✓ $okText" else notText,
         style = MaterialTheme.typography.titleMedium,
         fontWeight = FontWeight.Bold,
-        color = if (ok) Lake else Terracotta,
+        color = if (ok) Calm else Accent,
     )
 }

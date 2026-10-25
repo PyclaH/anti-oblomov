@@ -30,7 +30,7 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import ru.shashkov.antioblomov.rules.DurationCheck
 import ru.shashkov.antioblomov.rules.TimerRules
-import ru.shashkov.antioblomov.ui.theme.Terracotta
+import ru.shashkov.antioblomov.ui.theme.Accent
 
 /**
  * Окно «на сколько»: часы и минуты набираются цифрами с клавиатуры.
@@ -107,7 +107,7 @@ fun DurationDialog(
                     is DurationCheck.Error -> Text(
                         text = check.message,
                         style = MaterialTheme.typography.bodyMedium,
-                        color = Terracotta,
+                        color = Accent,
                     )
                 }
             }

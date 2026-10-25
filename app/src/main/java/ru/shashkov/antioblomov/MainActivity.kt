@@ -42,11 +42,11 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // Интерфейс на всю высоту экрана; тёмные значки в строке состояния,
-        // потому что фон приложения светлый.
+        // Интерфейс на всю высоту экрана; светлые значки в строке состояния —
+        // фон приложения тёмный (редизайн, только тёмная тема).
         enableEdgeToEdge(
-            statusBarStyle = SystemBarStyle.light(Color.TRANSPARENT, Color.TRANSPARENT),
-            navigationBarStyle = SystemBarStyle.light(Color.TRANSPARENT, Color.TRANSPARENT),
+            statusBarStyle = SystemBarStyle.dark(Color.TRANSPARENT),
+            navigationBarStyle = SystemBarStyle.dark(Color.TRANSPARENT),
         )
         onboarding = OnboardingStore(this)
         showOnboarding = !onboarding.completed

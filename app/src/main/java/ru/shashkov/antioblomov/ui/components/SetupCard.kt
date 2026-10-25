@@ -23,8 +23,8 @@ import androidx.compose.ui.unit.dp
 import ru.shashkov.antioblomov.rules.SetupChecklist
 import ru.shashkov.antioblomov.rules.SetupItem
 import ru.shashkov.antioblomov.rules.SetupState
-import ru.shashkov.antioblomov.ui.theme.Lake
-import ru.shashkov.antioblomov.ui.theme.Terracotta
+import ru.shashkov.antioblomov.ui.theme.Calm
+import ru.shashkov.antioblomov.ui.theme.Accent
 
 /**
  * «Настройка телефона» на главной: что сделано в мастере, а что пропущено (FR-08).
@@ -61,7 +61,7 @@ fun SetupRow(title: String, done: Boolean) {
         Icon(
             imageVector = if (done) Icons.Filled.CheckCircle else Icons.Filled.Warning,
             contentDescription = if (done) "Сделано" else "Не сделано",
-            tint = if (done) Lake else Terracotta,
+            tint = if (done) Calm else Accent,
         )
         Text(text = title, style = MaterialTheme.typography.bodyLarge)
     }

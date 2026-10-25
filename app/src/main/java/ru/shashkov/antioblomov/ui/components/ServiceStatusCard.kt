@@ -23,8 +23,8 @@ import ru.shashkov.antioblomov.rules.SetupGuide
 import ru.shashkov.antioblomov.blocking.openAccessibilitySettings
 import ru.shashkov.antioblomov.blocking.openAppSettings
 import ru.shashkov.antioblomov.ui.theme.AntiOblomovTheme
-import ru.shashkov.antioblomov.ui.theme.Lake
-import ru.shashkov.antioblomov.ui.theme.Terracotta
+import ru.shashkov.antioblomov.ui.theme.Calm
+import ru.shashkov.antioblomov.ui.theme.Accent
 
 /**
  * Карточка на главной: работает ли служба блокировки и как её включить.
@@ -97,7 +97,7 @@ private fun Status(text: String, ok: Boolean) = Text(
     text = text,
     style = MaterialTheme.typography.bodyLarge,
     fontWeight = FontWeight.Bold,
-    color = if (ok) Lake else Terracotta,
+    color = if (ok) Calm else Accent,
 )
 
 @Composable
