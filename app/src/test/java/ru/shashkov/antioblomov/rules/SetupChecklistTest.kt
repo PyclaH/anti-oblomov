@@ -17,7 +17,8 @@ class SetupChecklistTest {
         battery: Boolean = true,
         extraBattery: Boolean = true,
         autostart: Boolean = true,
-    ) = SetupState(brand, service, notifications, battery, extraBattery, autostart)
+        usage: Boolean = true,
+    ) = SetupState(brand, service, notifications, battery, extraBattery, autostart, usage)
 
     @Test fun `марка по производителю`() {
         assertEquals(PhoneBrand.XIAOMI, PhoneBrand.detect("Xiaomi", "POCO"))
@@ -62,6 +63,11 @@ class SetupChecklistTest {
 
     @Test fun `на прочих Android автозапуск не спрашиваем`() {
         assertTrue(SetupChecklist.missing(state(brand = PhoneBrand.OTHER, autostart = false)).isEmpty())
+    }
+
+    @Test fun `доступ к статистике — отдельный пункт и шаг мастера`() {
+        assertEquals(listOf(SetupItem.USAGE), SetupChecklist.missing(state(usage = false)))
+        assertTrue(OnboardingPage.USAGE in Onboarding.pages(PhoneBrand.OTHER))
     }
 
     @Test fun `пропущенные шаги видны`() {

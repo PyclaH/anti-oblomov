@@ -41,6 +41,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import ru.shashkov.antioblomov.blocking.TimerNotification
+import ru.shashkov.antioblomov.data.UsageCollector
 import ru.shashkov.antioblomov.blocking.openAccessibilitySettings
 import ru.shashkov.antioblomov.blocking.openAppSettings
 import ru.shashkov.antioblomov.blocking.openGuide
@@ -110,6 +111,7 @@ fun OnboardingScreen(
                 OnboardingPage.NOTIFICATIONS -> NotificationsPage(setup, onRefresh)
                 OnboardingPage.BATTERY -> BatteryPage(setup, onExtraBatteryConfirmed)
                 OnboardingPage.AUTOSTART -> AutostartPage(setup, onAutostartConfirmed)
+                OnboardingPage.USAGE -> UsagePage(setup)
                 OnboardingPage.FINISH -> FinishPage(setup)
             }
         }
@@ -138,6 +140,7 @@ private fun pageDone(page: OnboardingPage, setup: SetupState): Boolean = when (p
     OnboardingPage.NOTIFICATIONS -> SetupChecklist.isDone(SetupItem.NOTIFICATIONS, setup)
     OnboardingPage.BATTERY -> SetupChecklist.isDone(SetupItem.BATTERY, setup)
     OnboardingPage.AUTOSTART -> SetupChecklist.isDone(SetupItem.AUTOSTART, setup)
+    OnboardingPage.USAGE -> SetupChecklist.isDone(SetupItem.USAGE, setup)
     OnboardingPage.WELCOME, OnboardingPage.FINISH -> true
 }
 
@@ -251,6 +254,35 @@ private fun AutostartPage(setup: SetupState, onAutostartConfirmed: (Boolean) -> 
     val guide = SetupGuide.autostart(setup.brand) ?: return
     Title(guide.title)
     GuideBlock(guide, confirmed = setup.autostartConfirmed, onConfirmed = onAutostartConfirmed, showTitle = false)
+}
+
+@Composable
+private fun UsagePage(setup: SetupState) {
+    val context = LocalContext.current
+    Title("Статистика «Было / стало»")
+    Body(
+        "На главной будет видно, сколько времени вы проводили в выбранных приложениях до «Анти-Обломова» " +
+            "и сколько теперь — и сколько времени вернули себе."
+    )
+    InfoBox(
+        title = "Что для этого читается",
+        lines = listOf(
+            "Сколько минут каждое приложение было на экране — та же статистика, что в «Цифровом благополучии»",
+            "Данные остаются на телефоне и никуда не отправляются",
+        ),
+    )
+    Steps(
+        listOf(
+            "Нажмите «Открыть настройки»",
+            "Найдите «Анти-Обломов» и включите «Доступ к истории использования»",
+        )
+    )
+    Status(setup.usageAccess, okText = "Доступ к статистике есть", notText = "Доступа к статистике пока нет")
+    if (!setup.usageAccess) {
+        Button(modifier = Modifier.fillMaxWidth(), onClick = { UsageCollector.openSettings(context) }) {
+            Text("Открыть настройки")
+        }
+    }
 }
 
 @Composable

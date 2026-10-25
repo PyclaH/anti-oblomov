@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <!--
         Какие чужие приложения видит «Анти-Обломов» (Android 11+ иначе их скрывает):
@@ -36,6 +37,14 @@
         Блокировщику это нужно для основной функции: иначе система останавливает службу.
     -->
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+
+    <!--
+        «Было / стало»: сколько минут приложения были на экране (та же статистика, что
+        в «Цифровом благополучии»). Пользователь включает доступ сам в настройках.
+    -->
+    <uses-permission
+        android:name="android.permission.PACKAGE_USAGE_STATS"
+        tools:ignore="ProtectedPermissions" />
 
     <application
         android:allowBackup="true"

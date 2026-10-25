@@ -12,6 +12,7 @@ import android.util.Log
 import android.view.accessibility.AccessibilityEvent
 import ru.shashkov.antioblomov.data.ProtectedApps
 import ru.shashkov.antioblomov.data.SettingsStore
+import ru.shashkov.antioblomov.data.UsageCollector
 import ru.shashkov.antioblomov.rules.BlockRules
 import ru.shashkov.antioblomov.rules.BlockStatus
 import ru.shashkov.antioblomov.rules.Settings
@@ -19,6 +20,7 @@ import ru.shashkov.antioblomov.rules.TimeText
 import java.time.Duration
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
+import java.util.concurrent.Executors
 
 /**
  * Служба блокировки на основе специальных возможностей Android.
@@ -52,6 +54,15 @@ class BlockingService : AccessibilityService() {
     private var protectedApps: Set<String> = emptySet()
     private val handler = Handler(Looper.getMainLooper())
     private val boundaryCheck = Runnable { onBoundary() }
+
+    /** «Было / стало»: раз в час дописываем прошедшие дни в журнал — даже если приложение не открывают. */
+    private val usageExecutor = Executors.newSingleThreadExecutor()
+    private val usageTick = object : Runnable {
+        override fun run() {
+            usageExecutor.execute { UsageCollector.update(this@BlockingService) }
+            handler.postDelayed(this, USAGE_PERIOD_MS)
+        }
+    }
     private var scheduledFor: ZonedDateTime? = null
     private var focusRequest: AudioFocusRequest? = null
     private var lastPipPauseAt = 0L
@@ -66,6 +77,7 @@ class BlockingService : AccessibilityService() {
         scheduleBoundaryCheck(settings, ZonedDateTime.now())
         // После перезагрузки уведомление таймера пропадает — возвращаем его
         TimerNotification.update(this, settings)
+        handler.post(usageTick)
     }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
@@ -189,6 +201,8 @@ class BlockingService : AccessibilityService() {
 
     override fun onDestroy() {
         handler.removeCallbacks(boundaryCheck)
+        handler.removeCallbacks(usageTick)
+        usageExecutor.shutdown()
         if (::overlay.isInitialized) overlay.hide()
         Log.i(TAG, "Служба блокировки остановлена")
         super.onDestroy()
@@ -198,6 +212,7 @@ class BlockingService : AccessibilityService() {
         /** Фильтр для Logcat в Android Studio. */
         const val TAG = "AntiOblomov"
         private const val PIP_DEBOUNCE_MS = 2_000L
+        private const val USAGE_PERIOD_MS = 60 * 60 * 1000L
 
         /** Проверяем чуть позже границы, чтобы точно попасть внутрь интервала. */
         private const val BOUNDARY_SLACK_MS = 500L

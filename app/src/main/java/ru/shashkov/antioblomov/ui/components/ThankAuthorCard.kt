@@ -16,10 +16,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -29,42 +25,26 @@ import androidx.compose.ui.unit.dp
 import ru.shashkov.antioblomov.ui.theme.AntiOblomovTheme
 
 /**
- * Ссылка на страницу проекта на Sponsr.ru.
- * Пока пустая — карточка не показывается. Подставим, когда проект пройдёт модерацию.
+ * Страница проекта на Sponsr.ru (прислана 25.10.2026, проект на модерации).
+ * Пустая строка — карточка не показывается.
  */
-const val SPONSR_URL = ""
+const val SPONSR_URL = "https://sponsr.ru/anti_olblomov/"
 
 /**
- * С какой экономии (минут в день) предлагаем поблагодарить автора.
- * Небольшие колебания не считаем экономией.
- */
-const val THANK_THRESHOLD_MINUTES = 15
-
-/**
- * Предложение поблагодарить автора. Показывается рядом с блоком «Было / стало»
- * и только если приложение реально сэкономило время.
+ * Предложение поблагодарить автора — рядом с «Было / стало» (FR-17).
+ * КОГДА показывать, решает ThankRules (веха, экономия ≥ 15 мин/день, не чаще раза в 30 дней);
+ * карточка видна, пока пользователь не ответит: «Поблагодарить» или «Не сейчас».
  *
- * Полные условия показа (7 дней данных, вехи, не чаще раза в 30 дней) —
- * README, «Спецификация: раздел „Было / стало“», п. 6. Здесь проверяется только
- * порог экономии; остальное проверит главный экран на неделе 6.
- *
- * Важно (правила Sponsr п. 5.18 и RuStore п. 6.1): донат ничего не открывает
- * и ни на что в приложении не влияет — приложение полностью бесплатное.
- *
- * @param savedMinutesPerDay на сколько минут в день сократилось время
- *        в заблокированных приложениях (было − стало).
+ * Важно (правила Sponsr п. 5.18 и RuStore п. 6.1, 7.3): донат ничего не открывает,
+ * ни на что в приложении не влияет и не связан с отзывом — приложение полностью бесплатное.
  */
 @Composable
 fun ThankAuthorCard(
     savedMinutesPerDay: Int,
+    onAnswered: () -> Unit,
     modifier: Modifier = Modifier,
     url: String = SPONSR_URL,
 ) {
-    // «Не сейчас» скрывает карточку до перезапуска приложения.
-    // TODO: когда появится хранение настроек — скрывать на 30 дней.
-    var dismissed by rememberSaveable { mutableStateOf(false) }
-    if (dismissed || url.isBlank() || savedMinutesPerDay < THANK_THRESHOLD_MINUTES) return
-
     val context = LocalContext.current
 
     Card(
@@ -93,7 +73,7 @@ fun ThankAuthorCard(
                 horizontalArrangement = Arrangement.End,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                TextButton(onClick = { dismissed = true }) {
+                TextButton(onClick = onAnswered) {
                     Text("Не сейчас")
                 }
                 Button(onClick = {
@@ -102,6 +82,7 @@ fun ThankAuthorCard(
                     } catch (e: ActivityNotFoundException) {
                         Toast.makeText(context, "Не найден браузер, чтобы открыть ссылку", Toast.LENGTH_LONG).show()
                     }
+                    onAnswered()
                 }) {
                     Text("Поблагодарить автора")
                 }
@@ -127,8 +108,8 @@ private fun ThankAuthorCardPreview() {
     AntiOblomovTheme {
         ThankAuthorCard(
             savedMinutesPerDay = 145,
+            onAnswered = {},
             modifier = Modifier.padding(16.dp),
-            url = "https://sponsr.ru/",
         )
     }
 }

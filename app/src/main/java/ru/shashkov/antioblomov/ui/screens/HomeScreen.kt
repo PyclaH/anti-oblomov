@@ -23,10 +23,22 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
 import ru.shashkov.antioblomov.R
 import ru.shashkov.antioblomov.blocking.ServiceState
+import ru.shashkov.antioblomov.data.OnboardingStore
 import ru.shashkov.antioblomov.data.SettingsStore
+import ru.shashkov.antioblomov.data.UsageCollector
+import ru.shashkov.antioblomov.data.UsageStore
+import ru.shashkov.antioblomov.rules.DayUsage
+import ru.shashkov.antioblomov.rules.Savings
+import ru.shashkov.antioblomov.rules.ThankRules
+import ru.shashkov.antioblomov.rules.UsageHistory
+import ru.shashkov.antioblomov.ui.components.SPONSR_URL
+import ru.shashkov.antioblomov.ui.components.StatsCard
+import ru.shashkov.antioblomov.ui.components.ThankAuthorCard
 import ru.shashkov.antioblomov.rules.BlockRules
 import ru.shashkov.antioblomov.rules.BlockStatus
 import ru.shashkov.antioblomov.rules.HomeStatusText
@@ -44,7 +56,7 @@ import java.time.ZonedDateTime
  * и «Настройка телефона» (что пропущено в мастере, FR-08).
  * Если служба не работает, это видно сразу в статусе: блокировка по правилам есть,
  * но приложения на самом деле не блокируются.
- * На шаге 7 здесь появится «Было / стало».
+ * Под статусом — «Было / стало» (FR-14…FR-16) и, на вехах, «Поблагодарить автора» (FR-17).
  */
 @Composable
 fun HomeScreen(
@@ -66,6 +78,33 @@ fun HomeScreen(
             now = ZonedDateTime.now()
             if (++tick % 5 == 0) settings = store.read()
         }
+    }
+
+    // «Было / стало»: журнал пополняем и перечитываем раз в минуту (в фоне — долго)
+    val onboarding = remember { OnboardingStore(context) }
+    var history by remember { mutableStateOf<UsageHistory?>(null) }
+    var todayUsage by remember { mutableStateOf<DayUsage>(emptyMap()) }
+    var notScreenTime by remember { mutableStateOf(emptySet<String>()) }
+    var thankAnsweredAt by remember { mutableStateOf(onboarding.thankAnsweredAt) }
+    var thankMilestone by remember { mutableStateOf(onboarding.thankMilestone) }
+
+    LaunchedEffect(setup.usageAccess) {
+        if (!setup.usageAccess) return@LaunchedEffect
+        notScreenTime = withContext(Dispatchers.IO) { UsageCollector.notScreenTime(context) }
+        while (true) {
+            val (h, t) = withContext(Dispatchers.IO) {
+                UsageCollector.update(context)
+                UsageStore(context).read() to UsageCollector.today(context)
+            }
+            history = h
+            todayUsage = t
+            delay(60_000)
+        }
+    }
+
+    val today = now.toLocalDate()
+    val report = remember(history, todayUsage, settings.blockedPackages, notScreenTime, today) {
+        history?.let { Savings.report(it, today, todayUsage, settings.blockedPackages, notScreenTime) }
     }
 
     val status = BlockRules.status(settings, now)
@@ -122,6 +161,30 @@ fun HomeScreen(
                 text = "Приложения для блокировки не выбраны — отметьте их на вкладке «Приложения»",
                 style = MaterialTheme.typography.bodyMedium,
                 color = Terracotta,
+            )
+        }
+
+        StatsCard(
+            hasAccess = setup.usageAccess,
+            report = report,
+            startDate = history?.startDate,
+            noAppsSelected = settings.blockedPackages.isEmpty(),
+            onOpenAccess = { UsageCollector.openSettings(context) },
+        )
+
+        val milestone = report?.milestone
+        if (milestone != null &&
+            ThankRules.shouldShow(SPONSR_URL, milestone, thankMilestone, thankAnsweredAt, today)
+        ) {
+            ThankAuthorCard(
+                savedMinutesPerDay = milestone.savedPerDayMinutes,
+                onAnswered = {
+                    // Ответил — на этой вехе больше не предлагаем, следующий раз не раньше чем через 30 дней
+                    onboarding.thankAnsweredAt = today
+                    onboarding.thankMilestone = milestone.date
+                    thankAnsweredAt = today
+                    thankMilestone = milestone.date
+                },
             )
         }
 

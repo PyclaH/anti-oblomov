@@ -110,7 +110,7 @@ private fun AntiOblomovAppPreview() {
     AntiOblomovTheme {
         AntiOblomovApp(
             serviceState = ServiceState.OFF,
-            setup = SetupState(PhoneBrand.XIAOMI, false, false, false, false, false),
+            setup = SetupState(PhoneBrand.XIAOMI, false, false, false, false, false, false),
         )
     }
 }

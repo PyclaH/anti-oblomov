@@ -10,6 +10,7 @@ import android.os.PowerManager
 import android.provider.Settings
 import android.util.Log
 import ru.shashkov.antioblomov.data.OnboardingStore
+import ru.shashkov.antioblomov.data.UsageCollector
 import ru.shashkov.antioblomov.rules.Guide
 import ru.shashkov.antioblomov.rules.PhoneBrand
 import ru.shashkov.antioblomov.rules.SetupState
@@ -25,6 +26,7 @@ fun readSetupState(context: Context, onboarding: OnboardingStore = OnboardingSto
     batteryUnrestricted = isBatteryUnrestricted(context),
     extraBatteryConfirmed = onboarding.extraBatteryConfirmed,
     autostartConfirmed = onboarding.autostartConfirmed,
+    usageAccess = UsageCollector.hasAccess(context),
 )
 
 /** Android не ограничивает приложению работу в фоне («Батарея: без ограничений»). */
