@@ -30,7 +30,9 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import ru.shashkov.antioblomov.rules.DurationCheck
 import ru.shashkov.antioblomov.rules.TimerRules
-import ru.shashkov.antioblomov.ui.theme.Accent
+import androidx.compose.foundation.shape.RoundedCornerShape
+import ru.shashkov.antioblomov.ui.theme.Surface1
+import ru.shashkov.antioblomov.ui.theme.Warn
 
 /**
  * Окно «на сколько»: часы и минуты набираются цифрами с клавиатуры.
@@ -64,7 +66,9 @@ fun DurationDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(title) },
+        containerColor = Surface1,
+        shape = RoundedCornerShape(28.dp),
+        title = { Text(title, style = MaterialTheme.typography.titleLarge) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -107,7 +111,7 @@ fun DurationDialog(
                     is DurationCheck.Error -> Text(
                         text = check.message,
                         style = MaterialTheme.typography.bodyMedium,
-                        color = Accent,
+                        color = Warn,
                     )
                 }
             }
@@ -134,7 +138,8 @@ private fun NumberField(
         modifier = modifier,
         label = { Text(label) },
         singleLine = true,
-        textStyle = MaterialTheme.typography.titleLarge,
+        textStyle = MaterialTheme.typography.headlineSmall,
+        shape = RoundedCornerShape(16.dp),
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = imeAction),
         keyboardActions = KeyboardActions(onNext = { onIme() }, onDone = { onIme() }),
     )
