@@ -1,5 +1,7 @@
 package ru.shashkov.antioblomov.ui.screens
 
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -15,7 +17,6 @@ import ru.shashkov.antioblomov.rules.SetupChecklist
 import ru.shashkov.antioblomov.ui.components.StatusRing
 import ru.shashkov.antioblomov.ui.components.SystemBlock
 import ru.shashkov.antioblomov.ui.components.statsAppsSummary
-import ru.shashkov.antioblomov.ui.theme.Surface2
 import ru.shashkov.antioblomov.ui.theme.Warn
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -56,6 +57,7 @@ import ru.shashkov.antioblomov.rules.UsageHistory
 import ru.shashkov.antioblomov.ui.components.StatsCard
 import ru.shashkov.antioblomov.ui.components.ThankAuthorCard
 import ru.shashkov.antioblomov.rules.BlockRules
+import ru.shashkov.antioblomov.rules.BlockStatus
 import ru.shashkov.antioblomov.rules.HomeStatusText
 import ru.shashkov.antioblomov.rules.TimerRules
 import ru.shashkov.antioblomov.rules.SetupState
@@ -152,7 +154,7 @@ fun HomeScreen(
                 modifier = Modifier
                     .size(28.dp)
                     .clip(RoundedCornerShape(8.dp))
-                    .background(Surface2),
+                    .background(Brush.verticalGradient(listOf(Color(0xFF6E3019), Color(0xFF34150A)))),
                 contentAlignment = Alignment.Center,
             ) {
                 Image(painterResource(R.drawable.ic_launcher_foreground), contentDescription = null, modifier = Modifier.size(42.dp))
@@ -163,6 +165,7 @@ fun HomeScreen(
         StatusRing(
             text = HomeStatusText.ring(status, now),
             progress = BlockRules.blockedProgress(settings, now),
+            nothingPlanned = status is BlockStatus.Free && status.nextBlockAt == null,
             serviceWorks = serviceWorks,
             timerLeft = TimerRules.remainingMillis(settings, now)?.let(TimerRules::countdown),
             description = HomeStatusText.title(status, now) + ", " + HomeStatusText.detail(status, now) +

@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-    Иконка (редизайн, вариант «Графит», 25.10.2026): песочные часы тонким контуром,
-    единственный цвет — терракотовый песок. Та же идея, что и раньше, но темнее и спокойнее.
-    Рисунок — в безопасной зоне 66×66 в центре (адаптивная иконка 108×108).
+    Иконка (редизайн, вариант 2 «Тёмная терракота», 25.10.2026): светлые песочные часы
+    на тёмной терракоте, песок — цветом фона. Рисунок — в безопасной зоне 66×66 в центре
+    (адаптивная иконка 108×108).
 -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
@@ -10,35 +10,27 @@
     android:viewportWidth="108"
     android:viewportHeight="108">
 
-    <group
-        android:pivotX="54"
-        android:pivotY="54"
-        android:scaleX="1.0"
-        android:scaleY="1.0">
+    <!-- Верхняя и нижняя планки -->
+    <path
+        android:fillColor="#F2EFE8"
+        android:fillAlpha="0.92"
+        android:pathData="M36,32h36v5h-36z" />
+    <path
+        android:fillColor="#F2EFE8"
+        android:fillAlpha="0.92"
+        android:pathData="M36,71h36v5h-36z" />
 
-        <!-- Верхняя и нижняя планки -->
-        <path
-            android:fillColor="#F2EFE8"
-            android:pathData="M36,32h36v4h-36z" />
-        <path
-            android:fillColor="#F2EFE8"
-            android:pathData="M36,72h36v4h-36z" />
+    <!-- Колба -->
+    <path
+        android:fillColor="#F2EFE8"
+        android:fillAlpha="0.92"
+        android:pathData="M39.6,36.5h28.8L56,54l12.4,17.5H39.6L52,54z" />
 
-        <!-- Колба — контур -->
-        <path
-            android:strokeColor="#F2EFE8"
-            android:strokeWidth="2"
-            android:strokeLineJoin="round"
-            android:fillColor="#00000000"
-            android:pathData="M40,36h28l-12,18l12,18h-28l12,-18z" />
-
-        <!-- Песок: наверху — остаток, внизу — горка -->
-        <path
-            android:fillColor="#E2683C"
-            android:fillAlpha="0.55"
-            android:pathData="M46,41h16l-6.5,9h-3z" />
-        <path
-            android:fillColor="#E2683C"
-            android:pathData="M45,69l9,-8l9,8z" />
-    </group>
+    <!-- Песок: наверху — остаток, внизу — горка -->
+    <path
+        android:fillColor="#34150A"
+        android:pathData="M46,41h16l-6.5,9h-3z" />
+    <path
+        android:fillColor="#34150A"
+        android:pathData="M45,68l9,-8l9,8z" />
 </vector>
