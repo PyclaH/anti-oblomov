@@ -39,22 +39,51 @@ class ScheduleEditorTest {
         assertEquals(IntervalCheck.Ok(TimeInterval(m(22), 24 * 60)), ScheduleEditor.check(m(22), 0, emptyList()))
     }
 
-    @Test fun `пересечение — ошибка с указанием интервала`() {
-        val r = ScheduleEditor.check(m(13), m(16), monday.intervalsOn(MONDAY))
-        assertEquals(IntervalCheck.Error("Пересекается с интервалом 10:00–14:00"), r)
+    @Test fun `пересечение — не ошибка`() {
+        assertTrue(ScheduleEditor.check(m(13), m(16), monday.intervalsOn(MONDAY)) is IntervalCheck.Ok)
     }
 
-    @Test fun `интервал внутри другого — ошибка`() {
-        assertTrue(ScheduleEditor.check(m(11), m(12), monday.intervalsOn(MONDAY)) is IntervalCheck.Error)
+    // ---------- объединение ----------
+
+    @Test fun `пересекающийся интервал объединяется со всеми, кого задел`() {
+        val s = ScheduleEditor.put(monday, MONDAY, TimeInterval.of(13, 0, 16, 0))
+        assertEquals(listOf(TimeInterval.of(10, 0, 20, 0)), s.schedule[MONDAY])
     }
 
-    @Test fun `соприкосновение — не пересечение`() {
-        assertTrue(ScheduleEditor.check(m(14), m(15), monday.intervalsOn(MONDAY)) is IntervalCheck.Ok)
+    @Test fun `интервал внутри другого поглощается`() {
+        val s = ScheduleEditor.put(monday, MONDAY, TimeInterval.of(11, 0, 12, 0))
+        assertEquals(listOf(morning, evening), s.schedule[MONDAY])
     }
 
-    @Test fun `при правке интервал не конфликтует сам с собой`() {
-        val r = ScheduleEditor.check(m(9), m(14), monday.intervalsOn(MONDAY), replacing = morning)
-        assertEquals(IntervalCheck.Ok(TimeInterval.of(9, 0, 14, 0)), r)
+    @Test fun `соприкосновение тоже объединяет`() {
+        val s = ScheduleEditor.put(monday, MONDAY, TimeInterval.of(14, 0, 15, 0))
+        assertEquals(listOf(TimeInterval.of(10, 0, 20, 0)), s.schedule[MONDAY])
+    }
+
+    @Test fun `продолжение интервала встык удлиняет его`() {
+        val s = ScheduleEditor.put(monday, MONDAY, TimeInterval.of(20, 0, 21, 0))
+        assertEquals(listOf(morning, TimeInterval.of(15, 0, 21, 0)), s.schedule[MONDAY])
+    }
+
+    @Test fun `одинаковый интервал не дублируется`() {
+        val s = ScheduleEditor.put(monday, MONDAY, morning)
+        assertEquals(listOf(morning, evening), s.schedule[MONDAY])
+    }
+
+    @Test fun `правка, после которой интервал задел соседний, — объединение`() {
+        val s = ScheduleEditor.put(monday, MONDAY, TimeInterval.of(9, 0, 15, 30), old = morning)
+        assertEquals(listOf(TimeInterval.of(9, 0, 20, 0)), s.schedule[MONDAY])
+    }
+
+    @Test fun `правка без пересечений просто заменяет`() {
+        val s = ScheduleEditor.put(monday, MONDAY, TimeInterval.of(9, 0, 13, 0), old = morning)
+        assertEquals(listOf(TimeInterval.of(9, 0, 13, 0), evening), s.schedule[MONDAY])
+    }
+
+    @Test fun `объединение цепочкой через уже соприкасающиеся интервалы`() {
+        val settings = Settings(schedule = mapOf(MONDAY to listOf(TimeInterval.of(10, 0, 12, 0), TimeInterval.of(12, 0, 14, 0))))
+        val s = ScheduleEditor.put(settings, MONDAY, TimeInterval.of(11, 0, 11, 30))
+        assertEquals(listOf(TimeInterval.of(10, 0, 14, 0)), s.schedule[MONDAY])
     }
 
     // ---------- добавление, правка, удаление ----------

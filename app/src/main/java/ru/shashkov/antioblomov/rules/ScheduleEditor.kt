@@ -39,35 +39,51 @@ object ScheduleEditor {
     }
 
     /**
-     * Проверить интервал [startMinute]–[endMinute] для дня, где уже есть [existing].
-     * [replacing] — интервал, который сейчас редактируют (с ним не сравниваем).
-     * Конец 00:00 означает «до полуночи» (24:00): в часах Android нельзя выбрать 24:00.
+     * Проверить интервал перед сохранением: конец должен быть позже начала.
+     * Конец 00:00 означает «до полуночи» (24:00).
+     *
+     * Пересечения с другими интервалами ошибкой не считаются: при сохранении
+     * интервалы молча объединяются (put). [existing] и [replacing] оставлены
+     * для совместимости вызовов.
      */
+    @Suppress("UNUSED_PARAMETER")
     fun check(
         startMinute: Int,
         endMinute: Int,
-        existing: List<TimeInterval>,
+        existing: List<TimeInterval> = emptyList(),
         replacing: TimeInterval? = null,
     ): IntervalCheck {
         val end = if (endMinute == 0) TimeInterval.MINUTES_IN_DAY else endMinute
+        if (startMinute !in 0 until TimeInterval.MINUTES_IN_DAY || end > TimeInterval.MINUTES_IN_DAY) {
+            return IntervalCheck.Error("Время вне суток")
+        }
         if (end <= startMinute) {
             return IntervalCheck.Error("Конец должен быть позже начала")
         }
-        val candidate = TimeInterval(startMinute, end)
-        val conflict = existing
-            .filter { it != replacing }
-            .sortedBy { it.startMinute }
-            .firstOrNull { it.startMinute < candidate.endMinute && candidate.startMinute < it.endMinute }
-        if (conflict != null) {
-            return IntervalCheck.Error("Пересекается с интервалом $conflict")
-        }
-        return IntervalCheck.Ok(candidate)
+        return IntervalCheck.Ok(TimeInterval(startMinute, end))
     }
 
-    /** Добавить интервал или заменить [old] на [new] в день [day]. */
+    /**
+     * Добавить интервал или заменить [old] на [new] в день [day].
+     * Если новый интервал пересекается или соприкасается с другими (конец одного =
+     * начало другого), они молча объединяются в один (решение от 25.10.2026).
+     */
     fun put(settings: Settings, day: DayOfWeek, new: TimeInterval, old: TimeInterval? = null): Settings {
-        val list = settings.intervalsOn(day).filter { it != old } + new
-        return settings.copy(schedule = settings.schedule + (day to list.sortedBy { it.startMinute }))
+        var merged = new
+        var rest = settings.intervalsOn(day).filter { it != old }
+        while (true) {
+            val (touching, apart) = rest.partition {
+                it.startMinute <= merged.endMinute && merged.startMinute <= it.endMinute
+            }
+            if (touching.isEmpty()) break
+            merged = TimeInterval(
+                minOf(merged.startMinute, touching.minOf { it.startMinute }),
+                maxOf(merged.endMinute, touching.maxOf { it.endMinute }),
+            )
+            rest = apart
+        }
+        val list = (rest + merged).sortedBy { it.startMinute }
+        return settings.copy(schedule = settings.schedule + (day to list))
     }
 
     fun remove(settings: Settings, day: DayOfWeek, interval: TimeInterval): Settings {

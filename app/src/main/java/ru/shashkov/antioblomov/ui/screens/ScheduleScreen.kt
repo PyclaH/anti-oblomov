@@ -1,6 +1,5 @@
 package ru.shashkov.antioblomov.ui.screens
 
-import android.app.TimePickerDialog
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -17,6 +16,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -28,12 +29,12 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -42,21 +43,35 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.OffsetMapping
+import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.text.input.TransformedText
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import ru.shashkov.antioblomov.data.SettingsStore
 import ru.shashkov.antioblomov.rules.BlockRules
 import ru.shashkov.antioblomov.rules.BlockStatus
+import ru.shashkov.antioblomov.rules.ChangeGuard
 import ru.shashkov.antioblomov.rules.IntervalCheck
 import ru.shashkov.antioblomov.rules.ScheduleEditor
 import ru.shashkov.antioblomov.rules.Settings
+import ru.shashkov.antioblomov.rules.TimeInput
 import ru.shashkov.antioblomov.rules.TimeInterval
+import ru.shashkov.antioblomov.ui.components.WaitDialog
 import ru.shashkov.antioblomov.ui.theme.Lake
 import ru.shashkov.antioblomov.ui.theme.Terracotta
 import java.time.DayOfWeek
@@ -66,10 +81,15 @@ import java.time.format.DateTimeFormatter
 /** Что редактируем в диалоге: [old] = null — новый интервал. */
 private data class EditState(val old: TimeInterval?, val start: Int, val end: Int)
 
+/** Изменение, ждущее 15-секундной паузы (идёт блокировка — ChangeGuard). */
+private class PendingChange(val title: String, val change: (Settings) -> Settings, val done: () -> Unit)
+
 /**
  * Экран «Расписание» (FR-03…FR-05): интервалы блокировки по дням недели,
- * перерывы между ними, копирование на будни, проверка пересечений.
- * Изменения сохраняются сразу; служба подхватывает их без перезапуска.
+ * перерывы между ними, копирование на будни. Пересекающиеся и соприкасающиеся
+ * интервалы объединяются сами. Изменения сохраняются сразу; служба подхватывает их
+ * без перезапуска. Если идёт блокировка, а правка касается сегодняшнего дня, —
+ * сначала 15 секунд паузы с цитатой (WaitDialog).
  */
 @Composable
 fun ScheduleScreen(modifier: Modifier = Modifier) {
@@ -80,6 +100,7 @@ fun ScheduleScreen(modifier: Modifier = Modifier) {
     var selectedDay by rememberSaveable { mutableStateOf(ZonedDateTime.now().dayOfWeek) }
     var editing by remember { mutableStateOf<EditState?>(null) }
     var confirmCopy by remember { mutableStateOf<List<DayOfWeek>?>(null) }
+    var pending by remember { mutableStateOf<PendingChange?>(null) }
 
     // Статус «сейчас» меняется со временем
     LaunchedEffect(Unit) {
@@ -90,10 +111,23 @@ fun ScheduleScreen(modifier: Modifier = Modifier) {
         }
     }
 
-    fun save(change: (Settings) -> Settings) {
+    fun commit(change: (Settings) -> Settings) {
         settings = store.update(change)
         now = ZonedDateTime.now()
     }
+
+    /** Сохранить сразу или, если идёт блокировка и правка касается сегодня, — после паузы. */
+    fun save(title: String, change: (Settings) -> Settings, done: () -> Unit = {}) {
+        val before = store.read()
+        if (ChangeGuard.needsWait(before, change(before), ZonedDateTime.now())) {
+            pending = PendingChange(title, change, done)
+        } else {
+            commit(change)
+            done()
+        }
+    }
+
+    val copied = { Toast.makeText(context, "Скопировано на будни", Toast.LENGTH_SHORT).show() }
 
     val intervals = settings.intervalsOn(selectedDay)
     val dayName = ScheduleEditor.fullName(selectedDay)
@@ -135,7 +169,9 @@ fun ScheduleScreen(modifier: Modifier = Modifier) {
                     IntervalRow(
                         interval = interval,
                         onClick = { editing = EditState(interval, interval.startMinute, interval.endMinute) },
-                        onDelete = { save { ScheduleEditor.remove(it, selectedDay, interval) } },
+                        onDelete = {
+                            save("Удалить интервал $interval?", { ScheduleEditor.remove(it, selectedDay, interval) })
+                        },
                     )
                     breaks.firstOrNull { it.startMinute == interval.endMinute }?.let { BreakRow(it) }
                 }
@@ -164,8 +200,7 @@ fun ScheduleScreen(modifier: Modifier = Modifier) {
             onClick = {
                 val overwrite = ScheduleEditor.weekdaysToOverwrite(settings, selectedDay)
                 if (overwrite.isEmpty()) {
-                    save { ScheduleEditor.copyToWeekdays(it, selectedDay) }
-                    Toast.makeText(context, "Скопировано на будни", Toast.LENGTH_SHORT).show()
+                    save("Изменить расписание на сегодня?", { ScheduleEditor.copyToWeekdays(it, selectedDay) }, copied)
                 } else {
                     confirmCopy = overwrite
                 }
@@ -176,11 +211,13 @@ fun ScheduleScreen(modifier: Modifier = Modifier) {
     editing?.let { state ->
         IntervalDialog(
             state = state,
-            existing = intervals,
             onDismiss = { editing = null },
             onSave = { interval ->
-                save { ScheduleEditor.put(it, selectedDay, interval, old = state.old) }
                 editing = null
+                save(
+                    if (state.old == null) "Добавить интервал $interval?" else "Изменить интервал на $interval?",
+                    { ScheduleEditor.put(it, selectedDay, interval, old = state.old) },
+                )
             },
         )
     }
@@ -197,12 +234,23 @@ fun ScheduleScreen(modifier: Modifier = Modifier) {
             },
             confirmButton = {
                 TextButton(onClick = {
-                    save { ScheduleEditor.copyToWeekdays(it, selectedDay) }
                     confirmCopy = null
-                    Toast.makeText(context, "Скопировано на будни", Toast.LENGTH_SHORT).show()
+                    save("Изменить расписание на сегодня?", { ScheduleEditor.copyToWeekdays(it, selectedDay) }, copied)
                 }) { Text("Заменить") }
             },
             dismissButton = { TextButton(onClick = { confirmCopy = null }) { Text("Отмена") } },
+        )
+    }
+
+    pending?.let { p ->
+        WaitDialog(
+            title = p.title,
+            onConfirm = {
+                pending = null
+                commit(p.change)
+                p.done()
+            },
+            onDismiss = { pending = null },
         )
     }
 }
@@ -314,23 +362,35 @@ private fun BreakRow(gap: TimeInterval) {
     }
 }
 
-/** Диалог интервала: начало и конец выбираются в стандартных часах Android. */
+/**
+ * Диалог интервала: начало и конец набираются цифрами на клавиатуре,
+ * двоеточие подставляется само («930» → 9:30, «14» → 14:00). После четырёх цифр
+ * начала курсор сам переходит в поле конца.
+ */
 @Composable
 private fun IntervalDialog(
     state: EditState,
-    existing: List<TimeInterval>,
     onDismiss: () -> Unit,
     onSave: (TimeInterval) -> Unit,
 ) {
-    val context = LocalContext.current
-    var start by remember { mutableIntStateOf(state.start) }
-    var end by remember { mutableIntStateOf(state.end) }
-    val check = ScheduleEditor.check(start, end, existing, replacing = state.old)
+    var startField by remember { mutableStateOf(selectedAll(TimeInput.digitsOf(state.start))) }
+    var endField by remember { mutableStateOf(selectedAll(TimeInput.digitsOf(state.end))) }
+    val startFocus = remember { FocusRequester() }
+    val endFocus = remember { FocusRequester() }
+    val keyboard = LocalSoftwareKeyboardController.current
 
-    fun pick(initial: Int, onPicked: (Int) -> Unit) {
-        val h = (initial / 60) % 24
-        val m = initial % 60
-        TimePickerDialog(context, { _, hour, minute -> onPicked(hour * 60 + minute) }, h, m, true).show()
+    val start = TimeInput.parse(startField.text)
+    val end = TimeInput.parse(endField.text)
+    val check: IntervalCheck = when {
+        start == null -> IntervalCheck.Error("Введите время начала, например 930 или 0930")
+        end == null -> IntervalCheck.Error("Введите время конца, например 1400")
+        else -> ScheduleEditor.check(start, end)
+    }
+
+    LaunchedEffect(Unit) {
+        delay(150) // окно диалога должно успеть появиться
+        startFocus.requestFocus()
+        keyboard?.show()
     }
 
     AlertDialog(
@@ -338,19 +398,48 @@ private fun IntervalDialog(
         title = { Text(if (state.old == null) "Новый интервал" else "Интервал") },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                OutlinedButton(modifier = Modifier.fillMaxWidth(), onClick = { pick(start) { start = it } }) {
-                    Text("Начало: ${TimeInterval.hhmm(start)}")
-                }
-                OutlinedButton(modifier = Modifier.fillMaxWidth(), onClick = { pick(end) { end = it } }) {
-                    Text("Конец: ${if (end == 0) "24:00" else TimeInterval.hhmm(end)}")
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                    TimeField(
+                        label = "Начало",
+                        value = startField,
+                        onValueChange = { v ->
+                            val typed = v.text != startField.text
+                            startField = cleaned(v)
+                            if (typed && startField.text.length == TimeInput.MAX_DIGITS) {
+                                endField = selectedAll(endField.text)
+                                endFocus.requestFocus()
+                            }
+                        },
+                        imeAction = ImeAction.Next,
+                        onIme = { endField = selectedAll(endField.text); endFocus.requestFocus() },
+                        modifier = Modifier.weight(1f).focusRequester(startFocus),
+                    )
+                    Text("–", style = MaterialTheme.typography.titleLarge)
+                    TimeField(
+                        label = "Конец",
+                        value = endField,
+                        onValueChange = { v -> endField = cleaned(v) },
+                        imeAction = ImeAction.Done,
+                        onIme = { (check as? IntervalCheck.Ok)?.let { onSave(it.interval) } },
+                        modifier = Modifier.weight(1f).focusRequester(endFocus),
+                    )
                 }
                 Text(
-                    text = "Конец 00:00 — до полуночи.",
+                    text = "Только цифры: 930 → 9:30, 14 → 14:00. Конец 2400 или 0000 — до полуночи.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-                if (check is IntervalCheck.Error) {
-                    Text(text = check.message, style = MaterialTheme.typography.bodyMedium, color = Terracotta)
+                when (check) {
+                    is IntervalCheck.Ok -> Text(
+                        text = "Блокировка ${check.interval}",
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Bold,
+                    )
+                    is IntervalCheck.Error -> Text(
+                        text = check.message,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Terracotta,
+                    )
                 }
             }
         },
@@ -362,6 +451,51 @@ private fun IntervalDialog(
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text("Отмена") } },
     )
+}
+
+@Composable
+private fun TimeField(
+    label: String,
+    value: TextFieldValue,
+    onValueChange: (TextFieldValue) -> Unit,
+    imeAction: ImeAction,
+    onIme: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    OutlinedTextField(
+        value = value,
+        onValueChange = onValueChange,
+        modifier = modifier,
+        label = { Text(label) },
+        singleLine = true,
+        textStyle = MaterialTheme.typography.titleLarge,
+        visualTransformation = ColonTransformation,
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = imeAction),
+        keyboardActions = KeyboardActions(onNext = { onIme() }, onDone = { onIme() }),
+    )
+}
+
+/** Текст выделен целиком — первая набранная цифра заменит старое время. */
+private fun selectedAll(digits: String) = TextFieldValue(digits, TextRange(0, digits.length))
+
+/** Оставить только цифры (на цифровой клавиатуре бывают «.», «,» и «-»). */
+private fun cleaned(v: TextFieldValue): TextFieldValue {
+    val digits = TimeInput.clean(v.text)
+    return if (digits == v.text) v else TextFieldValue(digits, TextRange(digits.length))
+}
+
+/** Показывает «1430» как «14:30»: двоеточие перед двумя последними цифрами. */
+private object ColonTransformation : VisualTransformation {
+    override fun filter(text: AnnotatedString): TransformedText {
+        val digits = text.text
+        if (digits.length < 3) return TransformedText(text, OffsetMapping.Identity)
+        val colonAt = digits.length - 2
+        val mapping = object : OffsetMapping {
+            override fun originalToTransformed(offset: Int) = if (offset <= colonAt) offset else offset + 1
+            override fun transformedToOriginal(offset: Int) = if (offset <= colonAt) offset else (offset - 1).coerceAtMost(digits.length)
+        }
+        return TransformedText(AnnotatedString(TimeInput.display(digits)), mapping)
+    }
 }
 
 private val TIME = DateTimeFormatter.ofPattern("HH:mm")
