@@ -28,15 +28,12 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import ru.shashkov.antioblomov.R
 import ru.shashkov.antioblomov.blocking.ServiceState
-import ru.shashkov.antioblomov.data.OnboardingStore
 import ru.shashkov.antioblomov.data.SettingsStore
 import ru.shashkov.antioblomov.data.UsageCollector
 import ru.shashkov.antioblomov.data.UsageStore
 import ru.shashkov.antioblomov.rules.DayUsage
 import ru.shashkov.antioblomov.rules.Savings
-import ru.shashkov.antioblomov.rules.ThankRules
 import ru.shashkov.antioblomov.rules.UsageHistory
-import ru.shashkov.antioblomov.ui.components.SPONSR_URL
 import ru.shashkov.antioblomov.ui.components.StatsCard
 import ru.shashkov.antioblomov.ui.components.ThankAuthorCard
 import ru.shashkov.antioblomov.rules.BlockRules
@@ -56,7 +53,7 @@ import java.time.ZonedDateTime
  * и «Настройка телефона» (что пропущено в мастере, FR-08).
  * Если служба не работает, это видно сразу в статусе: блокировка по правилам есть,
  * но приложения на самом деле не блокируются.
- * Под статусом — «Было / стало» (FR-14…FR-16) и, на вехах, «Поблагодарить автора» (FR-17).
+ * Под статусом — «Было / стало» (FR-14…FR-16) и панель «Поблагодарить автора» (FR-17).
  */
 @Composable
 fun HomeScreen(
@@ -81,12 +78,9 @@ fun HomeScreen(
     }
 
     // «Было / стало»: журнал пополняем и перечитываем раз в минуту (в фоне — долго)
-    val onboarding = remember { OnboardingStore(context) }
     var history by remember { mutableStateOf<UsageHistory?>(null) }
     var todayUsage by remember { mutableStateOf<DayUsage>(emptyMap()) }
     var notScreenTime by remember { mutableStateOf(emptySet<String>()) }
-    var thankAnsweredAt by remember { mutableStateOf(onboarding.thankAnsweredAt) }
-    var thankMilestone by remember { mutableStateOf(onboarding.thankMilestone) }
 
     LaunchedEffect(setup.usageAccess) {
         if (!setup.usageAccess) return@LaunchedEffect
@@ -172,21 +166,8 @@ fun HomeScreen(
             onOpenAccess = { UsageCollector.openSettings(context) },
         )
 
-        val milestone = report?.milestone
-        if (milestone != null &&
-            ThankRules.shouldShow(SPONSR_URL, milestone, thankMilestone, thankAnsweredAt, today)
-        ) {
-            ThankAuthorCard(
-                savedMinutesPerDay = milestone.savedPerDayMinutes,
-                onAnswered = {
-                    // Ответил — на этой вехе больше не предлагаем, следующий раз не раньше чем через 30 дней
-                    onboarding.thankAnsweredAt = today
-                    onboarding.thankMilestone = milestone.date
-                    thankAnsweredAt = today
-                    thankMilestone = milestone.date
-                },
-            )
-        }
+        // Благодарность — всегда, под «Было / стало» и над службой (решение от 25.10.2026)
+        ThankAuthorCard(savedMinutesPerDay = report?.savedPerDayMinutes)
 
         ServiceStatusCard(state = serviceState)
         SetupCard(setup = setup, onOpenWizard = onOpenOnboarding)

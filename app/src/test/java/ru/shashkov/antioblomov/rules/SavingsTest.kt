@@ -1,10 +1,8 @@
 package ru.shashkov.antioblomov.rules
 
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
-import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.time.LocalDate
 
@@ -117,33 +115,5 @@ class SavingsTest {
         assertEquals("11 учебных дней", UsageText.schoolDays(11))
         assertEquals("21 учебный день", UsageText.schoolDays(21))
         assertEquals("−20 мин", UsageText.saved(-20))
-    }
-
-    // ---------- карточка «Поблагодарить автора» ----------
-
-    private val week = Milestone("Неделя", day(7), 7, 90, 150, 1050)
-
-    @Test fun `благодарность на вехе`() {
-        assertTrue(ThankRules.shouldShow("https://sponsr.ru/x/", week, null, null, day(8)))
-    }
-
-    @Test fun `без ссылки, вехи или экономии — не показываем`() {
-        assertFalse(ThankRules.shouldShow("", week, null, null, day(8)))
-        assertFalse(ThankRules.shouldShow("u", null, null, null, day(8)))
-        assertFalse(ThankRules.shouldShow("u", week.copy(savedPerDayMinutes = 10), null, null, day(8)))
-    }
-
-    @Test fun `ту же веху второй раз не показываем`() {
-        assertFalse(ThankRules.shouldShow("u", week, day(7), day(8), day(40)))
-    }
-
-    @Test fun `не чаще раза в 30 дней`() {
-        val twoWeeks = week.copy(title = "Две недели", date = day(14))
-        assertFalse(ThankRules.shouldShow("u", twoWeeks, day(7), day(8), day(15)))
-        val month = week.copy(title = "Месяц", date = start.plusMonths(1))
-        // веха «Месяц» наступила, но с прошлого показа меньше 30 дней — ждём
-        assertFalse(ThankRules.shouldShow("u", month, day(7), day(8), start.plusMonths(1).plusDays(2)))
-        // 30 дней прошло — показываем ту же веху
-        assertTrue(ThankRules.shouldShow("u", month, day(7), day(8), day(38)))
     }
 }

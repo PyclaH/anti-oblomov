@@ -142,29 +142,6 @@ object Savings {
     private fun Double.toMinutes(): Int = (this / 60).roundToInt()
 }
 
-/**
- * Когда показывать «Поблагодарить автора» (FR-17): ссылка есть, достигнута веха,
- * которую ещё не показывали, экономия на ней ≥ 15 мин/день, и с последнего показа
- * или «Не сейчас» прошло ≥ 30 дней.
- */
-object ThankRules {
-    const val MIN_SAVED_PER_DAY = 15
-    const val PAUSE_DAYS = 30L
-
-    fun shouldShow(
-        url: String,
-        milestone: Milestone?,
-        lastShownMilestone: LocalDate?,
-        lastShownAt: LocalDate?,
-        today: LocalDate,
-    ): Boolean {
-        if (url.isBlank() || milestone == null) return false
-        if (milestone.savedPerDayMinutes < MIN_SAVED_PER_DAY) return false
-        if (milestone.date == lastShownMilestone) return false
-        return lastShownAt == null || ChronoUnit.DAYS.between(lastShownAt, today) >= PAUSE_DAYS
-    }
-}
-
 /** Подписи времени для «Было / стало». */
 object UsageText {
     /** 135 → «2 ч 15 мин», 0 → «0 мин». */
