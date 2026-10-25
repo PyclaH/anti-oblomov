@@ -44,7 +44,7 @@ fun SetupCard(setup: SetupState, onOpenWizard: () -> Unit, modifier: Modifier = 
             }
             if (missing.isNotEmpty()) {
                 Text(
-                    text = "Без этих настроек система может отключать блокировку сама.",
+                    text = "Без этих настроек блокировка может отключаться сама, а «Было / стало» — не считаться.",
                     style = MaterialTheme.typography.bodyMedium,
                 )
                 Button(onClick = onOpenWizard) { Text("Настроить") }

@@ -11,6 +11,8 @@ data class SetupState(
     val extraBatteryConfirmed: Boolean,
     /** Пользователь отметил, что включил автозапуск (его не проверить из приложения). */
     val autostartConfirmed: Boolean,
+    /** Выдан доступ к истории использования — для «Было / стало» (шаг 7). */
+    val usageAccess: Boolean,
 )
 
 /** Пункт настройки телефона. */
@@ -19,6 +21,7 @@ enum class SetupItem(val title: String) {
     NOTIFICATIONS("Уведомления таймера"),
     BATTERY("Батарея без ограничений"),
     AUTOSTART("Автозапуск"),
+    USAGE("Доступ к статистике"),
 }
 
 /**
@@ -37,6 +40,7 @@ object SetupChecklist {
         SetupItem.BATTERY -> state.batteryUnrestricted &&
             (SetupGuide.extraBattery(state.brand) == null || state.extraBatteryConfirmed)
         SetupItem.AUTOSTART -> state.autostartConfirmed
+        SetupItem.USAGE -> state.usageAccess
     }
 
     /** Что ещё не сделано — показываем на главной. */
@@ -47,7 +51,7 @@ object SetupChecklist {
 }
 
 /** Страницы мастера по порядку. */
-enum class OnboardingPage { WELCOME, SERVICE, NOTIFICATIONS, BATTERY, AUTOSTART, FINISH }
+enum class OnboardingPage { WELCOME, SERVICE, NOTIFICATIONS, BATTERY, AUTOSTART, USAGE, FINISH }
 
 object Onboarding {
     fun pages(brand: PhoneBrand): List<OnboardingPage> =

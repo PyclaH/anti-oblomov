@@ -4,106 +4,110 @@ import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.net.Uri
 import android.widget.Toast
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Button
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.BorderStroke
+import ru.shashkov.antioblomov.R
 import ru.shashkov.antioblomov.ui.theme.AntiOblomovTheme
+import ru.shashkov.antioblomov.ui.theme.Ink
+import ru.shashkov.antioblomov.ui.theme.Sand
+import ru.shashkov.antioblomov.ui.theme.Slate
+import ru.shashkov.antioblomov.ui.theme.Terracotta
 
-/**
- * Ссылка на страницу проекта на Sponsr.ru.
- * Пока пустая — карточка не показывается. Подставим, когда проект пройдёт модерацию.
- */
-const val SPONSR_URL = ""
+/** Страница проекта на Sponsr.ru. */
+const val SPONSR_URL = "https://sponsr.ru/anti_oblomov/"
 
-/**
- * С какой экономии (минут в день) предлагаем поблагодарить автора.
- * Небольшие колебания не считаем экономией.
- */
+/** С какой экономии (минут в день) упоминаем её в панели. */
 const val THANK_THRESHOLD_MINUTES = 15
 
 /**
- * Предложение поблагодарить автора. Показывается рядом с блоком «Было / стало»
- * и только если приложение реально сэкономило время.
+ * Панель «Поблагодарить автора» на главной — всегда, ненавязчиво: под «Было / стало»,
+ * над карточкой службы (решение от 25.10.2026, вместо показа только на вехах).
+ * Если экономия уже заметна (≥ 15 мин в день) — упоминаем её.
  *
- * Полные условия показа (7 дней данных, вехи, не чаще раза в 30 дней) —
- * README, «Спецификация: раздел „Было / стало“», п. 6. Здесь проверяется только
- * порог экономии; остальное проверит главный экран на неделе 6.
+ * Важно (правила Sponsr п. 5.18 и RuStore п. 6.1, 7.3): донат ничего не открывает,
+ * ни на что в приложении не влияет и не связан с отзывом — приложение полностью бесплатное.
  *
- * Важно (правила Sponsr п. 5.18 и RuStore п. 6.1): донат ничего не открывает
- * и ни на что в приложении не влияет — приложение полностью бесплатное.
- *
- * @param savedMinutesPerDay на сколько минут в день сократилось время
- *        в заблокированных приложениях (было − стало).
+ * @param savedMinutesPerDay экономия в среднем в день; null — пока неизвестна
  */
 @Composable
 fun ThankAuthorCard(
-    savedMinutesPerDay: Int,
+    savedMinutesPerDay: Int?,
     modifier: Modifier = Modifier,
     url: String = SPONSR_URL,
 ) {
-    // «Не сейчас» скрывает карточку до перезапуска приложения.
-    // TODO: когда появится хранение настроек — скрывать на 30 дней.
-    var dismissed by rememberSaveable { mutableStateOf(false) }
-    if (dismissed || url.isBlank() || savedMinutesPerDay < THANK_THRESHOLD_MINUTES) return
-
     val context = LocalContext.current
 
     Card(
         modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer,
-        ),
+        colors = CardDefaults.cardColors(containerColor = Sand, contentColor = Ink),
     ) {
-        Column(
-            modifier = Modifier.padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
+        Row(
+            modifier = Modifier.padding(16.dp),
+            horizontalArrangement = Arrangement.spacedBy(14.dp),
+            verticalAlignment = Alignment.Top,
         ) {
-            Text(
-                text = "Ты возвращаешь себе ${formatMinutes(savedMinutesPerDay)} в день",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-            )
-            Text(
-                text = "Если «Анти-Обломов» помогает, можно поблагодарить автора. " +
-                    "Это необязательно: приложение бесплатное и таким останется.",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.End,
-                verticalAlignment = Alignment.CenterVertically,
+            // Логотип — песочные часы на терракотовом фоне, как иконка приложения
+            Box(
+                modifier = Modifier
+                    .size(48.dp)
+                    .clip(RoundedCornerShape(14.dp))
+                    .background(Terracotta),
+                contentAlignment = Alignment.Center,
             ) {
-                TextButton(onClick = { dismissed = true }) {
-                    Text("Не сейчас")
-                }
-                Button(onClick = {
-                    try {
-                        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
-                    } catch (e: ActivityNotFoundException) {
-                        Toast.makeText(context, "Не найден браузер, чтобы открыть ссылку", Toast.LENGTH_LONG).show()
-                    }
-                }) {
-                    Text("Поблагодарить автора")
+                Image(
+                    painter = painterResource(R.drawable.ic_launcher_foreground),
+                    contentDescription = null,
+                    modifier = Modifier.size(64.dp),
+                )
+            }
+            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Text("Поблагодарить автора", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                Text(
+                    text = savedMinutesPerDay
+                        ?.takeIf { it >= THANK_THRESHOLD_MINUTES }
+                        ?.let { "Ты возвращаешь себе ${formatMinutes(it)} в день. " }
+                        .orEmpty() +
+                        "«Анти-Обломов» бесплатный и без рекламы — таким и останется. " +
+                        "Если он помогает, можно поддержать школьный проект Руслана Шашкова.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Slate,
+                )
+                OutlinedButton(
+                    onClick = {
+                        try {
+                            context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
+                        } catch (e: ActivityNotFoundException) {
+                            Toast.makeText(context, "Не найден браузер, чтобы открыть ссылку", Toast.LENGTH_LONG).show()
+                        }
+                    },
+                    border = BorderStroke(1.dp, Terracotta),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = Terracotta),
+                ) {
+                    Text("Поддержать на Sponsr")
                 }
             }
         }
@@ -125,10 +129,9 @@ fun formatMinutes(minutes: Int): String {
 @Composable
 private fun ThankAuthorCardPreview() {
     AntiOblomovTheme {
-        ThankAuthorCard(
-            savedMinutesPerDay = 145,
-            modifier = Modifier.padding(16.dp),
-            url = "https://sponsr.ru/",
-        )
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+            ThankAuthorCard(savedMinutesPerDay = 145)
+            ThankAuthorCard(savedMinutesPerDay = null)
+        }
     }
 }

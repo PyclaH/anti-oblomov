@@ -14,6 +14,8 @@ import ru.shashkov.antioblomov.blocking.ServiceState
 import ru.shashkov.antioblomov.blocking.blockingServiceState
 import ru.shashkov.antioblomov.blocking.readSetupState
 import ru.shashkov.antioblomov.data.OnboardingStore
+import ru.shashkov.antioblomov.data.UsageCollector
+import kotlin.concurrent.thread
 import ru.shashkov.antioblomov.rules.SetupState
 import ru.shashkov.antioblomov.ui.AntiOblomovApp
 import ru.shashkov.antioblomov.ui.Tab
@@ -89,6 +91,8 @@ class MainActivity : ComponentActivity() {
     private fun refreshSetup() {
         serviceState = blockingServiceState(this)
         setup = readSetupState(this, onboarding)
+        // Доступ к статистике могли только что выдать — сразу делаем снимок «до установки»
+        if (setup?.usageAccess == true) thread { UsageCollector.update(applicationContext) }
     }
 
     companion object {

@@ -19,14 +19,30 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
 import ru.shashkov.antioblomov.R
 import ru.shashkov.antioblomov.blocking.ServiceState
+import ru.shashkov.antioblomov.data.AppsCache
+import ru.shashkov.antioblomov.data.InstalledApps
+import ru.shashkov.antioblomov.data.ProtectedApps
 import ru.shashkov.antioblomov.data.SettingsStore
+import ru.shashkov.antioblomov.data.StatsChoiceStore
+import ru.shashkov.antioblomov.rules.StatsApps
+import ru.shashkov.antioblomov.ui.components.StatsAppsPicker
+import ru.shashkov.antioblomov.data.UsageCollector
+import ru.shashkov.antioblomov.data.UsageStore
+import ru.shashkov.antioblomov.rules.DayUsage
+import ru.shashkov.antioblomov.rules.Savings
+import ru.shashkov.antioblomov.rules.UsageHistory
+import ru.shashkov.antioblomov.ui.components.StatsCard
+import ru.shashkov.antioblomov.ui.components.ThankAuthorCard
 import ru.shashkov.antioblomov.rules.BlockRules
 import ru.shashkov.antioblomov.rules.BlockStatus
 import ru.shashkov.antioblomov.rules.HomeStatusText
@@ -44,7 +60,7 @@ import java.time.ZonedDateTime
  * и «Настройка телефона» (что пропущено в мастере, FR-08).
  * Если служба не работает, это видно сразу в статусе: блокировка по правилам есть,
  * но приложения на самом деле не блокируются.
- * На шаге 7 здесь появится «Было / стало».
+ * Под статусом — «Было / стало» (FR-14…FR-16) и панель «Поблагодарить автора» (FR-17).
  */
 @Composable
 fun HomeScreen(
@@ -66,6 +82,50 @@ fun HomeScreen(
             now = ZonedDateTime.now()
             if (++tick % 5 == 0) settings = store.read()
         }
+    }
+
+    // «Было / стало»: журнал пополняем и перечитываем раз в минуту (в фоне — долго)
+    var history by remember { mutableStateOf<UsageHistory?>(null) }
+    var todayUsage by remember { mutableStateOf<DayUsage>(emptyMap()) }
+    var notScreenTime by remember { mutableStateOf(emptySet<String>()) }
+
+    LaunchedEffect(setup.usageAccess) {
+        if (!setup.usageAccess) return@LaunchedEffect
+        notScreenTime = withContext(Dispatchers.IO) { UsageCollector.notScreenTime(context) }
+        while (true) {
+            val (h, t) = withContext(Dispatchers.IO) {
+                UsageCollector.update(context)
+                UsageStore(context).read() to UsageCollector.today(context)
+            }
+            history = h
+            todayUsage = t
+            delay(60_000)
+        }
+    }
+
+    // Приложения для статистики — свой список (по умолчанию как список блокировки) или все несистемные
+    val statsStore = remember { StatsChoiceStore(context) }
+    var statsChoice by remember { mutableStateOf(statsStore.read()) }
+    var apps by remember { mutableStateOf(AppsCache.apps) }
+    var protectedApps by remember { mutableStateOf(AppsCache.protected) }
+    val iconPx = with(LocalDensity.current) { 40.dp.roundToPx() }
+    LaunchedEffect(Unit) {
+        val (loaded, prot) = withContext(Dispatchers.IO) {
+            InstalledApps.load(context, iconPx) to ProtectedApps.of(context)
+        }
+        AppsCache.apps = loaded
+        AppsCache.protected = prot
+        apps = loaded
+        protectedApps = prot
+    }
+    val nonSystem = remember(apps, protectedApps) {
+        apps.orEmpty().map { it.entry.packageName }.filterNot { it in protectedApps }.toSet()
+    }
+    val tracked = StatsApps.tracked(statsChoice, settings.blockedPackages, nonSystem)
+
+    val today = now.toLocalDate()
+    val report = remember(history, todayUsage, tracked, notScreenTime, today) {
+        history?.let { Savings.report(it, today, todayUsage, tracked, notScreenTime) }
     }
 
     val status = BlockRules.status(settings, now)
@@ -124,6 +184,26 @@ fun HomeScreen(
                 color = Terracotta,
             )
         }
+
+        StatsCard(
+            hasAccess = setup.usageAccess,
+            report = report,
+            startDate = history?.startDate,
+            noAppsSelected = tracked.isEmpty(),
+            onOpenAccess = { UsageCollector.openSettings(context) },
+            picker = {
+                StatsAppsPicker(
+                    apps = apps,
+                    protected = protectedApps,
+                    choice = statsChoice,
+                    tracked = tracked,
+                    onChoice = { statsChoice = it; statsStore.write(it) },
+                )
+            },
+        )
+
+        // Благодарность — всегда, под «Было / стало» и над службой (решение от 25.10.2026)
+        ThankAuthorCard(savedMinutesPerDay = report?.savedPerDayMinutes)
 
         ServiceStatusCard(state = serviceState)
         SetupCard(setup = setup, onOpenWizard = onOpenOnboarding)
