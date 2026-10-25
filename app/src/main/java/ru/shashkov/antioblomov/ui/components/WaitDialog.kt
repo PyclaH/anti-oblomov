@@ -1,5 +1,14 @@
 package ru.shashkov.antioblomov.ui.components
 
+import android.graphics.drawable.ColorDrawable
+import android.os.Build
+import android.view.Gravity
+import android.view.Window
+import android.view.WindowManager
+import androidx.compose.runtime.SideEffect
+import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.window.DialogWindowProvider
+import androidx.core.view.WindowCompat
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -62,6 +71,18 @@ fun WaitDialog(title: String, onConfirm: () -> Unit, onDismiss: () -> Unit) {
             dismissOnClickOutside = false,
         ),
     ) {
+        // Окно диалога по умолчанию не заходит под строку состояния, панель навигации
+        // и вырез камеры — отсюда были полосы. Растягиваем его на весь экран,
+        // как окно экрана блокировки (BlockOverlay).
+        val view = LocalView.current
+        val stretched = remember { BooleanArray(1) }
+        SideEffect {
+            if (!stretched[0]) {
+                (view.parent as? DialogWindowProvider)?.window?.let { stretchToFullScreen(it) }
+                stretched[0] = true
+            }
+        }
+
         Box(Modifier.fillMaxSize().background(Ink)) {
             AndroidView(
                 modifier = Modifier.fillMaxSize(),
@@ -131,6 +152,36 @@ fun WaitDialog(title: String, onConfirm: () -> Unit, onDismiss: () -> Unit) {
                     Text(if (left > 0) "Подтвердить через $left с" else "Подтвердить", fontSize = 16.sp)
                 }
             }
+        }
+    }
+}
+
+/** Окно — на весь экран, под системные панели и вырез; содержимое само отступает (safeDrawingPadding). */
+private fun stretchToFullScreen(window: Window) {
+    window.setLayout(WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.MATCH_PARENT)
+    window.setBackgroundDrawable(ColorDrawable(android.graphics.Color.TRANSPARENT))
+    window.setDimAmount(0f)
+    WindowCompat.setDecorFitsSystemWindows(window, false)
+    @Suppress("DEPRECATION")
+    window.statusBarColor = android.graphics.Color.TRANSPARENT
+    @Suppress("DEPRECATION")
+    window.navigationBarColor = android.graphics.Color.TRANSPARENT
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+        window.isStatusBarContrastEnforced = false
+        window.isNavigationBarContrastEnforced = false
+    }
+    window.attributes = window.attributes.apply {
+        width = WindowManager.LayoutParams.MATCH_PARENT
+        height = WindowManager.LayoutParams.MATCH_PARENT
+        gravity = Gravity.TOP or Gravity.START
+        flags = flags or WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or
+            WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS
+            fitInsetsTypes = 0
+            fitInsetsSides = 0
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
         }
     }
 }
