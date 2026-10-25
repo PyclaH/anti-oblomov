@@ -27,6 +27,8 @@ import ru.shashkov.antioblomov.data.InstalledApps
 import ru.shashkov.antioblomov.data.SettingsStore
 import ru.shashkov.antioblomov.rules.BlockRules
 import ru.shashkov.antioblomov.rules.BlockStatus
+import ru.shashkov.antioblomov.rules.IntervalCheck
+import ru.shashkov.antioblomov.rules.ScheduleEditor
 import ru.shashkov.antioblomov.rules.Settings
 import ru.shashkov.antioblomov.rules.TimeInterval
 import ru.shashkov.antioblomov.ui.theme.Lake
@@ -122,7 +124,11 @@ fun RulesTestPanel(modifier: Modifier = Modifier) {
                     if (end > TimeInterval.MINUTES_IN_DAY) {
                         Toast.makeText(context, "Слишком близко к полуночи — попробуйте после 00:00", Toast.LENGTH_LONG).show()
                     } else {
-                        save { s -> s.copy(schedule = s.schedule + (now.dayOfWeek to listOf(TimeInterval(start, end)))) }
+                        // Добавляем к расписанию дня, а не заменяем его: теперь есть настоящий экран «Расписание»
+                        when (val check = ScheduleEditor.check(start, end, settings.intervalsOn(now.dayOfWeek))) {
+                            is IntervalCheck.Ok -> save { ScheduleEditor.put(it, now.dayOfWeek, check.interval) }
+                            is IntervalCheck.Error -> Toast.makeText(context, check.message, Toast.LENGTH_LONG).show()
+                        }
                     }
                 },
             ) { Text("Расписание: со следующей минуты на 2 мин") }
@@ -135,10 +141,6 @@ fun RulesTestPanel(modifier: Modifier = Modifier) {
                     Text("Стоп таймер")
                 }
             }
-            OutlinedButton(
-                modifier = Modifier.fillMaxWidth(),
-                onClick = { save { it.copy(schedule = emptyMap(), timerEndsAt = null) } },
-            ) { Text("Сбросить расписание и таймер") }
         }
     }
 }
