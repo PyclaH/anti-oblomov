@@ -10,6 +10,7 @@ import android.os.Looper
 import android.os.SystemClock
 import android.util.Log
 import android.view.accessibility.AccessibilityEvent
+import ru.shashkov.antioblomov.data.ProtectedApps
 import ru.shashkov.antioblomov.data.SettingsStore
 import ru.shashkov.antioblomov.rules.BlockRules
 import ru.shashkov.antioblomov.rules.BlockStatus
@@ -45,6 +46,9 @@ class BlockingService : AccessibilityService() {
     private lateinit var overlay: BlockOverlay
     private lateinit var audioManager: AudioManager
     private lateinit var store: SettingsStore
+
+    /** Звонилка, настройки, рабочий стол и т. п. — не блокируются ни при каких настройках (FR-07). */
+    private var protectedApps: Set<String> = emptySet()
     private val handler = Handler(Looper.getMainLooper())
     private val boundaryCheck = Runnable { onBoundary() }
     private var scheduledFor: ZonedDateTime? = null
@@ -55,6 +59,7 @@ class BlockingService : AccessibilityService() {
         audioManager = getSystemService(AudioManager::class.java)
         overlay = BlockOverlay(this, onHidden = ::releaseAudioFocus)
         store = SettingsStore(this)
+        protectedApps = ProtectedApps.of(this)
         Log.i(TAG, "Служба блокировки подключена")
         scheduleBoundaryCheck(store.read(), ZonedDateTime.now())
     }
@@ -70,7 +75,7 @@ class BlockingService : AccessibilityService() {
         scheduleBoundaryCheck(settings, now)
 
         val foreground = foregroundPackage() ?: event.packageName?.toString()
-        if (foreground != null && foreground != packageName &&
+        if (foreground != null && foreground !in protectedApps &&
             BlockRules.shouldBlock(foreground, settings, now)
         ) {
             block(foreground, settings, now, event)
@@ -86,7 +91,7 @@ class BlockingService : AccessibilityService() {
         val now = ZonedDateTime.now()
         Log.i(TAG, "Проверка по времени: ${BlockRules.status(settings, now)}")
         val foreground = foregroundPackage()
-        if (foreground != null && foreground != packageName &&
+        if (foreground != null && foreground !in protectedApps &&
             BlockRules.shouldBlock(foreground, settings, now)
         ) {
             block(foreground, settings, now, event = null)
@@ -135,7 +140,8 @@ class BlockingService : AccessibilityService() {
         if (t - lastPipPauseAt < PIP_DEBOUNCE_MS) return
         val blockedPip = windows.any { window ->
             window.isInPictureInPictureMode &&
-                window.root?.packageName?.toString() in settings.blockedPackages
+                window.root?.packageName?.toString()
+                    ?.let { it in settings.blockedPackages && it !in protectedApps } == true
         }
         if (blockedPip) {
             lastPipPauseAt = t

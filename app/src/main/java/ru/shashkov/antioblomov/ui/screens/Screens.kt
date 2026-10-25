@@ -67,18 +67,6 @@ fun TimerScreen(modifier: Modifier = Modifier) = PlaceholderScreen(
 )
 
 @Composable
-fun AppsScreen(modifier: Modifier = Modifier) = PlaceholderScreen(
-    title = stringResource(R.string.tab_apps),
-    description = "Какие приложения блокировать.",
-    planned = listOf(
-        "Список установленных приложений с иконками",
-        "Поиск по названию",
-        "Переключатель «блокировать» у каждого приложения",
-    ),
-    modifier = modifier,
-)
-
-@Composable
 private fun PlaceholderScreen(
     title: String,
     description: String,

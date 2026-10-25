@@ -48,7 +48,7 @@ fun BlockingSpikeCard(state: ServiceState, modifier: Modifier = Modifier) {
             when (state) {
                 ServiceState.RUNNING -> {
                     Status("Служба работает", ok = true)
-                    Body("YouTube блокируется по расписанию и таймеру — проверка ниже.")
+                    Body("Выбранные приложения блокируются по расписанию и таймеру — проверка ниже.")
                     OutlinedButton(onClick = { openAccessibilitySettings(context) }) {
                         Text("Настройки спецвозможностей")
                     }

@@ -2,11 +2,23 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <!--
-        Шаг 1: чтобы узнать название YouTube для экрана блокировки.
-        На шаге 3 заменим на видимость всех приложений с иконкой на рабочем столе.
+        Какие чужие приложения видит «Анти-Обломов» (Android 11+ иначе их скрывает):
+        - с иконкой на рабочем столе — для экрана «Приложения»;
+        - рабочие столы и настройки — чтобы их нельзя было заблокировать (FR-07).
+        Разрешение QUERY_ALL_PACKAGES («видеть все приложения») не нужно.
     -->
     <queries>
-        <package android:name="com.google.android.youtube" />
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.LAUNCHER" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.HOME" />
+        </intent>
+        <intent>
+            <action android:name="android.settings.SETTINGS" />
+        </intent>
     </queries>
 
     <!--
