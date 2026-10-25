@@ -13,6 +13,7 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -41,9 +42,21 @@ enum class Tab(@StringRes val title: Int, val icon: ImageVector) {
  * Корневой экран: нижнее меню и содержимое выбранной вкладки.
  */
 @Composable
-fun AntiOblomovApp(serviceState: ServiceState) {
+fun AntiOblomovApp(
+    serviceState: ServiceState,
+    requestedTab: Tab? = null,
+    onTabOpened: () -> Unit = {},
+) {
     // rememberSaveable — выбранная вкладка не сбросится при повороте экрана
     var current by rememberSaveable { mutableStateOf(Tab.HOME) }
+
+    // Открыть вкладку по просьбе извне (нажатие на уведомление таймера)
+    LaunchedEffect(requestedTab) {
+        if (requestedTab != null) {
+            current = requestedTab
+            onTabOpened()
+        }
+    }
 
     Scaffold(
         bottomBar = {

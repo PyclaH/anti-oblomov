@@ -81,4 +81,25 @@ class ChangeGuardTest {
     @Test fun `ничего не поменялось — без паузы`() {
         assertFalse(ChangeGuard.needsWait(settings, settings, at(11)))
     }
+
+    // ---------- таймер ----------
+
+    @Test fun `остановка идущего таймера — пауза`() {
+        val running = TimerRules.start(settings, 60, at(15))
+        assertTrue(ChangeGuard.needsWait(running, TimerRules.stop(running), at(15, 10)))
+    }
+
+    @Test fun `запуск таймера — без паузы`() {
+        assertFalse(ChangeGuard.needsWait(settings, TimerRules.start(settings, 60, at(11)), at(11)))
+    }
+
+    @Test fun `продление таймера — без паузы`() {
+        val running = TimerRules.start(settings, 60, at(15))
+        assertFalse(ChangeGuard.needsWait(running, TimerRules.extend(running, 30, at(15, 10)), at(15, 10)))
+    }
+
+    @Test fun `сброс уже кончившегося таймера — без паузы`() {
+        val ended = TimerRules.start(settings, 60, at(15))
+        assertFalse(ChangeGuard.needsWait(ended, TimerRules.stop(ended), at(17)))
+    }
 }
