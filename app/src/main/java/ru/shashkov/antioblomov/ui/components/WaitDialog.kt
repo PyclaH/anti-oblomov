@@ -148,6 +148,12 @@ fun WaitDialog(title: String, onConfirm: () -> Unit, onDismiss: () -> Unit) {
 
                 Spacer(Modifier.weight(1f))
 
+                // Кольцо — над цитатой, одной группой с ней по центру экрана (R6b, макет «Окно паузы»):
+                // внизу, над кнопками, оно закрывало каплю на сцене «вода»
+                CountdownRing(left = left, total = ChangeGuard.WAIT_SECONDS)
+
+                Spacer(Modifier.height(18.dp))
+
                 Text(
                     text = "«${quote.text}»",
                     modifier = Modifier.fillMaxWidth(),
@@ -166,10 +172,6 @@ fun WaitDialog(title: String, onConfirm: () -> Unit, onDismiss: () -> Unit) {
                 )
 
                 Spacer(Modifier.weight(1f))
-
-                CountdownRing(left = left, total = ChangeGuard.WAIT_SECONDS)
-
-                Spacer(Modifier.height(8.dp))
 
                 OutlinedButton(
                     modifier = Modifier.fillMaxWidth().height(56.dp),
@@ -218,7 +220,7 @@ private fun CountdownRing(left: Int, total: Int) {
 
     Box(
         modifier = Modifier
-            .size(76.dp)
+            .size(88.dp)
             .clearAndSetSemantics {
                 contentDescription = if (done) "Можно подтвердить" else "Осталось $left секунд"
             },
@@ -240,11 +242,11 @@ private fun CountdownRing(left: Int, total: Int) {
             )
         }
         if (done) {
-            Icon(Icons.Filled.Check, contentDescription = null, tint = Calm, modifier = Modifier.size(30.dp))
+            Icon(Icons.Filled.Check, contentDescription = null, tint = Calm, modifier = Modifier.size(34.dp))
         } else {
             Text(
                 text = left.toString(),
-                style = BigNumber.copy(fontSize = 26.sp, lineHeight = 28.sp),
+                style = BigNumber.copy(fontSize = 28.sp, lineHeight = 30.sp),
                 color = TextPrimary,
             )
         }
