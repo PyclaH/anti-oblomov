@@ -22,10 +22,10 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import ru.shashkov.antioblomov.ui.theme.Accent
 import ru.shashkov.antioblomov.ui.theme.BigNumber
 import ru.shashkov.antioblomov.ui.theme.Calm
-import ru.shashkov.antioblomov.ui.theme.Overline
 import ru.shashkov.antioblomov.ui.theme.PtSerif
 import ru.shashkov.antioblomov.ui.theme.TABULAR
 import android.graphics.drawable.ColorDrawable
@@ -133,22 +133,14 @@ fun WaitDialog(title: String, onConfirm: () -> Unit, onDismiss: () -> Unit) {
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
-                Text(
-                    text = "ПАУЗА · ИДЁТ БЛОКИРОВКА",
-                    modifier = Modifier.padding(top = 24.dp),
-                    style = Overline,
-                    color = Accent,
-                )
-                Text(
-                    text = title,
-                    modifier = Modifier.fillMaxWidth(),
-                    style = MaterialTheme.typography.titleLarge,
-                    color = TextPrimary,
-                    textAlign = TextAlign.Center,
-                )
+                // Сверху — только «Подумай 15 секунд» (R6b): что меняется и что идёт блокировка,
+                // и так понятно. Вопрос (title) зачитывает экранный диктор.
                 Text(
                     text = "Подумай ${ChangeGuard.WAIT_SECONDS} секунд — точно нужно?",
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 24.dp)
+                        .semantics { contentDescription = "$title Подумай ${ChangeGuard.WAIT_SECONDS} секунд — точно нужно?" },
                     style = MaterialTheme.typography.bodyMedium,
                     color = TextPrimary.copy(alpha = 0.7f),
                     textAlign = TextAlign.Center,

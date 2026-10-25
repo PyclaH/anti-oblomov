@@ -39,8 +39,8 @@ import kotlin.math.sin
 /**
  * Фоны вкладок (редизайн R6, макеты «Фоны вкладок» от 25.10.2026).
  * Главная — сцена по состоянию: горы (блокировка впереди), поле с работниками (идёт блокировка),
- * море (ничего не запланировано). Остальные вкладки — схемы: сетка часов, шкала вокруг
- * циферблата, сетка «иконок».
+ * море (ничего не запланировано). Таймер — шкала вокруг циферблата. Расписание — путь солнца
+ * над полосой суток (R6b), Приложения — созвездия (R6b).
  *
  * Минимум цвета, рисунок бледный и плавно гаснет к середине экрана. Неподвижный —
  * рисуется один раз и прокручивается вместе с экраном.
@@ -49,7 +49,7 @@ import kotlin.math.sin
  * Чтобы рисунок стоял ровно под своим элементом на любом телефоне, он привязан к нему
  * (якорь): к кольцу на главной, полосе суток в расписании, циферблату таймера.
  */
-enum class Scene { MOUNTAINS, FIELD, SEA, HOURS, BEZEL, ICONS }
+enum class Scene { MOUNTAINS, FIELD, SEA, SUN_PATH, BEZEL, STARS }
 
 /** Где на экране элемент-якорь (в координатах всего окна). */
 class SceneAnchor {
@@ -65,12 +65,15 @@ fun rememberSceneAnchor(): SceneAnchor = remember { SceneAnchor() }
 /**
  * Экран с фоном: [scene] позади [content]. Смена сцены — плавная (главная меняет сцену
  * вместе с состоянием блокировки).
+ *
+ * @param hour который час (для солнца в расписании), 0..24; null — не рисовать солнце
  */
 @Composable
 fun SceneBox(
     scene: Scene,
     anchor: SceneAnchor?,
     modifier: Modifier = Modifier,
+    hour: Float? = null,
     content: @Composable BoxScope.() -> Unit,
 ) {
     val host: MutableState<Offset> = remember { mutableStateOf(Offset.Zero) }
@@ -83,7 +86,7 @@ fun SceneBox(
                     .graphicsLayer { compositingStrategy = CompositingStrategy.Offscreen },
             ) {
                 val a = anchor?.rect?.translate(-host.value)
-                drawScene(s, a)
+                drawScene(s, a, hour)
             }
         }
         content()
@@ -119,7 +122,7 @@ private fun DrawScope.fade(opaqueY: Float, goneY: Float, soft: Boolean = false) 
     drawRect(Brush.verticalGradient(*stops, startY = opaqueY, endY = goneY), blendMode = BlendMode.DstIn)
 }
 
-private fun DrawScope.drawScene(scene: Scene, anchor: Rect?) {
+private fun DrawScope.drawScene(scene: Scene, anchor: Rect?, hour: Float?) {
     val s = size.width / W
     when (scene) {
         Scene.MOUNTAINS, Scene.FIELD, Scene.SEA -> {
@@ -136,15 +139,13 @@ private fun DrawScope.drawScene(scene: Scene, anchor: Rect?) {
             fade(origin.y + 360f * s, origin.y + 540f * s)
         }
 
-        Scene.HOURS -> {
-            // Линии часов совпадают с полосой суток: в макете она от x = 20 до x = 370
+        Scene.SUN_PATH -> {
+            // Путь солнца над полосой суток: восход над 6:00, закат над 18:00, горизонт — по полосе
             val left = anchor?.left ?: (20f * s)
             val width = anchor?.width ?: (350f * s)
-            for (h in 0..24) {
-                val x = left + width * h / 24f
-                drawLine(INK.copy(alpha = if (h % 6 == 0) 0.11f else 0.05f), Offset(x, 0f), Offset(x, size.height), strokeWidth = s)
-            }
-            fade(0f, 560f * s, soft = true)
+            val base = anchor?.center?.y ?: (240f * s)
+            sunPath(left, width, base, s, hour)
+            fade(0f, base + 304f * s, soft = true)
         }
 
         Scene.BEZEL -> {
@@ -155,8 +156,8 @@ private fun DrawScope.drawScene(scene: Scene, anchor: Rect?) {
             fade(0f, origin.y + 600f * s, soft = true)
         }
 
-        Scene.ICONS -> {
-            mock(Offset.Zero, s) { icons() }
+        Scene.STARS -> {
+            mock(Offset.Zero, s) { stars() }
             fade(0f, 520f * s, soft = true)
         }
     }
@@ -319,20 +320,73 @@ private fun DrawScope.bezel() {
     }
 }
 
-// ─── Приложения: сетка «иконок» ───────────────────────────────────────────
+// ─── Расписание: путь солнца ──────────────────────────────────────────────
 
-private val EMPTY_CELLS = setOf(0 to 3, 1 to 1, 2 to 4, 3 to 2, 4 to 0, 5 to 3)
+private const val ARC = 118f // высота дуги в полдень, в единицах макета
+private val SUN = Color(0xFFF0A04B)
 
-private fun DrawScope.icons() {
-    val style = Stroke(1f)
-    for (row in 0 until 7) for (col in 0 until 5) {
-        if ((row to col) in EMPTY_CELLS) continue
-        drawRoundRect(
-            INK.copy(alpha = 0.07f),
-            topLeft = Offset(22f + col * 72f, 28f + row * 72f),
-            size = Size(50f, 50f),
-            cornerRadius = androidx.compose.ui.geometry.CornerRadius(14f),
-            style = style,
+/**
+ * Дуга из точек — по точке на каждый час с 6:00 до 18:00, точно над делениями полосы суток;
+ * пунктир вниз к полосе в 6, 9, 12, 15, 18 ч; тёплое свечение у горизонта; солнце — там,
+ * где оно сейчас (ночью солнца нет).
+ */
+private fun DrawScope.sunPath(left: Float, width: Float, base: Float, s: Float, hour: Float?) {
+    fun x(h: Float) = left + width * h / 24f
+    fun y(h: Float) = base - ARC * s * sin(Math.PI * (h - 6f) / 12f).toFloat()
+
+    // Тёплый край неба у горизонта
+    drawRect(
+        Brush.verticalGradient(0f to SUN.copy(alpha = 0f), 1f to SUN.copy(alpha = 0.07f), startY = base - 96f * s, endY = base),
+        topLeft = Offset(0f, base - 96f * s),
+        size = Size(size.width, 96f * s),
+    )
+    val dash = androidx.compose.ui.graphics.PathEffect.dashPathEffect(floatArrayOf(2f * s, 4f * s))
+    for (h in listOf(6f, 9f, 12f, 15f, 18f)) {
+        drawLine(INK.copy(alpha = 0.05f), Offset(x(h), y(h) + 6f * s), Offset(x(h), base), strokeWidth = s, pathEffect = dash)
+    }
+    for (h in 6..18) drawCircle(INK.copy(alpha = 0.34f), radius = 1.7f * s, center = Offset(x(h.toFloat()), y(h.toFloat())))
+    drawLine(INK.copy(alpha = 0.08f), Offset(0f, base), Offset(size.width, base), strokeWidth = s)
+
+    if (hour != null && hour in 6f..18f) {
+        val c = Offset(x(hour), y(hour))
+        drawCircle(
+            Brush.radialGradient(0f to SUN.copy(alpha = 0.45f), 1f to SUN.copy(alpha = 0f), center = c, radius = 34f * s),
+            radius = 34f * s,
+            center = c,
         )
+        drawCircle(SUN.copy(alpha = 0.55f), radius = 8f * s, center = c)
+    }
+}
+
+// ─── Приложения: созвездия ────────────────────────────────────────────────
+
+/** Россыпь звёзд — одна и та же при каждом запуске (постоянный сид). */
+private val STAR_FIELD: List<Triple<Offset, Float, Float>> = run {
+    val r = kotlin.random.Random(7)
+    List(70) {
+        Triple(
+            Offset(r.nextFloat() * W, r.nextFloat() * 480f),
+            listOf(0.7f, 0.9f, 1.1f, 1.4f)[r.nextInt(4)],
+            listOf(0.10f, 0.14f, 0.18f, 0.24f)[r.nextInt(4)],
+        )
+    }
+}
+
+private val CONSTELLATIONS = listOf(
+    listOf(40f to 60f, 78f to 46f, 112f to 70f, 150f to 58f, 170f to 96f),
+    listOf(250f to 40f, 290f to 64f, 330f to 52f, 352f to 92f, 318f to 120f, 290f to 64f),
+    listOf(60f to 230f, 100f to 210f, 132f to 250f, 176f to 236f),
+    listOf(268f to 300f, 300f to 270f, 342f to 286f, 360f to 250f),
+)
+
+private fun DrawScope.stars() {
+    for ((p, r, a) in STAR_FIELD) drawCircle(INK.copy(alpha = a), radius = r, center = p)
+    for (c in CONSTELLATIONS) {
+        val path = Path().apply {
+            moveTo(c[0].first, c[0].second)
+            for (i in 1 until c.size) lineTo(c[i].first, c[i].second)
+        }
+        drawPath(path, INK.copy(alpha = 0.10f), style = Stroke(1f, join = StrokeJoin.Round))
+        for ((x, y) in c) drawCircle(INK.copy(alpha = 0.30f), radius = 2f, center = Offset(x, y))
     }
 }
