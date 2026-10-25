@@ -8,7 +8,7 @@ import java.time.DayOfWeek.TUESDAY
 import java.time.ZoneId
 import java.time.ZonedDateTime
 
-/** Когда перед изменением настроек нужна пауза 15 секунд. */
+/** Когда перед изменением настроек нужна пауза 15 секунд: только ослабление во время блокировки. */
 class ChangeGuardTest {
 
     private val zone = ZoneId.of("Asia/Irkutsk")
@@ -31,9 +31,40 @@ class ChangeGuardTest {
         assertFalse(ChangeGuard.needsWait(settings, after, at(11)))
     }
 
-    @Test fun `во время блокировки изменение списка приложений — пауза`() {
+    @Test fun `во время блокировки удаление приложения из списка — пауза`() {
         val after = settings.copy(blockedPackages = emptySet())
         assertTrue(ChangeGuard.needsWait(settings, after, at(11)))
+    }
+
+    @Test fun `добавление приложения — без паузы`() {
+        val after = settings.copy(blockedPackages = settings.blockedPackages + "com.vkontakte.android")
+        assertFalse(ChangeGuard.needsWait(settings, after, at(11)))
+    }
+
+    @Test fun `новый интервал на сегодня — без паузы`() {
+        val after = ScheduleEditor.put(settings, MONDAY, TimeInterval.of(18, 0, 20, 0))
+        assertFalse(ChangeGuard.needsWait(settings, after, at(11)))
+    }
+
+    @Test fun `удлинение интервала — без паузы`() {
+        val after = ScheduleEditor.put(settings, MONDAY, TimeInterval.of(10, 0, 16, 0), old = morning)
+        assertFalse(ChangeGuard.needsWait(settings, after, at(11)))
+    }
+
+    @Test fun `укорачивание интервала — пауза`() {
+        val after = ScheduleEditor.put(settings, MONDAY, TimeInterval.of(10, 0, 13, 0), old = morning)
+        assertTrue(ChangeGuard.needsWait(settings, after, at(11)))
+    }
+
+    @Test fun `сдвиг интервала, после которого часть оставшегося времени свободна, — пауза`() {
+        val after = ScheduleEditor.put(settings, MONDAY, TimeInterval.of(12, 0, 16, 0), old = morning)
+        assertTrue(ChangeGuard.needsWait(settings, after, at(11)))
+    }
+
+    @Test fun `удаление уже прошедшего интервала — без паузы`() {
+        val withEarly = ScheduleEditor.put(settings, MONDAY, TimeInterval.of(7, 0, 8, 0))
+        val after = ScheduleEditor.remove(withEarly, MONDAY, TimeInterval.of(7, 0, 8, 0))
+        assertFalse(ChangeGuard.needsWait(withEarly, after, at(11)))
     }
 
     @Test fun `в свободное время — без паузы`() {

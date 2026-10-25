@@ -88,7 +88,7 @@ private class PendingChange(val title: String, val change: (Settings) -> Setting
  * Экран «Расписание» (FR-03…FR-05): интервалы блокировки по дням недели,
  * перерывы между ними, копирование на будни. Пересекающиеся и соприкасающиеся
  * интервалы объединяются сами. Изменения сохраняются сразу; служба подхватывает их
- * без перезапуска. Если идёт блокировка, а правка касается сегодняшнего дня, —
+ * без перезапуска. Если идёт блокировка, а правка её ослабляет на сегодня, —
  * сначала 15 секунд паузы с цитатой (WaitDialog).
  */
 @Composable
@@ -116,7 +116,7 @@ fun ScheduleScreen(modifier: Modifier = Modifier) {
         now = ZonedDateTime.now()
     }
 
-    /** Сохранить сразу или, если идёт блокировка и правка касается сегодня, — после паузы. */
+    /** Сохранить сразу или, если идёт блокировка и правка её ослабляет, — после паузы. */
     fun save(title: String, change: (Settings) -> Settings, done: () -> Unit = {}) {
         val before = store.read()
         if (ChangeGuard.needsWait(before, change(before), ZonedDateTime.now())) {
