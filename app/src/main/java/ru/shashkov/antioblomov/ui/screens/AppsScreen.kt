@@ -1,5 +1,7 @@
 package ru.shashkov.antioblomov.ui.screens
 
+import ru.shashkov.antioblomov.ui.components.Scene
+import ru.shashkov.antioblomov.ui.components.SceneBox
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -125,7 +127,9 @@ fun AppsScreen(modifier: Modifier = Modifier) {
         )
     }
 
-    Column(modifier = modifier.fillMaxSize()) {
+    // Фон (R6): сетка «иконок», гаснет к середине
+    SceneBox(scene = Scene.ICONS, anchor = null, modifier = modifier) {
+    Column(modifier = Modifier.fillMaxSize()) {
         // Сколько выбрано (null — список ещё грузится)
         val count = apps?.let { loaded -> AppList.selectedCount(loaded.map { it.entry }, protected, blocked) }
 
@@ -205,6 +209,7 @@ fun AppsScreen(modifier: Modifier = Modifier) {
             section("Часто отвлекают", sections.distracting, byPackage, blocked, ::toggle)
             section("Все приложения", sections.others, byPackage, blocked, ::toggle)
         }
+    }
     }
 }
 

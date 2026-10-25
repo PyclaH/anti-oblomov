@@ -1,17 +1,19 @@
 package ru.shashkov.antioblomov.ui.components
 
+import kotlin.math.sin
+import kotlin.math.cos
+import ru.shashkov.antioblomov.ui.theme.TextPrimary
+import androidx.compose.ui.graphics.StrokeJoin
+import androidx.compose.ui.graphics.Path
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -31,15 +33,12 @@ import ru.shashkov.antioblomov.rules.RingText
 import ru.shashkov.antioblomov.ui.theme.Accent
 import ru.shashkov.antioblomov.ui.theme.BigNumber
 import ru.shashkov.antioblomov.ui.theme.Calm
-import ru.shashkov.antioblomov.ui.theme.Overline
 import ru.shashkov.antioblomov.ui.theme.Surface2
-import ru.shashkov.antioblomov.ui.theme.TABULAR
-import ru.shashkov.antioblomov.ui.theme.TextMuted
 import ru.shashkov.antioblomov.ui.theme.Warn
 
 /**
  * Кольцо-циферблат на главной (редизайн R2): дуга — какая часть идущей блокировки прошла,
- * в центре — до какого времени. За кольцом свечение (R4, правка 25.10.2026):
+ * в центре — только время (R6): конец блокировки, следующая блокировка или «∞». За кольцом свечение (R4):
  * - блокировка — спокойная терракота, шире кольца, чуть выходит за циферблат;
  * - свободно, впереди блокировка — светлая бирюза, заметнее прежнего;
  * - свободно и ничего не запланировано («∞») — ещё светлее и ярче;
@@ -47,7 +46,6 @@ import ru.shashkov.antioblomov.ui.theme.Warn
  *
  * @param progress 0..1 — блокировка идёт; null — свободное время (дуги нет)
  * @param nothingPlanned нет ни расписания впереди, ни таймера
- * @param timerLeft «1:24:07», если идёт таймер
  * @param description что прочитает экранный диктор
  */
 @Composable
@@ -56,7 +54,6 @@ fun StatusRing(
     progress: Float?,
     nothingPlanned: Boolean,
     serviceWorks: Boolean,
-    timerLeft: String?,
     description: String,
     modifier: Modifier = Modifier,
 ) {
@@ -139,18 +136,38 @@ fun StatusRing(
                 drawCircle(color = tone.copy(alpha = 0.35f), radius = (size.minDimension - stroke) / 2, style = Stroke(2.dp.toPx()))
             }
         }
-        Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            Text(text.overline, style = Overline, color = tone)
+        // В кольце — только время (R6): остальное и так видно по дуге, свечению и фону.
+        // Полные подписи остаются для экранного диктора (description).
+        if (text.big == INFINITY) {
+            Infinity(Modifier.size(width = 92.dp, height = 46.dp))
+        } else {
             Text(text.big, style = BigNumber.copy(fontSize = 52.sp, lineHeight = 56.sp), textAlign = TextAlign.Center)
-            Text(text.sub, style = MaterialTheme.typography.bodySmall, color = TextMuted, textAlign = TextAlign.Center)
-            if (timerLeft != null) {
-                Text(
-                    "таймер · осталось $timerLeft",
-                    style = MaterialTheme.typography.bodySmall.copy(fontFeatureSettings = TABULAR),
-                    color = TextMuted,
-                )
-            }
         }
+    }
+}
+
+private const val INFINITY = "∞"
+
+/**
+ * Знак бесконечности — нарисован, а не набран шрифтом: в Unbounded он несимметричный.
+ * Лемниската Бернулли — обе петли одинаковые, линия одной толщины.
+ */
+@Composable
+private fun Infinity(modifier: Modifier) {
+    Canvas(modifier) {
+        val stroke = 5.dp.toPx()
+        val a = (size.width - stroke) / 2
+        val path = Path()
+        val steps = 160
+        for (i in 0..steps) {
+            val t = 2 * Math.PI * i / steps
+            val d = 1 + sin(t) * sin(t)
+            val x = center.x + (a * cos(t) / d).toFloat()
+            val y = center.y + (a * sin(t) * cos(t) / d).toFloat()
+            if (i == 0) path.moveTo(x, y) else path.lineTo(x, y)
+        }
+        path.close()
+        drawPath(path, TextPrimary, style = Stroke(stroke, cap = StrokeCap.Round, join = StrokeJoin.Round))
     }
 }
 

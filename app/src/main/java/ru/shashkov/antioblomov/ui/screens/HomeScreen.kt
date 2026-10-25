@@ -1,5 +1,8 @@
 package ru.shashkov.antioblomov.ui.screens
 
+import ru.shashkov.antioblomov.ui.components.Scene
+import ru.shashkov.antioblomov.ui.components.SceneBox
+import ru.shashkov.antioblomov.ui.components.rememberSceneAnchor
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.foundation.Image
@@ -140,8 +143,17 @@ fun HomeScreen(
     // Что-то не так со службой или настройками — блок «Система» раскрыт и стоит сразу под кольцом
     val systemProblem = !serviceWorks || SetupChecklist.missing(setup).isNotEmpty()
 
+    // Фон по состоянию (R6): идёт блокировка — поле, впереди блокировка — горы, ничего нет — море
+    val scene = when {
+        status is BlockStatus.Blocked -> Scene.FIELD
+        status is BlockStatus.Free && status.nextBlockAt != null -> Scene.MOUNTAINS
+        else -> Scene.SEA
+    }
+    val ringAnchor = rememberSceneAnchor()
+
+    SceneBox(scene = scene, anchor = ringAnchor, modifier = modifier) {
     Column(
-        modifier = modifier
+        modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 20.dp)
@@ -167,7 +179,7 @@ fun HomeScreen(
             progress = BlockRules.blockedProgress(settings, now),
             nothingPlanned = status is BlockStatus.Free && status.nextBlockAt == null,
             serviceWorks = serviceWorks,
-            timerLeft = TimerRules.remainingMillis(settings, now)?.let(TimerRules::countdown),
+            modifier = ringAnchor.modifier,
             description = HomeStatusText.title(status, now) + ", " + HomeStatusText.detail(status, now) +
                 if (serviceWorks) "" else ". Служба блокировки не работает",
         )
@@ -215,5 +227,6 @@ fun HomeScreen(
         ThankAuthorCard(savedMinutesPerDay = report?.savedPerDayMinutes)
 
         if (!systemProblem) SystemBlock(serviceState, setup, onOpenOnboarding)
+    }
     }
 }

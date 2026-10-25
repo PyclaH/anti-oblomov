@@ -1,5 +1,8 @@
 package ru.shashkov.antioblomov.ui.screens
 
+import ru.shashkov.antioblomov.ui.components.Scene
+import ru.shashkov.antioblomov.ui.components.SceneBox
+import ru.shashkov.antioblomov.ui.components.rememberSceneAnchor
 import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
@@ -145,8 +148,12 @@ fun TimerScreen(modifier: Modifier = Modifier) {
         (remaining.toFloat() / total).coerceIn(0f, 1f)
     } else null
 
+    // Фон (R6): шкала вокруг циферблата
+    val dialAnchor = rememberSceneAnchor()
+
+    SceneBox(scene = Scene.BEZEL, anchor = dialAnchor, modifier = modifier) {
     Column(
-        modifier = modifier
+        modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 20.dp)
@@ -173,6 +180,7 @@ fun TimerScreen(modifier: Modifier = Modifier) {
             fraction = fraction,
             countdown = remaining?.let(TimerRules::countdown),
             until = endsAt?.let { "до ${TimeText.at(it, now)}" },
+            ringModifier = dialAnchor.modifier,
         )
 
         if (remaining != null && endsAt != null) {
@@ -216,6 +224,7 @@ fun TimerScreen(modifier: Modifier = Modifier) {
                 else openNotificationSettings(context)
             })
         }
+    }
     }
 
     when (dialog) {
@@ -272,7 +281,7 @@ fun TimerScreen(modifier: Modifier = Modifier) {
  * @param fraction какая часть срока осталась, 0..1; null — таймер не идёт
  */
 @Composable
-private fun TimerDial(fraction: Float?, countdown: String?, until: String?) {
+private fun TimerDial(fraction: Float?, countdown: String?, until: String?, ringModifier: Modifier = Modifier) {
     val running = fraction != null
     // Дуга меняется раз в секунду — плавно, без рывков
     val sweep by animateFloatAsState(fraction ?: 0f, tween(1000, easing = LinearEasing), label = "dial")
@@ -298,7 +307,7 @@ private fun TimerDial(fraction: Float?, countdown: String?, until: String?) {
                 )
             }
         }
-        Canvas(Modifier.size(286.dp)) {
+        Canvas(Modifier.size(286.dp).then(ringModifier)) {
             val stroke = 8.dp.toPx()
             val radius = (size.minDimension - stroke) / 2
             drawCircle(Surface2, radius = radius, style = Stroke(stroke))
@@ -330,9 +339,8 @@ private fun TimerDial(fraction: Float?, countdown: String?, until: String?) {
         }
         Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
             if (running) {
-                Text("ПО ТАЙМЕРУ", style = Overline, color = Accent)
+                // Только обратный отсчёт (R6); «до 18:30» остаётся для экранного диктора
                 Text(countdown.orEmpty(), style = BigNumber.copy(fontSize = 44.sp, lineHeight = 48.sp))
-                Text(until.orEmpty(), style = MaterialTheme.typography.bodyMedium, color = TextMuted)
             } else {
                 Text("НЕ ЗАПУЩЕН", style = Overline, color = TextMuted)
                 Text("выбери ниже, на сколько", style = MaterialTheme.typography.bodySmall, color = TextMuted)
