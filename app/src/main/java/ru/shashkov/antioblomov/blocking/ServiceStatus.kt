@@ -58,29 +58,6 @@ fun openAccessibilitySettings(context: Context) {
     )
 }
 
-/** Телефон Xiaomi / Redmi / Poco (MIUI или HyperOS). */
-val isXiaomi: Boolean
-    get() = android.os.Build.MANUFACTURER.equals("xiaomi", ignoreCase = true)
-
-/**
- * Открыть экран «Автозапуск» приложения «Безопасность» на Xiaomi.
- * Этот экран не документирован и может отличаться в разных версиях системы,
- * поэтому при неудаче открываем страницу приложения в настройках.
- */
-fun openXiaomiAutostart(context: Context) {
-    val autostart = Intent().setComponent(
-        ComponentName(
-            "com.miui.securitycenter",
-            "com.miui.permcenter.autostart.AutoStartManagementActivity",
-        )
-    ).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-    try {
-        context.startActivity(autostart)
-    } catch (e: Exception) {
-        openAppSettings(context)
-    }
-}
-
 /** Открыть страницу «О приложении»: там на HyperOS «Автозапуск» и «Контроль активности». */
 fun openAppSettings(context: Context) {
     context.startActivity(

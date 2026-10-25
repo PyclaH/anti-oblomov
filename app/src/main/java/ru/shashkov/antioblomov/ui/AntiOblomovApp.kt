@@ -25,7 +25,10 @@ import androidx.compose.ui.tooling.preview.Preview
 import ru.shashkov.antioblomov.R
 import ru.shashkov.antioblomov.blocking.ServiceState
 import ru.shashkov.antioblomov.ui.screens.AppsScreen
+import ru.shashkov.antioblomov.rules.PhoneBrand
+import ru.shashkov.antioblomov.rules.SetupState
 import ru.shashkov.antioblomov.ui.screens.HomeScreen
+import ru.shashkov.antioblomov.ui.screens.OnboardingScreen
 import ru.shashkov.antioblomov.ui.screens.ScheduleScreen
 import ru.shashkov.antioblomov.ui.screens.TimerScreen
 import ru.shashkov.antioblomov.ui.theme.AntiOblomovTheme
@@ -44,6 +47,13 @@ enum class Tab(@StringRes val title: Int, val icon: ImageVector) {
 @Composable
 fun AntiOblomovApp(
     serviceState: ServiceState,
+    setup: SetupState,
+    showOnboarding: Boolean = false,
+    onOpenOnboarding: () -> Unit = {},
+    onAutostartConfirmed: (Boolean) -> Unit = {},
+    onExtraBatteryConfirmed: (Boolean) -> Unit = {},
+    onRefreshSetup: () -> Unit = {},
+    onOnboardingFinished: (openApps: Boolean) -> Unit = {},
     requestedTab: Tab? = null,
     onTabOpened: () -> Unit = {},
 ) {
@@ -56,6 +66,18 @@ fun AntiOblomovApp(
             current = requestedTab
             onTabOpened()
         }
+    }
+
+    // Мастер настройки — во весь экран, без нижнего меню
+    if (showOnboarding) {
+        OnboardingScreen(
+            setup = setup,
+            onAutostartConfirmed = onAutostartConfirmed,
+            onExtraBatteryConfirmed = onExtraBatteryConfirmed,
+            onRefresh = onRefreshSetup,
+            onFinish = onOnboardingFinished,
+        )
+        return
     }
 
     Scaffold(
@@ -74,7 +96,7 @@ fun AntiOblomovApp(
     ) { innerPadding ->
         val modifier = Modifier.padding(innerPadding)
         when (current) {
-            Tab.HOME -> HomeScreen(serviceState = serviceState, modifier = modifier)
+            Tab.HOME -> HomeScreen(serviceState = serviceState, setup = setup, onOpenOnboarding = onOpenOnboarding, modifier = modifier)
             Tab.SCHEDULE -> ScheduleScreen(modifier)
             Tab.TIMER -> TimerScreen(modifier)
             Tab.APPS -> AppsScreen(modifier)
@@ -85,5 +107,10 @@ fun AntiOblomovApp(
 @Preview(showBackground = true)
 @Composable
 private fun AntiOblomovAppPreview() {
-    AntiOblomovTheme { AntiOblomovApp(serviceState = ServiceState.OFF) }
+    AntiOblomovTheme {
+        AntiOblomovApp(
+            serviceState = ServiceState.OFF,
+            setup = SetupState(PhoneBrand.XIAOMI, false, false, false, false, false),
+        )
+    }
 }
