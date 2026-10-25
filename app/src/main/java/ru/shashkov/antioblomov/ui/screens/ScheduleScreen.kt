@@ -73,8 +73,8 @@ import ru.shashkov.antioblomov.rules.TimeInput
 import ru.shashkov.antioblomov.rules.TimeText
 import ru.shashkov.antioblomov.rules.TimeInterval
 import ru.shashkov.antioblomov.ui.components.WaitDialog
-import ru.shashkov.antioblomov.ui.theme.Lake
-import ru.shashkov.antioblomov.ui.theme.Terracotta
+import ru.shashkov.antioblomov.ui.theme.Calm
+import ru.shashkov.antioblomov.ui.theme.Accent
 import java.time.DayOfWeek
 import java.time.ZonedDateTime
 
@@ -259,16 +259,16 @@ fun ScheduleScreen(modifier: Modifier = Modifier) {
 @Composable
 private fun StatusLine(settings: Settings, now: ZonedDateTime) {
     val (text, color) = when (val status = BlockRules.status(settings, now)) {
-        is BlockStatus.Blocked -> "Сейчас: блокировка до ${dayTime(status.until, now)}" to Terracotta
+        is BlockStatus.Blocked -> "Сейчас: блокировка до ${dayTime(status.until, now)}" to Accent
         is BlockStatus.Free -> ("Сейчас: свободное время" +
-            (status.nextBlockAt?.let { " · следующая блокировка ${dayTime(it, now)}" } ?: "")) to Lake
+            (status.nextBlockAt?.let { " · следующая блокировка ${dayTime(it, now)}" } ?: "")) to Calm
     }
     Text(text = text, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold, color = color)
     if (settings.blockedPackages.isEmpty()) {
         Text(
             text = "Приложения для блокировки не выбраны — отметьте их на вкладке «Приложения»",
             style = MaterialTheme.typography.bodyMedium,
-            color = Terracotta,
+            color = Accent,
         )
     }
 }
@@ -304,7 +304,7 @@ private fun DayRow(selected: DayOfWeek, settings: Settings, onSelect: (DayOfWeek
                     Modifier
                         .size(6.dp)
                         .clip(CircleShape)
-                        .background(if (settings.intervalsOn(day).isNotEmpty()) Terracotta else Color.Transparent)
+                        .background(if (settings.intervalsOn(day).isNotEmpty()) Accent else Color.Transparent)
                 )
             }
         }
@@ -323,7 +323,7 @@ private fun IntervalRow(interval: TimeInterval, onClick: () -> Unit, onDelete: (
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Icon(Icons.Filled.Lock, contentDescription = null, tint = Terracotta)
+        Icon(Icons.Filled.Lock, contentDescription = null, tint = Accent)
         Text(
             text = interval.toString(),
             modifier = Modifier.weight(1f),
@@ -344,7 +344,7 @@ private fun BreakRow(gap: TimeInterval) {
             .fillMaxWidth()
             .drawBehind {
                 drawRoundRect(
-                    color = Lake,
+                    color = Calm,
                     cornerRadius = CornerRadius(16.dp.toPx()),
                     style = Stroke(
                         width = 1.5.dp.toPx(),
@@ -357,7 +357,7 @@ private fun BreakRow(gap: TimeInterval) {
         Text(
             text = "$gap · перерыв, всё открыто",
             style = MaterialTheme.typography.bodyLarge,
-            color = Lake,
+            color = Calm,
         )
     }
 }
@@ -438,7 +438,7 @@ private fun IntervalDialog(
                     is IntervalCheck.Error -> Text(
                         text = check.message,
                         style = MaterialTheme.typography.bodyMedium,
-                        color = Terracotta,
+                        color = Accent,
                     )
                 }
             }

@@ -4,7 +4,8 @@
         Тема окна до того, как Compose нарисует интерфейс.
         Основные цвета задаются в ui/theme/Theme.kt.
     -->
-    <style name="Theme.AntiOblomov" parent="android:Theme.Material.Light.NoActionBar">
-        <item name="android:windowBackground">@color/paper</item>
+    <style name="Theme.AntiOblomov" parent="android:Theme.Material.NoActionBar">
+        <!-- Тёмный фон с первого кадра, без белой вспышки при запуске -->
+        <item name="android:windowBackground">@color/night</item>
     </style>
 </resources>

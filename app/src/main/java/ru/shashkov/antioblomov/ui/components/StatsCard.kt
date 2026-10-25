@@ -22,10 +22,10 @@ import ru.shashkov.antioblomov.rules.Milestone
 import ru.shashkov.antioblomov.rules.Savings
 import ru.shashkov.antioblomov.rules.SavingsReport
 import ru.shashkov.antioblomov.rules.UsageText
-import ru.shashkov.antioblomov.ui.theme.Ink
-import ru.shashkov.antioblomov.ui.theme.Lake
-import ru.shashkov.antioblomov.ui.theme.Paper
-import ru.shashkov.antioblomov.ui.theme.Terracotta
+import ru.shashkov.antioblomov.ui.theme.TextPrimary
+import ru.shashkov.antioblomov.ui.theme.Calm
+import ru.shashkov.antioblomov.ui.theme.Surface1
+import ru.shashkov.antioblomov.ui.theme.Accent
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
@@ -51,7 +51,7 @@ fun StatsCard(
 ) {
     Card(
         modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = Paper, contentColor = Ink),
+        colors = CardDefaults.cardColors(containerColor = Surface1, contentColor = TextPrimary),
         border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
     ) {
         Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -87,19 +87,19 @@ private fun Report(r: SavingsReport, startDate: LocalDate, noAppsSelected: Boole
         Text(
             "Выберите приложения для статистики выше — или включите «Активировать все».",
             style = MaterialTheme.typography.bodyMedium,
-            color = Terracotta,
+            color = Accent,
         )
     }
 
     // До установки — после — сэкономлено, всё в среднем за день (решение от 25.10.2026)
     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        Figure("До, в день", r.beforeAvgMinutes?.let(UsageText::minutes) ?: "—", Ink, Modifier.weight(1f))
-        Figure("После, в день", UsageText.minutes(r.perDayAfterMinutes), Ink, Modifier.weight(1f))
+        Figure("До, в день", r.beforeAvgMinutes?.let(UsageText::minutes) ?: "—", TextPrimary, Modifier.weight(1f))
+        Figure("После, в день", UsageText.minutes(r.perDayAfterMinutes), TextPrimary, Modifier.weight(1f))
         val saved = r.perDaySavedMinutes
         Figure(
             title = if (saved != null && saved < 0) "Больше, в день" else "Сэкономлено, в день",
             value = saved?.let { UsageText.minutes(kotlin.math.abs(it)) } ?: "—",
-            color = if (saved != null && saved < 0) Terracotta else Lake,
+            color = if (saved != null && saved < 0) Accent else Calm,
             modifier = Modifier.weight(1f),
         )
     }
@@ -117,7 +117,7 @@ private fun Report(r: SavingsReport, startDate: LocalDate, noAppsSelected: Boole
             Line(
                 "Всего ты вернул себе",
                 UsageText.minutes(total) + if (days > 0) " · ${UsageText.schoolDays(days)}" else "",
-                Lake,
+                Calm,
             )
         }
     }
@@ -135,7 +135,7 @@ private fun Report(r: SavingsReport, startDate: LocalDate, noAppsSelected: Boole
 private fun MilestoneBlock(m: Milestone) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = Lake, contentColor = Paper),
+        colors = CardDefaults.cardColors(containerColor = Calm, contentColor = Surface1),
     ) {
         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Text("${m.title} с «Анти-Обломовым»", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
@@ -163,7 +163,7 @@ private fun Figure(title: String, value: String, color: Color, modifier: Modifie
 }
 
 @Composable
-private fun Line(title: String, value: String, color: Color = Ink) {
+private fun Line(title: String, value: String, color: Color = TextPrimary) {
     Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
         Text(title, modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium)
         Text(value, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold, color = color)

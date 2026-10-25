@@ -31,7 +31,7 @@ import androidx.compose.ui.unit.dp
 import ru.shashkov.antioblomov.data.InstalledApp
 import ru.shashkov.antioblomov.rules.StatsApps
 import ru.shashkov.antioblomov.rules.StatsChoice
-import ru.shashkov.antioblomov.ui.theme.Terracotta
+import ru.shashkov.antioblomov.ui.theme.Accent
 
 /**
  * Выпадающий список «Приложения для статистики» в блоке «Было / стало» (решение от 25.10.2026).
@@ -72,7 +72,7 @@ fun StatsAppsPicker(
                         else -> "Выбрано: ${tracked.size}"
                     },
                     style = MaterialTheme.typography.bodyMedium,
-                    color = if (tracked.isEmpty() && !choice.all) Terracotta else MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = if (tracked.isEmpty() && !choice.all) Accent else MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
             Icon(

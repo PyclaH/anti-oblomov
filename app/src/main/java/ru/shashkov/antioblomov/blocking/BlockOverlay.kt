@@ -84,7 +84,7 @@ class BlockOverlay(
 
         val logo = FrameLayout(ctx).apply {
             background = GradientDrawable().apply {
-                setColor(TERRACOTTA)
+                setColor(GRAPHITE) // как фон иконки приложения (редизайн, «Графит»)
                 cornerRadius = dp(28).toFloat()
             }
             addView(
@@ -195,6 +195,6 @@ class BlockOverlay(
         val INK = 0xFF1F2A37.toInt()
         val PAPER = 0xFFFAF7F0.toInt()
         val PAPER_DIM = 0x99FAF7F0.toInt()
-        val TERRACOTTA = 0xFFB4502A.toInt()
+        val GRAPHITE = 0xFF1E232D.toInt()
     }
 }
