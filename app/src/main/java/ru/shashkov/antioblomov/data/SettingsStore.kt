@@ -1,5 +1,6 @@
 package ru.shashkov.antioblomov.data
 
+import android.content.Intent
 import ru.shashkov.antioblomov.blocking.BlockNotification
 import android.content.Context
 import android.util.AtomicFile
@@ -60,6 +61,8 @@ class SettingsStore(context: Context) {
         // Любая смена настроек (расписание, таймер, приложения, язык) — сразу обновить уведомление
         // «Блокировка до …» (v1.2): иначе оно ждало бы следующей проверки службы
         runCatching { BlockNotification.update(appContext, settings) }
+        // …и сказать службе блокировки (другой процесс), чтобы сразу тикала отсчёт, если блокировка началась
+        runCatching { appContext.sendBroadcast(Intent(ACTION_SETTINGS_CHANGED).setPackage(appContext.packageName)) }
     }
 
     /** Прочитать, изменить, записать. */
@@ -69,6 +72,9 @@ class SettingsStore(context: Context) {
     companion object {
         private const val TAG = "AntiOblomov"
         private const val FILE_NAME = "settings.json"
+
+        /** Внутренний сигнал службе блокировки: настройки изменились (только внутри приложения). */
+        const val ACTION_SETTINGS_CHANGED = "ru.shashkov.antioblomov.SETTINGS_CHANGED"
 
         /** По умолчанию ничего не выбрано — пользователь сам отмечает приложения (решение от 25.10.2026). */
         val DEFAULT = Settings()

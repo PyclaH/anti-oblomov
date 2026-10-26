@@ -1,5 +1,10 @@
 package ru.shashkov.antioblomov.blocking
 
+import androidx.core.content.ContextCompat
+import android.os.PowerManager
+import android.content.IntentFilter
+import android.content.Context
+import android.content.BroadcastReceiver
 import android.accessibilityservice.AccessibilityService
 import android.content.Intent
 import android.media.AudioAttributes
@@ -65,6 +70,45 @@ class BlockingService : AccessibilityService() {
         }
     }
     private var scheduledFor: ZonedDateTime? = null
+
+    /**
+     * Отсчёт в уведомлении о блокировке (v1.2): раз в секунду, ровно на смене секунды, пока идёт блокировка
+     * и включён экран. Нужен потому, что «Супер-остров» HyperOS и острова других прошивок системный
+     * хронометр не показывают. Экран выключен — не тратим батарею; включился — сразу продолжаем.
+     */
+    private var ticking = false
+    private val notificationTick = object : Runnable {
+        override fun run() {
+            val endsAt = BlockNotification.update(this@BlockingService, store.read())
+            if (endsAt == null || !screenOn()) {
+                ticking = false
+                return
+            }
+            val left = endsAt - System.currentTimeMillis()
+            // Отсчёт показывает секунды с округлением вверх — следующая смена через ((left − 1) mod 1000) + 1 мс
+            handler.postDelayed(this, ((left - 1).mod(1000L) + 1 + TICK_SLACK_MS).coerceAtLeast(MIN_TICK_MS))
+        }
+    }
+    private val screenReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            // Экран включился или настройки поменяли в приложении — обновить уведомление и тикать
+            if (intent.action == Intent.ACTION_SCREEN_OFF) {
+                handler.removeCallbacks(notificationTick)
+                ticking = false
+            } else {
+                startTick()
+            }
+        }
+    }
+
+    private fun screenOn(): Boolean = getSystemService(PowerManager::class.java).isInteractive
+
+    /** Обновить уведомление сейчас и, если идёт блокировка, тикать дальше. */
+    private fun startTick() {
+        handler.removeCallbacks(notificationTick)
+        ticking = true
+        handler.post(notificationTick)
+    }
     private var focusRequest: AudioFocusRequest? = null
     private var lastPipPauseAt = 0L
 
@@ -77,7 +121,18 @@ class BlockingService : AccessibilityService() {
         val settings = store.read()
         scheduleBoundaryCheck(settings, ZonedDateTime.now())
         // После перезагрузки уведомление пропадает — возвращаем его (если сейчас идёт блокировка)
-        BlockNotification.update(this, settings)
+        ContextCompat.registerReceiver(
+            this,
+            screenReceiver,
+            IntentFilter().apply {
+                addAction(Intent.ACTION_SCREEN_ON)
+                addAction(Intent.ACTION_SCREEN_OFF)
+                addAction(Intent.ACTION_USER_PRESENT)
+                addAction(SettingsStore.ACTION_SETTINGS_CHANGED)
+            },
+            ContextCompat.RECEIVER_NOT_EXPORTED,
+        )
+        startTick()
         handler.post(usageTick)
     }
 
@@ -90,6 +145,8 @@ class BlockingService : AccessibilityService() {
         val settings = store.read()
         val now = ZonedDateTime.now()
         scheduleBoundaryCheck(settings, now)
+        // Блокировку включили из приложения (таймер, расписание) — подхватить отсчёт в уведомлении
+        if (!ticking && BlockRules.status(settings, now) is BlockStatus.Blocked) startTick()
 
         val foreground = foregroundPackage() ?: event.packageName?.toString()
         if (foreground != null && foreground !in protectedApps &&
@@ -107,8 +164,8 @@ class BlockingService : AccessibilityService() {
         val settings = store.read()
         val now = ZonedDateTime.now()
         Log.i(TAG, "Проверка по времени: ${BlockRules.status(settings, now)}")
-        // Началась или кончилась блокировка — уведомление «Блокировка до …» появляется или исчезает
-        BlockNotification.update(this, settings, now)
+        // Началась или кончилась блокировка — уведомление появляется (и тикает) или исчезает
+        startTick()
         val foreground = foregroundPackage()
         if (foreground != null && foreground !in protectedApps &&
             BlockRules.shouldBlock(foreground, settings, now)
@@ -208,6 +265,8 @@ class BlockingService : AccessibilityService() {
     override fun onDestroy() {
         handler.removeCallbacks(boundaryCheck)
         handler.removeCallbacks(usageTick)
+        handler.removeCallbacks(notificationTick)
+        runCatching { unregisterReceiver(screenReceiver) }
         usageExecutor.shutdown()
         if (::overlay.isInitialized) overlay.hide()
         Log.i(TAG, "Служба блокировки остановлена")
@@ -219,6 +278,8 @@ class BlockingService : AccessibilityService() {
         const val TAG = "AntiOblomov"
         private const val PIP_DEBOUNCE_MS = 2_000L
         private const val USAGE_PERIOD_MS = 60 * 60 * 1000L
+        private const val TICK_SLACK_MS = 15L
+        private const val MIN_TICK_MS = 200L
 
         /** Проверяем чуть позже границы, чтобы точно попасть внутрь интервала. */
         private const val BOUNDARY_SLACK_MS = 500L
