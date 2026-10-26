@@ -26,7 +26,7 @@ class PlanStringsTest {
 
     @Test fun `копирование на будни — названия дней`() {
         assertEquals(
-            "Расписание на вторник, среда будет заменено расписанием дня «Понедельник».",
+            "Расписание на вторник, среду будет заменено расписанием дня «Понедельник».",
             PlanRu.copyWillReplace(listOf("Вторник", "Среда"), "Понедельник"),
         )
         assertEquals(
@@ -38,5 +38,12 @@ class PlanStringsTest {
     @Test fun `английский — единственное и множественное число секунд`() {
         assertEquals("1 second left", PlanEn.secondsLeft(1))
         assertEquals("15 seconds left", PlanEn.secondsLeft(15))
+    }
+
+    @Test fun `секунды склоняются`() {
+        assertEquals("Ещё 1 секунду", PlanRu.secondsLeft(1))
+        assertEquals("Ещё 3 секунды", PlanRu.secondsLeft(3))
+        assertEquals("Ещё 11 секунд", PlanRu.secondsLeft(11))
+        assertEquals("Ещё 15 секунд", PlanRu.secondsLeft(15))
     }
 }

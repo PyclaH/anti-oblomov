@@ -1574,7 +1574,7 @@ object SetupUz : SetupStrings {
 // =====================================================================================
 
 object SetupZh : SetupStrings {
-    override val itemService = "拦截服务"
+    override val itemService = "屏蔽服务"
     override val itemNotifications = "计时器通知"
     override val itemBattery = "电池不受限制"
     override val itemAutostart = "自启动"
@@ -1585,7 +1585,7 @@ object SetupZh : SetupStrings {
 
     override val autostartXiaomi = GuideText(
         title = "自启动",
-        why = "没有它，HyperOS 和 MIUI 在重启后不会启动拦截服务。",
+        why = "没有它，HyperOS 和 MIUI 在重启后不会启动屏蔽服务。",
         steps = listOf(
             "将打开“手机管家”（或“安全中心”）中的“自启动”列表",
             "找到“反奥勃洛莫夫”并打开开关",
@@ -1594,7 +1594,7 @@ object SetupZh : SetupStrings {
     )
     override val autostartSamsung = GuideText(
         title = "不让应用休眠",
-        why = "三星会让长时间未使用的应用进入休眠，拦截服务随之停止工作。",
+        why = "三星会让长时间未使用的应用进入休眠，屏蔽服务随之停止工作。",
         steps = listOf(
             "设置 → 设备维护（或电池）→ 后台使用限制",
             "从不休眠的应用 → “+” → “反奥勃洛莫夫”",
@@ -1613,7 +1613,7 @@ object SetupZh : SetupStrings {
     )
     private fun appLaunch(os: String) = GuideText(
         title = "应用启动管理",
-        why = "$os 会自行决定哪些应用可以在后台运行，可能会停止拦截服务。",
+        why = "$os 会自行决定哪些应用可以在后台运行，可能会停止屏蔽服务。",
         steps = listOf(
             "找到“反奥勃洛莫夫”，关闭“自动管理”",
             "在弹出的窗口中打开全部三项：“允许自启动”“允许关联启动”“允许后台活动”",
@@ -1642,7 +1642,7 @@ object SetupZh : SetupStrings {
     )
     override val batteryXiaomi = GuideText(
         title = "省电策略",
-        why = "HyperOS 有自己的省电机制，可能会停止拦截服务。",
+        why = "HyperOS 有自己的省电机制，可能会停止屏蔽服务。",
         steps = listOf(
             "将打开“反奥勃洛莫夫”的“省电策略”",
             "选择“无限制”",
@@ -1657,15 +1657,15 @@ object SetupZh : SetupStrings {
 
     override val welcomeTitle = "设置“反奥勃洛莫夫”"
     override val welcomeIntro = "本应用会在学习时间（按日程或计时器）关闭你选择的社交网络和游戏，并显示一句名言。"
-    override val welcomeHow = "为了让拦截始终有效，需要在手机上允许几项权限。只需 2–3 分钟。任何一步都可以跳过，之后再从主屏幕回来设置。"
+    override val welcomeHow = "为了让屏蔽始终有效，需要在手机上允许几项权限。只需 2–3 分钟。任何一步都可以跳过，之后再从主屏幕回来设置。"
     override val start = "开始"
 
-    override val serviceTitle = "拦截服务"
+    override val serviceTitle = "屏蔽服务"
     override val serviceWhy = "为了关闭所选应用，“反奥勃洛莫夫”需要使用 Android 无障碍服务。"
     override val serviceDoesTitle = "服务会做什么"
     override val serviceDoes = listOf(
         "识别屏幕上打开的应用名称",
-        "如果该应用正处于拦截时间，显示一个带名言的界面",
+        "如果该应用正处于屏蔽时间，显示一个带名言的界面",
     )
     override val serviceDoesNotTitle = "服务不会做什么"
     override val serviceDoesNot = listOf(
@@ -1674,7 +1674,7 @@ object SetupZh : SetupStrings {
     )
     override val serviceSteps = listOf(
         "点按“打开无障碍”",
-        "找到“反奥勃洛莫夫：拦截”，通常在“已下载的应用”或“已安装的服务”中",
+        "找到“反奥勃洛莫夫：屏蔽”，通常在“已下载的应用”或“已安装的服务”中",
         "打开并确认。手机可能会让你等几秒钟，这是正常的",
     )
     override val serviceOn = "服务正在运行"
@@ -1684,14 +1684,14 @@ object SetupZh : SetupStrings {
     override val openAppInfo = "打开“应用信息”"
 
     override val notificationsTitle = "通知"
-    override val notificationsWhy = "计时拦截期间，通知栏会显示剩余时间。应用不会发送其他通知。"
+    override val notificationsWhy = "计时屏蔽期间，通知栏会显示剩余时间。应用不会发送其他通知。"
     override val notificationsOn = "已允许通知"
     override val notificationsOff = "通知已关闭"
     override val allowNotifications = "允许通知"
     override val openNotificationSettings = "打开通知设置"
 
     override val batteryTitle = "电池"
-    override val batteryWhy = "为了省电，系统会停止在后台运行的应用，拦截也就悄悄失效了。"
+    override val batteryWhy = "为了省电，系统会停止在后台运行的应用，屏蔽也就悄悄失效了。"
     override val batteryOn = "已允许后台运行"
     override val batteryOff = "后台运行受限"
     override val batteryHint = "点按按钮，在弹窗中选择“允许”。如果打开的是列表，请找到“反奥勃洛莫夫”，选择“不优化”或“不受限制”。"
@@ -1715,7 +1715,7 @@ object SetupZh : SetupStrings {
     override val finishDone = "手机已设置好"
     override val finishAlmost = "快完成了"
     override val finishSkipped = "跳过的项目可以稍后设置：见主屏幕上的“手机设置”卡片。"
-    override val finishRest = "最后只需选择要拦截的内容，然后设定日程或启动计时器。"
+    override val finishRest = "最后只需选择要屏蔽的内容，然后设定日程或启动计时器。"
     override val chooseApps = "选择应用"
     override val toHome = "返回主屏幕"
 
@@ -1724,14 +1724,14 @@ object SetupZh : SetupStrings {
     override val notDone = "未完成"
 
     override val cardTitle = "手机设置"
-    override val cardHint = "没有这些设置，拦截可能会自行关闭，“之前 / 现在”也可能无法统计。"
+    override val cardHint = "没有这些设置，屏蔽可能会自行关闭，“之前 / 现在”也可能无法统计。"
     override val cardSetUp = "去设置"
     override val cardRedo = "重新设置"
 
-    override val consentTitle = "拦截服务：它能看到什么"
-    override val consentIntro = "“反奥勃洛莫夫”使用 Android 无障碍服务（Accessibility Service），在拦截期间关闭所选应用。"
+    override val consentTitle = "屏蔽服务：它能看到什么"
+    override val consentIntro = "“反奥勃洛莫夫”使用 Android 无障碍服务（Accessibility Service），在屏蔽期间关闭所选应用。"
     override val consentData = "哪些数据：服务会识别当前屏幕上打开的是哪个应用（其系统名称）。"
-    override val consentWhy = "用途：如果该应用在你的拦截列表中且正处于拦截时间，就会在它上面显示一个带名言的界面。"
+    override val consentWhy = "用途：如果该应用在你的屏蔽列表中且正处于屏蔽时间，就会在它上面显示一个带名言的界面。"
     override val consentNot = "服务不读取屏幕上的文字、消息和密码，不保存任何关于你操作的信息，也不传输任何内容：本应用没有联网权限。"
     override val consentOff = "你可以随时在手机的无障碍设置中关闭该服务。"
     override val consentAccept = "接受"

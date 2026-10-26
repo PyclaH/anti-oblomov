@@ -123,7 +123,9 @@ object PlanRu : PlanStrings {
     override fun changeIntervalQ(interval: String) = "Изменить интервал на $interval?"
     override val copyToWeekdaysQ = "Копировать на будни?"
     override fun copyWillReplace(days: List<String>, from: String) =
-        "Расписание на " + days.joinToString(", ") { it.lowercase() } + " будет заменено расписанием дня «$from»."
+        // Винительный падеж: «на среду, пятницу» (Среда → среду)
+        "Расписание на " + days.joinToString(", ") { d -> d.lowercase().let { if (it.endsWith("а")) it.dropLast(1) + "у" else it } } +
+            " будет заменено расписанием дня «$from»."
     override val replace = "Заменить"
     override val dayBarEmpty = "Полоса суток: блокировки нет"
     override fun dayBar(intervals: String) = "Полоса суток: $intervals"
@@ -168,7 +170,12 @@ object PlanRu : PlanStrings {
     override fun confirmIn(seconds: Int) = "Подтвердить через $seconds с"
     override val confirm = "Подтвердить"
     override val canConfirm = "Можно подтвердить"
-    override fun secondsLeft(seconds: Int) = "Осталось $seconds секунд"
+    override fun secondsLeft(seconds: Int) = "Ещё $seconds " + when {
+        seconds % 100 in 11..14 -> "секунд"
+        seconds % 10 == 1 -> "секунду"
+        seconds % 10 in 2..4 -> "секунды"
+        else -> "секунд"
+    }
 
     override val notificationTitle = "Блокировка по таймеру"
     override val channelDescription = "Обратный отсчёт, пока идёт блокировка по таймеру"

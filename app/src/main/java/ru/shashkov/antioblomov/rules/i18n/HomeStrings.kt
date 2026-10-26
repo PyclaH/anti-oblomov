@@ -782,7 +782,7 @@ object HomeUz : HomeStrings {
     override val nextBlockLabel = "keyingi bloklash"
     override val nextShort = "keyingisi"
 
-    override val statsTitle = "OLDIN / KEYIN"
+    override val statsTitle = "AVVAL / HOZIR"
     override val collapseAppList = "Ilovalar ro‘yxatini yig‘ish"
     override val statsAppsTitle = "Statistika uchun ilovalar"
     override val accessExplain = "«Anti-Oblomov»dan oldin ijtimoiy tarmoqlarda qancha vaqt o‘tkazganingni va hozir qanchaligini ko‘rish uchun " +
@@ -874,7 +874,7 @@ object HomeZh : HomeStrings {
     override val nextBlockLabel = "下次屏蔽"
     override val nextShort = "下次"
 
-    override val statsTitle = "之前 / 之后"
+    override val statsTitle = "之前 / 现在"
     override val collapseAppList = "收起应用列表"
     override val statsAppsTitle = "参与统计的应用"
     override val accessExplain = "想看看用“反奥勃洛莫夫”之前和现在你在社交网络上花了多少时间，" +

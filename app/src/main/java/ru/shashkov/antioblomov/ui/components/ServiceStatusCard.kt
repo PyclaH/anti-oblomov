@@ -36,9 +36,9 @@ import ru.shashkov.antioblomov.ui.theme.Accent
 @Composable
 fun ServiceStatusCard(state: ServiceState, modifier: Modifier = Modifier) {
     val context = LocalContext.current
-    val autostart = SetupGuide.autostart(phoneBrand)
-    val openService = rememberAccessibilityOpener()
     val s = LocalStrings.current
+    val autostart = SetupGuide.autostart(phoneBrand, s.setup)
+    val openService = rememberAccessibilityOpener()
     // Название службы — как его показывает список спецвозможностей
     val serviceLabel = stringResource(R.string.accessibility_service_label)
     run {

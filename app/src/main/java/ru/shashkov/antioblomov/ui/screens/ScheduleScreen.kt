@@ -213,7 +213,7 @@ fun ScheduleScreen(modifier: Modifier = Modifier) {
                             menu = false
                             val overwrite = ScheduleEditor.weekdaysToOverwrite(settings, selectedDay)
                             if (overwrite.isEmpty()) {
-                                save(s.plan.changeTodayScheduleQ, { ScheduleEditor.copyToWeekdays(it, selectedDay) }, copied)
+                                save(s.plan.copyToWeekdaysQ, { ScheduleEditor.copyToWeekdays(it, selectedDay) }, copied)
                             } else {
                                 confirmCopy = overwrite
                             }
@@ -295,7 +295,7 @@ fun ScheduleScreen(modifier: Modifier = Modifier) {
             confirmButton = {
                 TextButton(onClick = {
                     confirmCopy = null
-                    save(s.plan.changeTodayScheduleQ, { ScheduleEditor.copyToWeekdays(it, selectedDay) }, copied)
+                    save(s.plan.copyToWeekdaysQ, { ScheduleEditor.copyToWeekdays(it, selectedDay) }, copied)
                 }) { Text(s.plan.replace) }
             },
             dismissButton = { TextButton(onClick = { confirmCopy = null }) { Text(s.common.cancel) } },

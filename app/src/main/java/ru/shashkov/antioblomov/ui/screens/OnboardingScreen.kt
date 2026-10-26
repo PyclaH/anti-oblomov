@@ -1,5 +1,7 @@
 package ru.shashkov.antioblomov.ui.screens
 
+import java.util.Locale
+import ru.shashkov.antioblomov.rules.i18n.SystemNames
 import ru.shashkov.antioblomov.ui.components.rememberAccessibilityOpener
 import android.Manifest
 import android.os.Build
@@ -217,7 +219,7 @@ private fun LanguagePicker() {
     val setLanguage = LocalSetLanguage.current
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(
-            str.common.language.uppercase(),
+            str.common.language.uppercase(Locale.forLanguageTag(str.lang.code)),
             style = Overline,
             color = TextMuted,
             modifier = Modifier.padding(top = 8.dp),
@@ -430,13 +432,28 @@ private fun Title(text: String) =
 
 @Composable
 private fun Body(text: String) =
-    Text(text = text, style = MaterialTheme.typography.bodyLarge)
+    Text(text = systemNames(text), style = MaterialTheme.typography.bodyLarge)
+
+/**
+ * Названия приложения и службы в подсказке — как их покажет телефон (на языке телефона,
+ * а не приложения), см. SystemNames.
+ */
+@Composable
+private fun systemNames(text: String): String {
+    val context = LocalContext.current
+    return SystemNames.fix(
+        text,
+        LocalStrings.current.lang,
+        context.getString(R.string.app_name),
+        context.getString(R.string.accessibility_service_label),
+    )
+}
 
 /** Шаги инструкции — номер в кружке и текст. */
 @Composable
 private fun Steps(lines: List<String>) {
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        lines.forEachIndexed { i, line ->
+        lines.map { systemNames(it) }.forEachIndexed { i, line ->
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 Box(
                     modifier = Modifier
@@ -457,7 +474,7 @@ private fun Steps(lines: List<String>) {
 @Composable
 private fun InfoBox(title: String, lines: List<String>) {
     AppCard(spacing = 6.dp) {
-        Text(title.uppercase(), style = Overline, color = TextMuted)
+        Text(title.uppercase(Locale.forLanguageTag(LocalStrings.current.lang.code)), style = Overline, color = TextMuted)
         lines.forEach { Text("•  $it", style = MaterialTheme.typography.bodyMedium) }
     }
 }

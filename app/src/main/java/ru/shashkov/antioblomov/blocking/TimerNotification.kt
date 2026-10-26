@@ -94,7 +94,8 @@ object TimerNotification {
 
     private fun ensureChannel(context: Context) {
         val manager = context.getSystemService(NotificationManager::class.java)
-        if (manager.getNotificationChannel(CHANNEL_ID) != null) return
+        // Создаём каждый раз: если канал уже есть, Android только обновит название и описание —
+        // так они следуют за языком приложения (v1.2). Важность и прочие настройки пользователя не меняются.
         val s = Language.strings(context).plan
         manager.createNotificationChannel(
             NotificationChannel(CHANNEL_ID, s.timerTitle, NotificationManager.IMPORTANCE_LOW).apply {

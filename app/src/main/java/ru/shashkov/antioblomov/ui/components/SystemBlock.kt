@@ -68,7 +68,7 @@ fun SystemBlock(
                     .background(if (problem) Warn else Calm)
             )
             Text(
-                text = "${s.home.system} · " + if (serviceState != ServiceState.RUNNING) s.home.serviceNotWorking else SetupChecklist.summary(setup),
+                text = "${s.home.system} · " + if (serviceState != ServiceState.RUNNING) s.home.serviceNotWorking else SetupChecklist.summary(setup, s.setup),
                 style = MaterialTheme.typography.bodyMedium,
                 color = if (problem) Warn else MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.weight(1f),
