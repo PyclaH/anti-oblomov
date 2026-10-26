@@ -25,9 +25,18 @@ class OnboardingStore(context: Context) {
         get() = prefs.getBoolean(KEY_EXTRA_BATTERY, false)
         set(value) = prefs.edit().putBoolean(KEY_EXTRA_BATTERY, value).apply()
 
+    /**
+     * Пользователь прочитал, что видит служба спецвозможностей, и нажал «Принимаю»
+     * (требование Google Play к приложениям со службой не для людей с инвалидностью).
+     */
+    var serviceConsent: Boolean
+        get() = prefs.getBoolean(KEY_SERVICE_CONSENT, false)
+        set(value) = prefs.edit().putBoolean(KEY_SERVICE_CONSENT, value).apply()
+
     private companion object {
         const val KEY_COMPLETED = "completed"
         const val KEY_AUTOSTART = "autostart_confirmed"
         const val KEY_EXTRA_BATTERY = "extra_battery_confirmed"
+        const val KEY_SERVICE_CONSENT = "service_consent"
     }
 }

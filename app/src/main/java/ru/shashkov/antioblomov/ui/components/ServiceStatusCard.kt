@@ -20,7 +20,6 @@ import ru.shashkov.antioblomov.blocking.ServiceState
 import ru.shashkov.antioblomov.blocking.openGuide
 import ru.shashkov.antioblomov.blocking.phoneBrand
 import ru.shashkov.antioblomov.rules.SetupGuide
-import ru.shashkov.antioblomov.blocking.openAccessibilitySettings
 import ru.shashkov.antioblomov.blocking.openAppSettings
 import ru.shashkov.antioblomov.ui.theme.AntiOblomovTheme
 import ru.shashkov.antioblomov.ui.theme.Calm
@@ -35,6 +34,7 @@ import ru.shashkov.antioblomov.ui.theme.Accent
 fun ServiceStatusCard(state: ServiceState, modifier: Modifier = Modifier) {
     val context = LocalContext.current
     val autostart = SetupGuide.autostart(phoneBrand)
+    val openService = rememberAccessibilityOpener()
     run {
         Column(
             modifier = modifier.fillMaxWidth(),
@@ -45,7 +45,7 @@ fun ServiceStatusCard(state: ServiceState, modifier: Modifier = Modifier) {
                 ServiceState.RUNNING -> {
                     Status("Служба работает", ok = true)
                     Body("Выбранные приложения блокируются по расписанию и таймеру.")
-                    OutlinedButton(onClick = { openAccessibilitySettings(context) }) {
+                    OutlinedButton(onClick = openService) {
                         Text("Настройки спецвозможностей")
                     }
                 }
@@ -57,7 +57,7 @@ fun ServiceStatusCard(state: ServiceState, modifier: Modifier = Modifier) {
                             "включите «Анти-Обломов: блокировка» в спецвозможностях." +
                             if (autostart != null) " Чтобы служба запускалась сама, проверьте «${autostart.title}» в настройке телефона ниже." else ""
                     )
-                    Button(onClick = { openAccessibilitySettings(context) }) {
+                    Button(onClick = openService) {
                         Text("Спецвозможности")
                     }
                     if (autostart != null) {
@@ -77,7 +77,7 @@ fun ServiceStatusCard(state: ServiceState, modifier: Modifier = Modifier) {
                         "В «Специальных возможностях» найдите в списке служб " +
                             "«Анти-Обломов: блокировка» и включите её."
                     )
-                    Button(onClick = { openAccessibilitySettings(context) }) {
+                    Button(onClick = openService) {
                         Text("Открыть настройки")
                     }
                 }

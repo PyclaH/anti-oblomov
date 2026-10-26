@@ -1,5 +1,6 @@
 package ru.shashkov.antioblomov.ui.screens
 
+import ru.shashkov.antioblomov.ui.components.rememberAccessibilityOpener
 import android.Manifest
 import android.os.Build
 import androidx.activity.compose.BackHandler
@@ -75,7 +76,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import ru.shashkov.antioblomov.blocking.TimerNotification
 import ru.shashkov.antioblomov.data.UsageCollector
-import ru.shashkov.antioblomov.blocking.openAccessibilitySettings
 import ru.shashkov.antioblomov.blocking.openAppSettings
 import ru.shashkov.antioblomov.blocking.openGuide
 import ru.shashkov.antioblomov.blocking.openNotificationSettings
@@ -209,6 +209,8 @@ private fun WelcomePage() {
 private fun ServicePage(setup: SetupState) {
     val context = LocalContext.current
     var showRestrictedHelp by rememberSaveable { mutableStateOf(false) }
+    // Первый раз — окно согласия (Google Play), потом сразу настройки
+    val openService = rememberAccessibilityOpener()
 
     Title("Служба блокировки")
     Body("Чтобы закрывать выбранные приложения, «Анти-Обломову» нужна служба специальных возможностей Android.")
@@ -235,7 +237,7 @@ private fun ServicePage(setup: SetupState) {
     )
     Status(setup.serviceRunning, okText = "Служба работает", notText = "Служба пока не включена")
     if (!setup.serviceRunning) {
-        Button(modifier = Modifier.fillMaxWidth(), onClick = { openAccessibilitySettings(context) }) {
+        Button(modifier = Modifier.fillMaxWidth(), onClick = openService) {
             Text("Открыть спецвозможности")
         }
         // Android 13+: у приложений не из магазина переключатель бывает серым («Ограниченная настройка»)
