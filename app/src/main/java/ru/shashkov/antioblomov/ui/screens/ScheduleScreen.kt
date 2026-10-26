@@ -98,6 +98,8 @@ import ru.shashkov.antioblomov.rules.TimeInput
 import ru.shashkov.antioblomov.rules.TimeText
 import ru.shashkov.antioblomov.rules.TimeInterval
 import ru.shashkov.antioblomov.ui.components.WaitDialog
+import ru.shashkov.antioblomov.ui.i18n.LocalStrings
+import ru.shashkov.antioblomov.rules.i18n.CommonStrings
 import ru.shashkov.antioblomov.ui.theme.Calm
 import ru.shashkov.antioblomov.ui.theme.Accent
 import java.time.DayOfWeek
@@ -119,6 +121,7 @@ private class PendingChange(val title: String, val change: (Settings) -> Setting
 @Composable
 fun ScheduleScreen(modifier: Modifier = Modifier) {
     val context = LocalContext.current
+    val s = LocalStrings.current
     val store = remember { SettingsStore(context) }
     var settings by remember { mutableStateOf(store.read()) }
     var now by remember { mutableStateOf(ZonedDateTime.now()) }
@@ -152,10 +155,10 @@ fun ScheduleScreen(modifier: Modifier = Modifier) {
         }
     }
 
-    val copied = { Toast.makeText(context, "Скопировано на будни", Toast.LENGTH_SHORT).show() }
+    val copied = { Toast.makeText(context, s.plan.copiedToWeekdays, Toast.LENGTH_SHORT).show() }
 
     val intervals = settings.intervalsOn(selectedDay)
-    val dayName = ScheduleEditor.fullName(selectedDay)
+    val dayName = ScheduleEditor.fullName(selectedDay, s.common)
 
     // Фон (R6b): путь солнца над полосой суток, солнце — где оно сейчас
     val barAnchor = rememberSceneAnchor()
@@ -170,16 +173,16 @@ fun ScheduleScreen(modifier: Modifier = Modifier) {
         verticalArrangement = Arrangement.spacedBy(18.dp),
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            Text(text = "Расписание", style = MaterialTheme.typography.headlineMedium)
+            Text(text = s.plan.scheduleTitle, style = MaterialTheme.typography.headlineMedium)
             Text(
-                text = "Когда блокировать выбранные приложения. Между интервалами — перерыв, всё открыто.",
+                text = s.plan.scheduleHint,
                 style = MaterialTheme.typography.bodySmall,
                 color = TextMuted,
             )
         }
         if (settings.blockedPackages.isEmpty()) {
             Text(
-                text = "Приложения для блокировки не выбраны — отметь их на вкладке «Приложения»",
+                text = s.plan.noAppsSelected,
                 style = MaterialTheme.typography.bodySmall,
                 color = Warn,
             )
@@ -200,17 +203,17 @@ fun ScheduleScreen(modifier: Modifier = Modifier) {
                         .background(Surface1)
                         .border(1.dp, Line, CircleShape),
                 ) {
-                    Icon(Icons.Filled.MoreVert, contentDescription = "Ещё: копировать на будни", tint = TextPrimary)
+                    Icon(Icons.Filled.MoreVert, contentDescription = s.plan.moreCopyToWeekdays, tint = TextPrimary)
                 }
                 DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
                     DropdownMenuItem(
-                        text = { Text("Копировать на будни (Пн–Пт)") },
+                        text = { Text(s.plan.copyToWeekdaysMenu) },
                         enabled = intervals.isNotEmpty(),
                         onClick = {
                             menu = false
                             val overwrite = ScheduleEditor.weekdaysToOverwrite(settings, selectedDay)
                             if (overwrite.isEmpty()) {
-                                save("Изменить расписание на сегодня?", { ScheduleEditor.copyToWeekdays(it, selectedDay) }, copied)
+                                save(s.plan.changeTodayScheduleQ, { ScheduleEditor.copyToWeekdays(it, selectedDay) }, copied)
                             } else {
                                 confirmCopy = overwrite
                             }
@@ -224,7 +227,7 @@ fun ScheduleScreen(modifier: Modifier = Modifier) {
 
         if (intervals.isEmpty()) {
             Text(
-                text = "В этот день блокировки нет",
+                text = s.plan.noBlockingThisDay,
                 style = MaterialTheme.typography.bodyMedium,
                 color = TextMuted,
             )
@@ -238,7 +241,7 @@ fun ScheduleScreen(modifier: Modifier = Modifier) {
                         active = nowMinute in interval,
                         onClick = { editing = EditState(interval, interval.startMinute, interval.endMinute) },
                         onDelete = {
-                            save("Удалить интервал $interval?", { ScheduleEditor.remove(it, selectedDay, interval) })
+                            save(s.plan.deleteIntervalQ(interval.toString()), { ScheduleEditor.remove(it, selectedDay, interval) })
                         },
                     )
                     breaks.firstOrNull { it.startMinute == interval.endMinute }?.let { BreakRow(it) }
@@ -252,7 +255,7 @@ fun ScheduleScreen(modifier: Modifier = Modifier) {
             onClick = {
                 val suggestion = ScheduleEditor.suggestNew(intervals)
                 if (suggestion == null) {
-                    Toast.makeText(context, "$dayName занят до полуночи — измени существующий интервал", Toast.LENGTH_LONG).show()
+                    Toast.makeText(context, s.plan.dayFullUntilMidnight(dayName), Toast.LENGTH_LONG).show()
                 } else {
                     editing = EditState(old = null, start = suggestion.first, end = suggestion.second)
                 }
@@ -260,7 +263,7 @@ fun ScheduleScreen(modifier: Modifier = Modifier) {
         ) {
             Icon(Icons.Filled.Add, contentDescription = null)
             Spacer(Modifier.size(8.dp))
-            Text("Интервал", style = MaterialTheme.typography.labelLarge)
+            Text(s.plan.interval, style = MaterialTheme.typography.labelLarge)
         }
     }
     }
@@ -272,7 +275,7 @@ fun ScheduleScreen(modifier: Modifier = Modifier) {
             onSave = { interval ->
                 editing = null
                 save(
-                    if (state.old == null) "Добавить интервал $interval?" else "Изменить интервал на $interval?",
+                    if (state.old == null) s.plan.addIntervalQ(interval.toString()) else s.plan.changeIntervalQ(interval.toString()),
                     { ScheduleEditor.put(it, selectedDay, interval, old = state.old) },
                 )
             },
@@ -283,20 +286,19 @@ fun ScheduleScreen(modifier: Modifier = Modifier) {
         AlertDialog(
             onDismissRequest = { confirmCopy = null },
             containerColor = Surface1,
-            title = { Text("Копировать на будни?", style = MaterialTheme.typography.titleLarge) },
+            title = { Text(s.plan.copyToWeekdaysQ, style = MaterialTheme.typography.titleLarge) },
             text = {
                 Text(
-                    "Расписание на " + days.joinToString(", ") { ScheduleEditor.fullName(it).lowercase() } +
-                        " будет заменено расписанием дня «$dayName».",
+                    s.plan.copyWillReplace(days.map { ScheduleEditor.fullName(it, s.common) }, dayName),
                 )
             },
             confirmButton = {
                 TextButton(onClick = {
                     confirmCopy = null
-                    save("Изменить расписание на сегодня?", { ScheduleEditor.copyToWeekdays(it, selectedDay) }, copied)
-                }) { Text("Заменить") }
+                    save(s.plan.changeTodayScheduleQ, { ScheduleEditor.copyToWeekdays(it, selectedDay) }, copied)
+                }) { Text(s.plan.replace) }
             },
-            dismissButton = { TextButton(onClick = { confirmCopy = null }) { Text("Отмена") } },
+            dismissButton = { TextButton(onClick = { confirmCopy = null }) { Text(s.common.cancel) } },
         )
     }
 
@@ -319,6 +321,7 @@ fun ScheduleScreen(modifier: Modifier = Modifier) {
  */
 @Composable
 private fun DaySegment(selected: DayOfWeek, settings: Settings, onSelect: (DayOfWeek) -> Unit) {
+    val s = LocalStrings.current
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -343,7 +346,7 @@ private fun DaySegment(selected: DayOfWeek, settings: Settings, onSelect: (DayOf
                 verticalArrangement = Arrangement.Center,
             ) {
                 Text(
-                    text = ScheduleEditor.shortName(day),
+                    text = ScheduleEditor.shortName(day, s.common),
                     style = MaterialTheme.typography.labelLarge,
                     color = when {
                         isSelected -> Night0
@@ -376,6 +379,7 @@ private fun DaySegment(selected: DayOfWeek, settings: Settings, onSelect: (DayOf
 @Composable
 private fun DayBar(intervals: List<TimeInterval>, nowMinute: Int?, barModifier: Modifier = Modifier) {
     val day = TimeInterval.MINUTES_IN_DAY.toFloat()
+    val s = LocalStrings.current
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Canvas(
             modifier = Modifier
@@ -383,8 +387,8 @@ private fun DayBar(intervals: List<TimeInterval>, nowMinute: Int?, barModifier: 
                 .height(24.dp)
                 .then(barModifier)
                 .semantics {
-                    contentDescription = if (intervals.isEmpty()) "Полоса суток: блокировки нет"
-                    else "Полоса суток: " + intervals.joinToString(", ")
+                    contentDescription = if (intervals.isEmpty()) s.plan.dayBarEmpty
+                    else s.plan.dayBar(intervals.joinToString(", "))
                 },
         ) {
             val barH = 12.dp.toPx()
@@ -423,6 +427,7 @@ private fun DayBar(intervals: List<TimeInterval>, nowMinute: Int?, barModifier: 
 /** Интервал: замок, время крупно, длительность, удалить. Идущий сейчас — с терракотовым замком. */
 @Composable
 private fun IntervalRow(interval: TimeInterval, active: Boolean, onClick: () -> Unit, onDelete: () -> Unit) {
+    val s = LocalStrings.current
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -442,12 +447,12 @@ private fun IntervalRow(interval: TimeInterval, active: Boolean, onClick: () -> 
             maxLines = 1,
         )
         Text(
-            TimerRules.durationText(interval.endMinute - interval.startMinute),
+            TimerRules.durationText(interval.endMinute - interval.startMinute, s.common),
             style = MaterialTheme.typography.bodySmall,
             color = TextMuted,
         )
         IconButton(onClick = onDelete) {
-            Icon(Icons.Outlined.Delete, contentDescription = "Удалить интервал $interval", tint = TextMuted)
+            Icon(Icons.Outlined.Delete, contentDescription = s.plan.deleteIntervalLabel(interval.toString()), tint = TextMuted)
         }
     }
 }
@@ -455,6 +460,7 @@ private fun IntervalRow(interval: TimeInterval, active: Boolean, onClick: () -> 
 /** Перерыв — тонкая пунктирная строка между интервалами: в это время всё открыто. */
 @Composable
 private fun BreakRow(gap: TimeInterval) {
+    val s = LocalStrings.current
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -471,7 +477,7 @@ private fun BreakRow(gap: TimeInterval) {
             .padding(horizontal = 16.dp, vertical = 10.dp),
     ) {
         Text(
-            text = "$gap · перерыв, всё открыто",
+            text = s.plan.breakRow(gap.toString()),
             style = MaterialTheme.typography.bodySmall,
             color = TextMuted,
         )
@@ -494,13 +500,14 @@ private fun IntervalDialog(
     val startFocus = remember { FocusRequester() }
     val endFocus = remember { FocusRequester() }
     val keyboard = LocalSoftwareKeyboardController.current
+    val s = LocalStrings.current
 
     val start = TimeInput.parse(startField.text)
     val end = TimeInput.parse(endField.text)
     val check: IntervalCheck = when {
-        start == null -> IntervalCheck.Error("Введите время начала, например 930 или 0930")
-        end == null -> IntervalCheck.Error("Введите время конца, например 1400")
-        else -> ScheduleEditor.check(start, end)
+        start == null -> IntervalCheck.Error(s.plan.enterStartTime)
+        end == null -> IntervalCheck.Error(s.plan.enterEndTime)
+        else -> ScheduleEditor.check(start, end, s = s.plan)
     }
 
     LaunchedEffect(Unit) {
@@ -513,12 +520,12 @@ private fun IntervalDialog(
         onDismissRequest = onDismiss,
         containerColor = Surface1,
         shape = RoundedCornerShape(28.dp),
-        title = { Text(if (state.old == null) "Новый интервал" else "Интервал", style = MaterialTheme.typography.titleLarge) },
+        title = { Text(if (state.old == null) s.plan.newInterval else s.plan.interval, style = MaterialTheme.typography.titleLarge) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
                     TimeField(
-                        label = "Начало",
+                        label = s.plan.start,
                         value = startField,
                         onValueChange = { v ->
                             val typed = v.text != startField.text
@@ -534,7 +541,7 @@ private fun IntervalDialog(
                     )
                     Text("–", style = MaterialTheme.typography.titleLarge)
                     TimeField(
-                        label = "Конец",
+                        label = s.plan.end,
                         value = endField,
                         onValueChange = { v -> endField = cleaned(v) },
                         imeAction = ImeAction.Done,
@@ -543,13 +550,13 @@ private fun IntervalDialog(
                     )
                 }
                 Text(
-                    text = "Только цифры: 930 → 9:30, 14 → 14:00. Конец 2400 или 0000 — до полуночи.",
+                    text = s.plan.timeInputHint,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 when (check) {
                     is IntervalCheck.Ok -> Text(
-                        text = "Блокировка ${check.interval}",
+                        text = s.plan.blockingInterval(check.interval.toString()),
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.Bold,
                     )
@@ -565,9 +572,9 @@ private fun IntervalDialog(
             TextButton(
                 enabled = check is IntervalCheck.Ok,
                 onClick = { (check as? IntervalCheck.Ok)?.let { onSave(it.interval) } },
-            ) { Text("Сохранить") }
+            ) { Text(s.common.save) }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Отмена") } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(s.common.cancel) } },
     )
 }
 
@@ -618,4 +625,4 @@ private object ColonTransformation : VisualTransformation {
 }
 
 /** «14:00» сегодня, «завтра 09:00», «Пн 10:00» в другой день. */
-private fun dayTime(t: ZonedDateTime, now: ZonedDateTime): String = TimeText.at(t, now)
+private fun dayTime(t: ZonedDateTime, now: ZonedDateTime, c: CommonStrings): String = TimeText.at(t, now, c)

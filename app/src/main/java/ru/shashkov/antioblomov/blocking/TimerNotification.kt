@@ -14,6 +14,7 @@ import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import ru.shashkov.antioblomov.MainActivity
 import ru.shashkov.antioblomov.R
+import ru.shashkov.antioblomov.data.Language
 import ru.shashkov.antioblomov.rules.Settings
 import ru.shashkov.antioblomov.rules.TimeText
 import java.time.Instant
@@ -50,6 +51,7 @@ object TimerNotification {
             return
         }
         if (!allowed(context)) return
+        val s = Language.strings(context)
         ensureChannel(context)
 
         val open = PendingIntent.getActivity(
@@ -60,12 +62,12 @@ object TimerNotification {
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP),
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
         )
-        val until = TimeText.at(Instant.ofEpochMilli(endsAt).atZone(now.zone), now)
+        val until = TimeText.at(Instant.ofEpochMilli(endsAt).atZone(now.zone), now, s.common)
 
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_stat_lock)
-            .setContentTitle("Блокировка по таймеру")
-            .setContentText("до $until")
+            .setContentTitle(s.plan.notificationTitle)
+            .setContentText(s.plan.until(until))
             .setWhen(endsAt)
             .setShowWhen(true)
             .setUsesChronometer(true)
@@ -93,9 +95,10 @@ object TimerNotification {
     private fun ensureChannel(context: Context) {
         val manager = context.getSystemService(NotificationManager::class.java)
         if (manager.getNotificationChannel(CHANNEL_ID) != null) return
+        val s = Language.strings(context).plan
         manager.createNotificationChannel(
-            NotificationChannel(CHANNEL_ID, "Таймер", NotificationManager.IMPORTANCE_LOW).apply {
-                description = "Обратный отсчёт, пока идёт блокировка по таймеру"
+            NotificationChannel(CHANNEL_ID, s.timerTitle, NotificationManager.IMPORTANCE_LOW).apply {
+                description = s.channelDescription
                 setShowBadge(false)
             }
         )
