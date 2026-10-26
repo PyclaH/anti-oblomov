@@ -424,7 +424,7 @@ private fun DayBar(intervals: List<TimeInterval>, nowMinute: Int?, barModifier: 
     }
 }
 
-/** Интервал: замок, время крупно, длительность, удалить. Идущий сейчас — с терракотовым замком. */
+/** Интервал: замок, время крупно и длительность под ним, удалить. Идущий сейчас — с терракотовым замком. */
 @Composable
 private fun IntervalRow(interval: TimeInterval, active: Boolean, onClick: () -> Unit, onDelete: () -> Unit) {
     val s = LocalStrings.current
@@ -440,17 +440,23 @@ private fun IntervalRow(interval: TimeInterval, active: Boolean, onClick: () -> 
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Icon(Icons.Outlined.Lock, contentDescription = null, tint = if (active) Accent else TextMuted, modifier = Modifier.size(20.dp))
-        Text(
-            text = "${TimeInterval.hhmm(interval.startMinute)} — ${TimeInterval.hhmm(interval.endMinute)}",
-            modifier = Modifier.weight(1f),
-            style = MaterialTheme.typography.headlineSmall.copy(fontSize = 20.sp),
-            maxLines = 1,
-        )
-        Text(
-            TimerRules.durationText(interval.endMinute - interval.startMinute, s.common),
-            style = MaterialTheme.typography.bodySmall,
-            color = TextMuted,
-        )
+        // Время — целиком в первой строке, длительность — мелко под ним (v1.2): раньше они делили
+        // одну строку, и на узких экранах и длинных словах («4 ч 30 мин», «4 Std. 30 Min.») конец
+        // интервала обрезался.
+        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text(
+                text = "${TimeInterval.hhmm(interval.startMinute)} — ${TimeInterval.hhmm(interval.endMinute)}",
+                style = MaterialTheme.typography.headlineSmall.copy(fontSize = 20.sp),
+                maxLines = 1,
+                softWrap = false,
+            )
+            Text(
+                TimerRules.durationText(interval.endMinute - interval.startMinute, s.common),
+                style = MaterialTheme.typography.bodySmall,
+                color = TextMuted,
+                maxLines = 1,
+            )
+        }
         IconButton(onClick = onDelete) {
             Icon(Icons.Outlined.Delete, contentDescription = s.plan.deleteIntervalLabel(interval.toString()), tint = TextMuted)
         }
