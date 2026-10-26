@@ -1,5 +1,9 @@
 package ru.shashkov.antioblomov.ui
 
+import ru.shashkov.antioblomov.ui.components.WaitRequest
+import ru.shashkov.antioblomov.ui.components.WaitOverlay
+import ru.shashkov.antioblomov.ui.components.LocalWaitHost
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.padding
 import androidx.compose.animation.AnimatedContent
@@ -116,7 +120,11 @@ fun AntiOblomovApp(
         return
     }
 
+    // Пауза перед ослаблением блокировки — слоем поверх всего, на весь экран (см. WaitDialog)
+    val wait = remember { mutableStateOf<WaitRequest?>(null) }
+
     AppBackground {
+        CompositionLocalProvider(LocalWaitHost provides wait) {
         Scaffold(
             containerColor = Color.Transparent,
             contentColor = TextPrimary,
@@ -136,6 +144,8 @@ fun AntiOblomovApp(
                 }
             }
         }
+        }
+        WaitOverlay(wait)
     }
 }
 

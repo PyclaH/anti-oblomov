@@ -1,5 +1,13 @@
 package ru.shashkov.antioblomov.ui.components
 
+import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.key
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.clickable
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.Animatable
@@ -70,14 +78,69 @@ import ru.shashkov.antioblomov.rules.ChangeGuard
 import ru.shashkov.antioblomov.ui.theme.Night0
 import ru.shashkov.antioblomov.ui.theme.TextPrimary
 
+/** Открытая пауза: заголовок (для диктора) и что делать по кнопкам. */
+class WaitRequest(val title: String, val onConfirm: () -> Unit, val onDismiss: () -> Unit)
+
+/**
+ * Куда показывать паузу: слой поверх всего приложения (AntiOblomovApp). Нет слоя — отдельное окно.
+ */
+val LocalWaitHost = staticCompositionLocalOf<MutableState<WaitRequest?>?> { null }
+
 /**
  * Пауза перед изменением настроек во время блокировки (ChangeGuard):
  * во весь экран — цитата на фоне-картинке, как на экране блокировки,
  * и кольцо обратного отсчёта (редизайн R5: PT Serif, Onest, «стеклянная» кнопка). «Подтвердить» становится доступна через 15 секунд.
  * «Отмена» и кнопка «Назад» — ничего не меняют.
+ *
+ * Показывается слоем поверх приложения, а не отдельным окном-диалогом (26.10.2026): на части
+ * телефонов окно диалога не заходило под нижнюю панель навигации и снизу оставалась полоса.
+ * Окно приложения и так растянуто на весь экран (enableEdgeToEdge), поэтому слой — тоже.
  */
 @Composable
 fun WaitDialog(title: String, onConfirm: () -> Unit, onDismiss: () -> Unit) {
+    val host = LocalWaitHost.current
+    if (host == null) {
+        WaitWindow(title, onConfirm, onDismiss)
+        return
+    }
+    val confirm by rememberUpdatedState(onConfirm)
+    val dismiss by rememberUpdatedState(onDismiss)
+    val request = remember { WaitRequest(title, { confirm() }, { dismiss() }) }
+    DisposableEffect(request) {
+        host.value = request
+        onDispose { if (host.value === request) host.value = null }
+    }
+}
+
+/** Слой паузы — рисует AntiOblomovApp поверх всего, включая нижнее меню. */
+@Composable
+fun WaitOverlay(host: MutableState<WaitRequest?>) {
+    val request = host.value ?: return
+    key(request) {
+        BackHandler { request.onDismiss() }
+        WaitScreen(request.title, request.onConfirm, request.onDismiss)
+    }
+}
+
+/** Запасной вариант — отдельное окно-диалог (если слоя нет, например в превью). */
+@Composable
+private fun WaitWindow(title: String, onConfirm: () -> Unit, onDismiss: () -> Unit) {
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(
+            usePlatformDefaultWidth = false,
+            decorFitsSystemWindows = false,
+            dismissOnClickOutside = false,
+        ),
+    ) {
+        val view = LocalView.current
+        SideEffect { (view.parent as? DialogWindowProvider)?.window?.let { stretchToFullScreen(it) } }
+        WaitScreen(title, onConfirm, onDismiss)
+    }
+}
+
+@Composable
+private fun WaitScreen(title: String, onConfirm: () -> Unit, onDismiss: () -> Unit) {
     val quote = remember { Quotes.random() }
     var left by remember { mutableIntStateOf(ChangeGuard.WAIT_SECONDS) }
 
@@ -88,27 +151,14 @@ fun WaitDialog(title: String, onConfirm: () -> Unit, onDismiss: () -> Unit) {
         }
     }
 
-    Dialog(
-        onDismissRequest = onDismiss,
-        properties = DialogProperties(
-            usePlatformDefaultWidth = false,
-            decorFitsSystemWindows = false,
-            dismissOnClickOutside = false,
-        ),
-    ) {
-        // Окно диалога по умолчанию не заходит под строку состояния, панель навигации
-        // и вырез камеры — отсюда были полосы. Растягиваем его на весь экран,
-        // как окно экрана блокировки (BlockOverlay).
-        val view = LocalView.current
-        val stretched = remember { BooleanArray(1) }
-        SideEffect {
-            if (!stretched[0]) {
-                (view.parent as? DialogWindowProvider)?.window?.let { stretchToFullScreen(it) }
-                stretched[0] = true
-            }
-        }
-
-        Box(Modifier.fillMaxSize().background(Night0)) {
+    run {
+        Box(
+            Modifier
+                .fillMaxSize()
+                .background(Night0)
+                // Нажатия мимо кнопок не проходят к экрану под паузой
+                .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) {},
+        ) {
             AndroidView(
                 modifier = Modifier.fillMaxSize(),
                 factory = { ctx -> SceneBackgroundView(ctx, quote.scene, seed = quote.text.hashCode()) },
