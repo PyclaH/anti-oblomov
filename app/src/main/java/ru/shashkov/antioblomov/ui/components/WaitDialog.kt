@@ -77,6 +77,7 @@ import ru.shashkov.antioblomov.blocking.SceneBackgroundView
 import ru.shashkov.antioblomov.rules.ChangeGuard
 import ru.shashkov.antioblomov.ui.theme.Night0
 import ru.shashkov.antioblomov.ui.theme.TextPrimary
+import ru.shashkov.antioblomov.ui.i18n.LocalStrings
 
 /** Открытая пауза: заголовок (для диктора) и что делать по кнопкам. */
 class WaitRequest(val title: String, val onConfirm: () -> Unit, val onDismiss: () -> Unit)
@@ -143,6 +144,7 @@ private fun WaitWindow(title: String, onConfirm: () -> Unit, onDismiss: () -> Un
 private fun WaitScreen(title: String, onConfirm: () -> Unit, onDismiss: () -> Unit) {
     val quote = remember { Quotes.random() }
     var left by remember { mutableIntStateOf(ChangeGuard.WAIT_SECONDS) }
+    val s = LocalStrings.current
 
     LaunchedEffect(Unit) {
         while (left > 0) {
@@ -186,11 +188,11 @@ private fun WaitScreen(title: String, onConfirm: () -> Unit, onDismiss: () -> Un
                 // Сверху — только «Подумай 15 секунд» (R6b): что меняется и что идёт блокировка,
                 // и так понятно. Вопрос (title) зачитывает экранный диктор.
                 Text(
-                    text = "Подумай ${ChangeGuard.WAIT_SECONDS} секунд — точно нужно?",
+                    text = s.plan.thinkSeconds(ChangeGuard.WAIT_SECONDS),
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(top = 24.dp)
-                        .semantics { contentDescription = "$title Подумай ${ChangeGuard.WAIT_SECONDS} секунд — точно нужно?" },
+                        .semantics { contentDescription = "$title ${s.plan.thinkSeconds(ChangeGuard.WAIT_SECONDS)}" },
                     style = MaterialTheme.typography.bodyMedium,
                     color = TextPrimary.copy(alpha = 0.7f),
                     textAlign = TextAlign.Center,
@@ -205,7 +207,7 @@ private fun WaitScreen(title: String, onConfirm: () -> Unit, onDismiss: () -> Un
                 Spacer(Modifier.height(18.dp))
 
                 Text(
-                    text = "«${quote.text}»",
+                    text = s.plan.quoted(quote.text),
                     modifier = Modifier.fillMaxWidth(),
                     color = TextPrimary,
                     fontFamily = PtSerif,
@@ -233,7 +235,7 @@ private fun WaitScreen(title: String, onConfirm: () -> Unit, onDismiss: () -> Un
                         contentColor = TextPrimary,
                     ),
                 ) {
-                    Text("Не менять", style = MaterialTheme.typography.titleMedium)
+                    Text(s.plan.keepAsIs, style = MaterialTheme.typography.titleMedium)
                 }
                 TextButton(
                     modifier = Modifier.fillMaxWidth().height(48.dp),
@@ -245,7 +247,7 @@ private fun WaitScreen(title: String, onConfirm: () -> Unit, onDismiss: () -> Un
                     ),
                 ) {
                     Text(
-                        if (left > 0) "Подтвердить через $left с" else "Подтвердить",
+                        if (left > 0) s.plan.confirmIn(left) else s.plan.confirm,
                         style = MaterialTheme.typography.bodyLarge.copy(fontFeatureSettings = TABULAR),
                     )
                 }
@@ -266,13 +268,14 @@ private fun CountdownRing(left: Int, total: Int) {
         fraction.animateTo(0f, tween(durationMillis = total * 1_000, easing = LinearEasing))
     }
     val done = left == 0
+    val s = LocalStrings.current
     val tone by animateColorAsState(if (done) Calm else Accent, tween(300), label = "wait-tone")
 
     Box(
         modifier = Modifier
             .size(88.dp)
             .clearAndSetSemantics {
-                contentDescription = if (done) "Можно подтвердить" else "Осталось $left секунд"
+                contentDescription = if (done) s.plan.canConfirm else s.plan.secondsLeft(left)
             },
         contentAlignment = Alignment.Center,
     ) {
