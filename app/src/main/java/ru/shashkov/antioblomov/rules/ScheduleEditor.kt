@@ -1,5 +1,9 @@
 package ru.shashkov.antioblomov.rules
 
+import ru.shashkov.antioblomov.rules.i18n.CommonRu
+import ru.shashkov.antioblomov.rules.i18n.CommonStrings
+import ru.shashkov.antioblomov.rules.i18n.PlanRu
+import ru.shashkov.antioblomov.rules.i18n.PlanStrings
 import java.time.DayOfWeek
 
 /** Результат проверки интервала перед сохранением (FR-04). */
@@ -18,25 +22,9 @@ object ScheduleEditor {
     )
 
     /** Короткие подписи для кнопок дней. */
-    fun shortName(day: DayOfWeek): String = when (day) {
-        DayOfWeek.MONDAY -> "Пн"
-        DayOfWeek.TUESDAY -> "Вт"
-        DayOfWeek.WEDNESDAY -> "Ср"
-        DayOfWeek.THURSDAY -> "Чт"
-        DayOfWeek.FRIDAY -> "Пт"
-        DayOfWeek.SATURDAY -> "Сб"
-        DayOfWeek.SUNDAY -> "Вс"
-    }
+    fun shortName(day: DayOfWeek, s: CommonStrings = CommonRu): String = s.dayShort(day)
 
-    fun fullName(day: DayOfWeek): String = when (day) {
-        DayOfWeek.MONDAY -> "Понедельник"
-        DayOfWeek.TUESDAY -> "Вторник"
-        DayOfWeek.WEDNESDAY -> "Среда"
-        DayOfWeek.THURSDAY -> "Четверг"
-        DayOfWeek.FRIDAY -> "Пятница"
-        DayOfWeek.SATURDAY -> "Суббота"
-        DayOfWeek.SUNDAY -> "Воскресенье"
-    }
+    fun fullName(day: DayOfWeek, s: CommonStrings = CommonRu): String = s.dayFull(day)
 
     /**
      * Проверить интервал перед сохранением: конец должен быть позже начала.
@@ -44,7 +32,7 @@ object ScheduleEditor {
      *
      * Пересечения с другими интервалами ошибкой не считаются: при сохранении
      * интервалы молча объединяются (put). [existing] и [replacing] оставлены
-     * для совместимости вызовов.
+     * для совместимости вызовов. Тексты ошибок — на языке [s] (по умолчанию русском).
      */
     @Suppress("UNUSED_PARAMETER")
     fun check(
@@ -52,13 +40,14 @@ object ScheduleEditor {
         endMinute: Int,
         existing: List<TimeInterval> = emptyList(),
         replacing: TimeInterval? = null,
+        s: PlanStrings = PlanRu,
     ): IntervalCheck {
         val end = if (endMinute == 0) TimeInterval.MINUTES_IN_DAY else endMinute
         if (startMinute !in 0 until TimeInterval.MINUTES_IN_DAY || end > TimeInterval.MINUTES_IN_DAY) {
-            return IntervalCheck.Error("Время вне суток")
+            return IntervalCheck.Error(s.timeOutOfDay)
         }
         if (end <= startMinute) {
-            return IntervalCheck.Error("Конец должен быть позже начала")
+            return IntervalCheck.Error(s.endAfterStart)
         }
         return IntervalCheck.Ok(TimeInterval(startMinute, end))
     }

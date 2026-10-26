@@ -23,6 +23,9 @@ import androidx.compose.ui.unit.dp
 import ru.shashkov.antioblomov.rules.SetupChecklist
 import ru.shashkov.antioblomov.rules.SetupItem
 import ru.shashkov.antioblomov.rules.SetupState
+import ru.shashkov.antioblomov.rules.i18n.SetupRu
+import ru.shashkov.antioblomov.rules.i18n.SetupStrings
+import ru.shashkov.antioblomov.ui.i18n.LocalStrings
 import ru.shashkov.antioblomov.ui.theme.Calm
 import ru.shashkov.antioblomov.ui.theme.TextMuted
 import ru.shashkov.antioblomov.ui.theme.Warn
@@ -34,22 +37,23 @@ import ru.shashkov.antioblomov.ui.theme.Accent
  */
 @Composable
 fun SetupCard(setup: SetupState, onOpenWizard: () -> Unit, modifier: Modifier = Modifier) {
+    val s = LocalStrings.current.setup
     val missing = SetupChecklist.missing(setup)
     run {
         Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Text("Настройка телефона", style = MaterialTheme.typography.titleSmall)
+            Text(s.cardTitle, style = MaterialTheme.typography.titleSmall)
             SetupChecklist.items(setup.brand).forEach { item ->
-                SetupRow(title = itemTitle(item, setup), done = SetupChecklist.isDone(item, setup))
+                SetupRow(title = itemTitle(item, setup, s), done = SetupChecklist.isDone(item, setup))
             }
             if (missing.isNotEmpty()) {
                 Text(
-                    text = "Без этих настроек блокировка может отключаться сама, а «Было / стало» — не считаться.",
+                    text = s.cardHint,
                     style = MaterialTheme.typography.bodySmall,
                     color = TextMuted,
                 )
-                Button(onClick = onOpenWizard) { Text("Настроить") }
+                Button(onClick = onOpenWizard) { Text(s.cardSetUp) }
             } else {
-                OutlinedButton(onClick = onOpenWizard) { Text("Пройти настройку заново") }
+                OutlinedButton(onClick = onOpenWizard) { Text(s.cardRedo) }
             }
         }
     }
@@ -57,10 +61,11 @@ fun SetupCard(setup: SetupState, onOpenWizard: () -> Unit, modifier: Modifier = 
 
 @Composable
 fun SetupRow(title: String, done: Boolean) {
+    val s = LocalStrings.current.setup
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
         Icon(
             imageVector = if (done) Icons.Filled.CheckCircle else Icons.Filled.Warning,
-            contentDescription = if (done) "Сделано" else "Не сделано",
+            contentDescription = if (done) s.markDone else s.notDone,
             tint = if (done) Calm else Warn,
         )
         Text(text = title, style = MaterialTheme.typography.bodyLarge)
@@ -68,5 +73,5 @@ fun SetupRow(title: String, done: Boolean) {
 }
 
 /** На разных марках «автозапуск» называется по-разному. */
-fun itemTitle(item: SetupItem, setup: SetupState): String =
-    if (item == SetupItem.AUTOSTART) SetupChecklist.autostartTitle(setup.brand) else item.title
+fun itemTitle(item: SetupItem, setup: SetupState, s: SetupStrings = SetupRu): String =
+    if (item == SetupItem.AUTOSTART) SetupChecklist.autostartTitle(setup.brand, s) else item.title(s)

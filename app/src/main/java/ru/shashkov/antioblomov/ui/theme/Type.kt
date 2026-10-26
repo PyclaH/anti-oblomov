@@ -71,3 +71,19 @@ val AppTypography = Typography(
     labelMedium = TextStyle(fontFamily = Onest, fontWeight = FontWeight.Medium, fontSize = 13.sp, lineHeight = 18.sp),
     labelSmall = TextStyle(fontFamily = Onest, fontWeight = FontWeight.Medium, fontSize = 11.sp, lineHeight = 14.sp),
 )
+
+/**
+ * Типографика под язык (v1.2). В Unbounded нет казахских букв (Ә, Ғ, Қ, Ң, Ө, Ұ, Ү, Һ) —
+ * для казахского заголовки набираем Onest SemiBold, иначе в словах были бы буквы из системного шрифта.
+ * Китайские иероглифы Android сам берёт из системного шрифта — это нормально.
+ */
+fun typographyFor(headlineFamily: FontFamily): Typography =
+    if (headlineFamily == Unbounded) AppTypography
+    else AppTypography.copy(
+        displayLarge = AppTypography.displayLarge.copy(fontFamily = headlineFamily, fontWeight = FontWeight.SemiBold),
+        displayMedium = AppTypography.displayMedium.copy(fontFamily = headlineFamily, fontWeight = FontWeight.SemiBold),
+        displaySmall = AppTypography.displaySmall.copy(fontFamily = headlineFamily, fontWeight = FontWeight.SemiBold),
+        headlineLarge = AppTypography.headlineLarge.copy(fontFamily = headlineFamily, fontWeight = FontWeight.SemiBold),
+        headlineMedium = AppTypography.headlineMedium.copy(fontFamily = headlineFamily, fontWeight = FontWeight.SemiBold),
+        headlineSmall = AppTypography.headlineSmall.copy(fontFamily = headlineFamily, fontWeight = FontWeight.SemiBold),
+    )

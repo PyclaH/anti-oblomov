@@ -15,6 +15,8 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import ru.shashkov.antioblomov.R
+import ru.shashkov.antioblomov.data.Language
+import ru.shashkov.antioblomov.rules.i18n.AppsStrings
 import kotlin.math.roundToInt
 
 /**
@@ -44,10 +46,17 @@ class BlockOverlay(
 
     val isShowing: Boolean get() = view != null
 
-    /** @param until «до 14:00» — когда закончится блокировка (FR-12); null — не показывать */
-    fun show(appName: String, until: String? = null) {
+    /**
+     * @param appName название приложения; null — не удалось узнать («Это приложение»)
+     * @param until «14:00», «завтра 01:30» — когда закончится блокировка (FR-12); null — не показывать
+     */
+    fun show(appName: String?, until: String? = null) {
         if (view != null) return
-        val v = buildView(appName, until, Quotes.random())
+        // Тексты — на языке приложения (v1.2); служба читает его из настроек при каждом показе
+        val strings = Language.strings(service)
+        val s = strings.apps
+        // Цитата — на том же языке (v1.2): для каждого языка свой проверенный список
+        val v = buildView(appName ?: s.thisApp, until, Quotes.random(strings.lang), s)
         windowManager.addView(v, fullScreenParams())
         view = v
     }
@@ -83,7 +92,7 @@ class BlockOverlay(
         }
     }
 
-    private fun buildView(appName: String, until: String?, quote: Quote): View {
+    private fun buildView(appName: String, until: String?, quote: Quote, s: AppsStrings): View {
         val ctx = service
 
         val logo = FrameLayout(ctx).apply {
@@ -99,17 +108,17 @@ class BlockOverlay(
             )
         }
 
-        val title = text(listOfNotNull("$appName на паузе", until).joinToString(" "), 15f, PAPER_70).apply {
+        val title = text(if (until != null) s.pausedUntil(appName, until) else s.paused(appName), 15f, PAPER_70).apply {
             typeface = onest
         }
 
-        val quoteView = text("«${quote.text}»", quoteSize(quote.text), PAPER).apply {
+        val quoteView = text(s.quoted(quote.text), quoteSize(quote.text), PAPER).apply {
             typeface = serif
             setLineSpacing(0f, 1.2f)
         }
         val author = text(quote.source, 14f, PAPER_65).apply { typeface = onest }
 
-        val button = text("Вернуться к делу", 16f, PAPER).apply {
+        val button = text(s.backToWork, 16f, PAPER).apply {
             typeface = onestBold
             background = GradientDrawable().apply {
                 setColor(GLASS)

@@ -1,5 +1,8 @@
 package ru.shashkov.antioblomov.rules
 
+import ru.shashkov.antioblomov.rules.i18n.SetupRu
+import ru.shashkov.antioblomov.rules.i18n.SetupStrings
+
 /** Что настроено на телефоне — собирается в MainActivity при каждом возврате в приложение. */
 data class SetupState(
     val brand: PhoneBrand,
@@ -16,12 +19,21 @@ data class SetupState(
 )
 
 /** Пункт настройки телефона. */
-enum class SetupItem(val title: String) {
-    SERVICE("Служба блокировки"),
-    NOTIFICATIONS("Уведомления таймера"),
-    BATTERY("Батарея без ограничений"),
-    AUTOSTART("Автозапуск"),
-    USAGE("Доступ к статистике"),
+enum class SetupItem {
+    SERVICE,
+    NOTIFICATIONS,
+    BATTERY,
+    AUTOSTART,
+    USAGE;
+
+    /** Название пункта на языке [s] (по умолчанию русский). */
+    fun title(s: SetupStrings = SetupRu): String = when (this) {
+        SERVICE -> s.itemService
+        NOTIFICATIONS -> s.itemNotifications
+        BATTERY -> s.itemBattery
+        AUTOSTART -> s.itemAutostart
+        USAGE -> s.itemUsage
+    }
 }
 
 /**
@@ -50,20 +62,15 @@ object SetupChecklist {
      * Строка «Система» на главной (редизайн R2): «всё в порядке», «служба не работает»
      * или «2 настройки пропущены».
      */
-    fun summary(state: SetupState): String {
-        if (!state.serviceRunning) return "служба не работает"
+    fun summary(state: SetupState, s: SetupStrings = SetupRu): String {
+        if (!state.serviceRunning) return s.summaryServiceOff
         val n = missing(state).size
-        return when {
-            n == 0 -> "всё в порядке"
-            n % 100 in 11..14 -> "$n настроек пропущено"
-            n % 10 == 1 -> "$n настройка пропущена"
-            n % 10 in 2..4 -> "$n настройки пропущены"
-            else -> "$n настроек пропущено"
-        }
+        return if (n == 0) s.summaryAllOk else s.summaryMissing(n)
     }
 
     /** Подпись к названию пункта для главной: что именно нужно, если не сделано. */
-    fun autostartTitle(brand: PhoneBrand): String = SetupGuide.autostart(brand)?.title ?: SetupItem.AUTOSTART.title
+    fun autostartTitle(brand: PhoneBrand, s: SetupStrings = SetupRu): String =
+        SetupGuide.autostart(brand, s)?.title ?: SetupItem.AUTOSTART.title(s)
 }
 
 /** Страницы мастера по порядку. */

@@ -1,5 +1,7 @@
 package ru.shashkov.antioblomov.ui.screens
 
+import java.util.Locale
+import ru.shashkov.antioblomov.rules.i18n.SystemNames
 import ru.shashkov.antioblomov.ui.components.rememberAccessibilityOpener
 import android.Manifest
 import android.os.Build
@@ -74,7 +76,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import ru.shashkov.antioblomov.blocking.TimerNotification
+import ru.shashkov.antioblomov.blocking.BlockNotification
 import ru.shashkov.antioblomov.data.UsageCollector
 import ru.shashkov.antioblomov.blocking.openAppSettings
 import ru.shashkov.antioblomov.blocking.openGuide
@@ -87,6 +89,9 @@ import ru.shashkov.antioblomov.rules.SetupChecklist
 import ru.shashkov.antioblomov.rules.SetupGuide
 import ru.shashkov.antioblomov.rules.SetupItem
 import ru.shashkov.antioblomov.rules.SetupState
+import ru.shashkov.antioblomov.rules.i18n.Lang
+import ru.shashkov.antioblomov.ui.i18n.LocalSetLanguage
+import ru.shashkov.antioblomov.ui.i18n.LocalStrings
 import ru.shashkov.antioblomov.ui.components.SetupRow
 import ru.shashkov.antioblomov.ui.components.itemTitle
 import ru.shashkov.antioblomov.ui.theme.Calm
@@ -107,6 +112,8 @@ fun OnboardingScreen(
     onRefresh: () -> Unit,
     onFinish: (openApps: Boolean) -> Unit,
 ) {
+    val str = LocalStrings.current
+    val s = str.setup
     val pages = Onboarding.pages(setup.brand)
     var index by rememberSaveable { mutableIntStateOf(0) }
     val page = pages[index.coerceIn(pages.indices)]
@@ -146,9 +153,9 @@ fun OnboardingScreen(
                 modifier = Modifier.fillMaxWidth().height(56.dp),
                 shape = RoundedCornerShape(18.dp),
                 onClick = { onFinish(true) },
-            ) { Text("Выбрать приложения", style = MaterialTheme.typography.labelLarge) }
+            ) { Text(s.chooseApps, style = MaterialTheme.typography.labelLarge) }
             TextButton(modifier = Modifier.fillMaxWidth(), onClick = { onFinish(false) }) {
-                Text("На главную", color = TextMuted)
+                Text(s.toHome, color = TextMuted)
             }
         } else {
             Row(
@@ -157,7 +164,7 @@ fun OnboardingScreen(
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 if (index > 0) {
-                    TextButton(onClick = { index-- }, modifier = Modifier.height(56.dp)) { Text("Назад", color = TextMuted) }
+                    TextButton(onClick = { index-- }, modifier = Modifier.height(56.dp)) { Text(str.common.back, color = TextMuted) }
                 }
                 Spacer(Modifier.weight(1f))
                 if (done || page == OnboardingPage.WELCOME) {
@@ -166,7 +173,7 @@ fun OnboardingScreen(
                         modifier = Modifier.height(56.dp),
                         shape = RoundedCornerShape(18.dp),
                         contentPadding = PaddingValues(horizontal = 28.dp),
-                    ) { Text(if (page == OnboardingPage.WELCOME) "Начать" else "Далее", style = MaterialTheme.typography.labelLarge) }
+                    ) { Text(if (page == OnboardingPage.WELCOME) s.start else str.common.next, style = MaterialTheme.typography.labelLarge) }
                 } else {
                     OutlinedButton(
                         onClick = { index++ },
@@ -174,7 +181,7 @@ fun OnboardingScreen(
                         shape = RoundedCornerShape(18.dp),
                         border = BorderStroke(1.dp, Line),
                         contentPadding = PaddingValues(horizontal = 28.dp),
-                    ) { Text("Пропустить", color = TextPrimary) }
+                    ) { Text(str.common.skip, color = TextPrimary) }
                 }
             }
         }
@@ -194,60 +201,109 @@ private fun pageDone(page: OnboardingPage, setup: SetupState): Boolean = when (p
 
 @Composable
 private fun WelcomePage() {
-    Title("Настроим «Анти-Обломов»")
-    Body(
-        "Приложение закрывает выбранные соцсети и игры в учебное время — по расписанию или таймеру — " +
-            "и показывает вместо них цитату."
-    )
-    Body(
-        "Чтобы блокировка работала всегда, телефону нужно разрешить несколько вещей. " +
-            "Это займёт 2–3 минуты. Любой шаг можно пропустить и вернуться к нему с главного экрана."
-    )
+    val s = LocalStrings.current.setup
+    Title(s.welcomeTitle)
+    Body(s.welcomeIntro)
+    Body(s.welcomeHow)
+    LanguagePicker()
+}
+
+/**
+ * Выбор языка на первой странице (v1.2): подпись «ЯЗЫК» и сетка 2 колонки.
+ * Нажатие сразу меняет язык — мастер перерисовывается на новом.
+ * Не LazyGrid: страница уже прокручивается.
+ */
+@Composable
+private fun LanguagePicker() {
+    val str = LocalStrings.current
+    val setLanguage = LocalSetLanguage.current
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(
+            str.common.language.uppercase(Locale.forLanguageTag(str.lang.code)),
+            style = Overline,
+            color = TextMuted,
+            modifier = Modifier.padding(top = 8.dp),
+        )
+        Lang.entries.chunked(2).forEach { row ->
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                row.forEach { lang ->
+                    LanguageCell(
+                        lang = lang,
+                        selected = lang == str.lang,
+                        onClick = { setLanguage(lang) },
+                        modifier = Modifier.weight(1f),
+                    )
+                }
+                // Нечётное число языков: пустая ячейка, чтобы последняя не растягивалась на всю ширину
+                if (row.size == 1) Spacer(Modifier.weight(1f))
+            }
+        }
+    }
+}
+
+@Composable
+private fun LanguageCell(lang: Lang, selected: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    val shape = RoundedCornerShape(14.dp)
+    Row(
+        modifier = modifier
+            .clip(shape)
+            .background(if (selected) Surface2 else Surface1)
+            .border(1.dp, if (selected) TextMuted else Line, shape)
+            .clickable(onClick = onClick)
+            .padding(12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            lang.nativeName,
+            fontSize = 15.sp,
+            color = TextPrimary,
+            modifier = Modifier.weight(1f),
+        )
+        // Радио-кружок: выбранный — терракотовое кольцо с точкой
+        Box(
+            modifier = Modifier
+                .size(18.dp)
+                .border(if (selected) 2.dp else 1.dp, if (selected) Accent else Line, CircleShape),
+            contentAlignment = Alignment.Center,
+        ) {
+            if (selected) {
+                Box(
+                    Modifier
+                        .size(8.dp)
+                        .clip(CircleShape)
+                        .background(Accent)
+                )
+            }
+        }
+    }
 }
 
 @Composable
 private fun ServicePage(setup: SetupState) {
+    val s = LocalStrings.current.setup
     val context = LocalContext.current
     var showRestrictedHelp by rememberSaveable { mutableStateOf(false) }
     // Первый раз — окно согласия (Google Play), потом сразу настройки
     val openService = rememberAccessibilityOpener()
 
-    Title("Служба блокировки")
-    Body("Чтобы закрывать выбранные приложения, «Анти-Обломову» нужна служба специальных возможностей Android.")
-    InfoBox(
-        title = "Что делает служба",
-        lines = listOf(
-            "Узнаёт название приложения, которое открылось на экране",
-            "Если для него сейчас время блокировки — показывает экран с цитатой",
-        ),
-    )
-    InfoBox(
-        title = "Чего служба не делает",
-        lines = listOf(
-            "Не читает текст на экране, сообщения и пароли",
-            "Ничего не отправляет в интернет — всё остаётся на телефоне",
-        ),
-    )
-    Steps(
-        listOf(
-            "Нажмите «Открыть спецвозможности»",
-            "Найдите «Анти-Обломов: блокировка» — бывает в разделе «Скачанные приложения» или «Установленные службы»",
-            "Включите и подтвердите. Телефон может попросить подождать несколько секунд — это нормально",
-        )
-    )
-    Status(setup.serviceRunning, okText = "Служба работает", notText = "Служба пока не включена")
+    Title(s.serviceTitle)
+    Body(s.serviceWhy)
+    InfoBox(title = s.serviceDoesTitle, lines = s.serviceDoes)
+    InfoBox(title = s.serviceDoesNotTitle, lines = s.serviceDoesNot)
+    Steps(s.serviceSteps)
+    Status(setup.serviceRunning, okText = s.serviceOn, notText = s.serviceOff)
     if (!setup.serviceRunning) {
         Button(modifier = Modifier.fillMaxWidth(), onClick = openService) {
-            Text("Открыть спецвозможности")
+            Text(s.openAccessibility)
         }
         // Android 13+: у приложений не из магазина переключатель бывает серым («Ограниченная настройка»)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             TextButton(onClick = { showRestrictedHelp = !showRestrictedHelp }) {
-                Text("Переключатель серый и не включается?")
+                Text(s.restrictedQuestion)
             }
             if (showRestrictedHelp) {
-                Steps(SetupGuide.RESTRICTED_SETTINGS_HELP)
-                OutlinedButton(onClick = { openAppSettings(context) }) { Text("Открыть «О приложении»") }
+                Steps(SetupGuide.restrictedSettingsHelp(s))
+                OutlinedButton(onClick = { openAppSettings(context) }) { Text(s.openAppInfo) }
             }
         }
     }
@@ -255,41 +311,43 @@ private fun ServicePage(setup: SetupState) {
 
 @Composable
 private fun NotificationsPage(setup: SetupState, onRefresh: () -> Unit) {
+    val s = LocalStrings.current.setup
     val context = LocalContext.current
     val ask = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { onRefresh() }
 
-    Title("Уведомления")
-    Body("Пока идёт блокировка по таймеру, в шторке видно, сколько осталось. Больше уведомлений приложение не присылает.")
-    Status(setup.notificationsAllowed, okText = "Уведомления разрешены", notText = "Уведомления выключены")
+    Title(s.notificationsTitle)
+    Body(s.notificationsWhy)
+    Status(setup.notificationsAllowed, okText = s.notificationsOn, notText = s.notificationsOff)
     if (!setup.notificationsAllowed) {
         Button(
             modifier = Modifier.fillMaxWidth(),
             onClick = {
                 val needsPermission = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
-                    !TimerNotification.allowed(context) &&
+                    !BlockNotification.allowed(context) &&
                     androidx.core.content.ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) !=
                     android.content.pm.PackageManager.PERMISSION_GRANTED
                 if (needsPermission) ask.launch(Manifest.permission.POST_NOTIFICATIONS)
                 else openNotificationSettings(context)
             },
-        ) { Text("Разрешить уведомления") }
+        ) { Text(s.allowNotifications) }
         // Если отказали дважды, Android больше не показывает запрос — тогда только через настройки
-        TextButton(onClick = { openNotificationSettings(context) }) { Text("Открыть настройки уведомлений") }
+        TextButton(onClick = { openNotificationSettings(context) }) { Text(s.openNotificationSettings) }
     }
 }
 
 @Composable
 private fun BatteryPage(setup: SetupState, onExtraBatteryConfirmed: (Boolean) -> Unit) {
+    val s = LocalStrings.current.setup
     val context = LocalContext.current
-    val extra = SetupGuide.extraBattery(setup.brand)
+    val extra = SetupGuide.extraBattery(setup.brand, s)
 
-    Title("Батарея")
-    Body("Ради экономии заряда система останавливает приложения, которые работают в фоне, — и блокировка тихо перестаёт работать.")
-    Status(setup.batteryUnrestricted, okText = "Работа в фоне разрешена", notText = "Работа в фоне ограничена")
+    Title(s.batteryTitle)
+    Body(s.batteryWhy)
+    Status(setup.batteryUnrestricted, okText = s.batteryOn, notText = s.batteryOff)
     if (!setup.batteryUnrestricted) {
-        Body("Нажмите кнопку и в окне выберите «Разрешить». Если вместо окна открылся список — найдите «Анти-Обломов» и выберите «Не экономить» или «Без ограничений».")
+        Body(s.batteryHint)
         Button(modifier = Modifier.fillMaxWidth(), onClick = { requestBatteryUnrestricted(context) }) {
-            Text("Разрешить работу в фоне")
+            Text(s.allowBackground)
         }
     }
     if (extra != null) {
@@ -299,51 +357,40 @@ private fun BatteryPage(setup: SetupState, onExtraBatteryConfirmed: (Boolean) ->
 
 @Composable
 private fun AutostartPage(setup: SetupState, onAutostartConfirmed: (Boolean) -> Unit) {
-    val guide = SetupGuide.autostart(setup.brand) ?: return
+    val s = LocalStrings.current.setup
+    val guide = SetupGuide.autostart(setup.brand, s) ?: return
     Title(guide.title)
     GuideBlock(guide, confirmed = setup.autostartConfirmed, onConfirmed = onAutostartConfirmed, showTitle = false)
 }
 
 @Composable
 private fun UsagePage(setup: SetupState) {
+    val s = LocalStrings.current.setup
     val context = LocalContext.current
-    Title("Статистика «Было / стало»")
-    Body(
-        "На главной будет видно, сколько времени вы проводили в выбранных приложениях до «Анти-Обломова» " +
-            "и сколько теперь — и сколько времени вернули себе."
-    )
-    InfoBox(
-        title = "Что для этого читается",
-        lines = listOf(
-            "Сколько минут каждое приложение было на экране — та же статистика, что в «Цифровом благополучии»",
-            "Данные остаются на телефоне и никуда не отправляются",
-        ),
-    )
-    Steps(
-        listOf(
-            "Нажмите «Открыть настройки»",
-            "Найдите «Анти-Обломов» и включите «Доступ к истории использования»",
-        )
-    )
-    Status(setup.usageAccess, okText = "Доступ к статистике есть", notText = "Доступа к статистике пока нет")
+    Title(s.usageTitle)
+    Body(s.usageWhy)
+    InfoBox(title = s.usageReadsTitle, lines = s.usageReads)
+    Steps(s.usageSteps)
+    Status(setup.usageAccess, okText = s.usageOn, notText = s.usageOff)
     if (!setup.usageAccess) {
         Button(modifier = Modifier.fillMaxWidth(), onClick = { UsageCollector.openSettings(context) }) {
-            Text("Открыть настройки")
+            Text(s.openSettings)
         }
     }
 }
 
 @Composable
 private fun FinishPage(setup: SetupState) {
+    val s = LocalStrings.current.setup
     val missing = SetupChecklist.missing(setup)
-    Title(if (missing.isEmpty()) "Телефон настроен" else "Почти готово")
+    Title(if (missing.isEmpty()) s.finishDone else s.finishAlmost)
     SetupChecklist.items(setup.brand).forEach { item ->
-        SetupRow(title = itemTitle(item, setup), done = SetupChecklist.isDone(item, setup))
+        SetupRow(title = itemTitle(item, setup, s), done = SetupChecklist.isDone(item, setup))
     }
     if (missing.isNotEmpty()) {
-        Body("Пропущенное можно настроить позже: на главной — карточка «Настройка телефона».")
+        Body(s.finishSkipped)
     }
-    Body("Осталось выбрать, что блокировать, и задать расписание или запустить таймер.")
+    Body(s.finishRest)
 }
 
 // ---------- общие куски ----------
@@ -351,6 +398,7 @@ private fun FinishPage(setup: SetupState) {
 /** Инструкция оболочки: зачем, что нажать, кнопка и отметка «Сделано» (проверить из приложения нельзя). */
 @Composable
 private fun GuideBlock(guide: Guide, confirmed: Boolean, onConfirmed: (Boolean) -> Unit, showTitle: Boolean = true) {
+    val s = LocalStrings.current.setup
     val context = LocalContext.current
     if (showTitle) Text(guide.title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
     Body(guide.why)
@@ -361,7 +409,7 @@ private fun GuideBlock(guide: Guide, confirmed: Boolean, onConfirmed: (Boolean) 
         onClick = { openGuide(context, guide) },
     ) { Text(guide.buttonText) }
     Text(
-        "Если открылась страница «О приложении» — ищи эту настройку там.",
+        s.guideFallback,
         style = MaterialTheme.typography.bodySmall,
         color = TextMuted,
     )
@@ -374,7 +422,7 @@ private fun GuideBlock(guide: Guide, confirmed: Boolean, onConfirmed: (Boolean) 
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Checkbox(checked = confirmed, onCheckedChange = onConfirmed)
-        Text("Сделано", style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold)
+        Text(s.markDone, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold)
     }
 }
 
@@ -384,13 +432,28 @@ private fun Title(text: String) =
 
 @Composable
 private fun Body(text: String) =
-    Text(text = text, style = MaterialTheme.typography.bodyLarge)
+    Text(text = systemNames(text), style = MaterialTheme.typography.bodyLarge)
+
+/**
+ * Названия приложения и службы в подсказке — как их покажет телефон (на языке телефона,
+ * а не приложения), см. SystemNames.
+ */
+@Composable
+private fun systemNames(text: String): String {
+    val context = LocalContext.current
+    return SystemNames.fix(
+        text,
+        LocalStrings.current.lang,
+        context.getString(R.string.app_name),
+        context.getString(R.string.accessibility_service_label),
+    )
+}
 
 /** Шаги инструкции — номер в кружке и текст. */
 @Composable
 private fun Steps(lines: List<String>) {
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        lines.forEachIndexed { i, line ->
+        lines.map { systemNames(it) }.forEachIndexed { i, line ->
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 Box(
                     modifier = Modifier
@@ -411,7 +474,7 @@ private fun Steps(lines: List<String>) {
 @Composable
 private fun InfoBox(title: String, lines: List<String>) {
     AppCard(spacing = 6.dp) {
-        Text(title.uppercase(), style = Overline, color = TextMuted)
+        Text(title.uppercase(Locale.forLanguageTag(LocalStrings.current.lang.code)), style = Overline, color = TextMuted)
         lines.forEach { Text("•  $it", style = MaterialTheme.typography.bodyMedium) }
     }
 }

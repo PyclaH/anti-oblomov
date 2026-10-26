@@ -32,6 +32,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.BorderStroke
 import ru.shashkov.antioblomov.R
+import ru.shashkov.antioblomov.rules.i18n.CommonRu
+import ru.shashkov.antioblomov.rules.i18n.CommonStrings
+import ru.shashkov.antioblomov.ui.i18n.LocalStrings
 import ru.shashkov.antioblomov.ui.theme.AntiOblomovTheme
 import ru.shashkov.antioblomov.ui.theme.TextPrimary
 import ru.shashkov.antioblomov.ui.theme.Surface2
@@ -39,8 +42,8 @@ import ru.shashkov.antioblomov.ui.theme.TextMuted
 import ru.shashkov.antioblomov.ui.theme.Accent
 import ru.shashkov.antioblomov.ui.theme.Night0
 
-/** Страница проекта на Sponsr.ru. */
-const val SPONSR_URL = "https://sponsr.ru/anti_oblomov/subscribe/#levels"
+/** Страница доната проекта (DonationAlerts). */
+const val DONATE_URL = "https://www.donationalerts.com/r/antioblomov"
 
 /** С какой экономии (минут в день) упоминаем её в панели. */
 const val THANK_THRESHOLD_MINUTES = 15
@@ -49,7 +52,7 @@ const val THANK_THRESHOLD_MINUTES = 15
  * «Поблагодарить автора» на главной — всегда, ненавязчиво (решение от 25.10.2026): одна строка
  * под «Было / стало», над «Системой» (редизайн R2). Если экономия ≥ 15 мин в день — упоминаем её.
  *
- * Важно (правила Sponsr п. 5.18 и RuStore п. 6.1, 7.3): донат ничего не открывает,
+ * Важно (правила RuStore п. 6.1, 7.3): донат ничего не открывает,
  * ни на что в приложении не влияет и не связан с отзывом — приложение полностью бесплатное.
  *
  * @param savedMinutesPerDay экономия в среднем в день; null — пока неизвестна
@@ -58,14 +61,15 @@ const val THANK_THRESHOLD_MINUTES = 15
 fun ThankAuthorCard(
     savedMinutesPerDay: Int?,
     modifier: Modifier = Modifier,
-    url: String = SPONSR_URL,
+    url: String = DONATE_URL,
 ) {
     val context = LocalContext.current
+    val s = LocalStrings.current
     val open = {
         try {
             context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
         } catch (e: ActivityNotFoundException) {
-            Toast.makeText(context, "Не найден браузер, чтобы открыть ссылку", Toast.LENGTH_LONG).show()
+            Toast.makeText(context, s.home.noBrowser, Toast.LENGTH_LONG).show()
         }
     }
 
@@ -86,31 +90,23 @@ fun ThankAuthorCard(
                 )
             }
             Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Text("Поблагодарить автора", style = MaterialTheme.typography.titleSmall)
+                Text(s.home.thankAuthor, style = MaterialTheme.typography.titleSmall)
                 Text(
                     text = savedMinutesPerDay
                         ?.takeIf { it >= THANK_THRESHOLD_MINUTES }
-                        ?.let { "Ты возвращаешь себе ${formatMinutes(it)} в день" }
-                        ?: "Приложение бесплатное и без рекламы",
+                        ?.let { s.home.youSave(formatMinutes(it, s.common)) }
+                        ?: s.home.freeNoAds,
                     style = MaterialTheme.typography.bodySmall,
                     color = TextMuted,
                 )
             }
-            Text("Sponsr ›", style = MaterialTheme.typography.bodySmall, color = Accent)
+            Text(s.home.support, style = MaterialTheme.typography.bodySmall, color = Accent)
         }
     }
 }
 
-/** 135 → «2 ч 15 мин», 40 → «40 мин». */
-fun formatMinutes(minutes: Int): String {
-    val h = minutes / 60
-    val m = minutes % 60
-    return when {
-        h == 0 -> "$m мин"
-        m == 0 -> "$h ч"
-        else -> "$h ч $m мин"
-    }
-}
+/** 135 → «2 ч 15 мин», 40 → «40 мин» (на языке [c]). */
+fun formatMinutes(minutes: Int, c: CommonStrings = CommonRu): String = c.duration(minutes)
 
 @Preview(showBackground = true)
 @Composable

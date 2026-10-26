@@ -31,6 +31,9 @@ import androidx.compose.ui.unit.dp
 import ru.shashkov.antioblomov.data.InstalledApp
 import ru.shashkov.antioblomov.rules.StatsApps
 import ru.shashkov.antioblomov.rules.StatsChoice
+import ru.shashkov.antioblomov.rules.i18n.HomeRu
+import ru.shashkov.antioblomov.rules.i18n.HomeStrings
+import ru.shashkov.antioblomov.ui.i18n.LocalStrings
 import ru.shashkov.antioblomov.ui.theme.Accent
 import ru.shashkov.antioblomov.ui.theme.Line
 import ru.shashkov.antioblomov.ui.theme.Night1
@@ -39,11 +42,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.OutlinedTextFieldDefaults
 
 /** Подпись к кнопке списка: «Как в списке блокировки: 3», «Выбрано: 5», «Все, кроме системных». */
-fun statsAppsSummary(choice: StatsChoice, tracked: Set<String>): String = when {
-    choice.all -> "Все, кроме системных"
-    tracked.isEmpty() -> "Не выбраны"
-    choice.chosen == null -> "Как в списке блокировки: ${tracked.size}"
-    else -> "Выбрано: ${tracked.size}"
+fun statsAppsSummary(choice: StatsChoice, tracked: Set<String>, s: HomeStrings = HomeRu): String = when {
+    choice.all -> s.appsAllExceptSystem
+    tracked.isEmpty() -> s.appsNone
+    choice.chosen == null -> s.appsAsBlockList(tracked.size)
+    else -> s.appsChosen(tracked.size)
 }
 
 /**
@@ -62,6 +65,7 @@ fun StatsAppsPicker(
     tracked: Set<String>,
     onChoice: (StatsChoice) -> Unit,
 ) {
+    val s = LocalStrings.current
     var query by rememberSaveable { mutableStateOf("") }
 
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -72,9 +76,9 @@ fun StatsAppsPicker(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Column(Modifier.weight(1f)) {
-                Text("Активировать все", style = MaterialTheme.typography.bodyLarge)
+                Text(s.home.activateAll, style = MaterialTheme.typography.bodyLarge)
                 Text(
-                    "Считать все приложения, кроме системных",
+                    s.home.activateAllSub,
                     style = MaterialTheme.typography.bodySmall,
                     color = TextMuted,
                 )
@@ -90,12 +94,12 @@ fun StatsAppsPicker(
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
             shape = RoundedCornerShape(16.dp),
-            placeholder = { Text("Найти и добавить приложение", color = TextMuted) },
+            placeholder = { Text(s.home.searchApps, color = TextMuted) },
             leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null, tint = TextMuted) },
             trailingIcon = {
                 if (query.isNotEmpty()) {
                     IconButton(onClick = { query = "" }) {
-                        Icon(Icons.Filled.Clear, contentDescription = "Очистить поиск", tint = TextMuted)
+                        Icon(Icons.Filled.Clear, contentDescription = s.home.clearSearch, tint = TextMuted)
                     }
                 }
             },
@@ -112,7 +116,7 @@ fun StatsAppsPicker(
         if (apps == null) {
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
                 CircularProgressIndicator(modifier = Modifier.padding(4.dp), color = Accent)
-                Text("Загружаю список приложений…", style = MaterialTheme.typography.bodyMedium)
+                Text(s.home.loadingApps, style = MaterialTheme.typography.bodyMedium)
             }
             return@Column
         }
@@ -123,8 +127,8 @@ fun StatsAppsPicker(
         }
         if (shown.isEmpty()) {
             Text(
-                text = if (query.isBlank()) "Пока ничего не выбрано — найдите приложение поиском и включите"
-                else "Ничего не найдено",
+                text = if (query.isBlank()) s.home.nothingChosen
+                else s.home.nothingFound,
                 style = MaterialTheme.typography.bodyMedium,
                 color = TextMuted,
             )

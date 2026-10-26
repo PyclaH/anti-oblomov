@@ -1,5 +1,11 @@
 package ru.shashkov.antioblomov
 
+import ru.shashkov.antioblomov.ui.i18n.LocalStrings
+import ru.shashkov.antioblomov.ui.i18n.LocalSetLanguage
+import ru.shashkov.antioblomov.rules.i18n.stringsFor
+import ru.shashkov.antioblomov.rules.i18n.Lang
+import ru.shashkov.antioblomov.data.Language
+import androidx.compose.runtime.CompositionLocalProvider
 import android.content.Intent
 import android.graphics.Color
 import android.os.Bundle
@@ -37,6 +43,9 @@ class MainActivity : ComponentActivity() {
     /** Показывать мастер настройки: при первом запуске и по кнопке на главной. */
     private var showOnboarding by mutableStateOf(false)
 
+    /** Язык интерфейса (v1.2). */
+    private var language by mutableStateOf(Lang.RU)
+
     /** Вкладка, которую нужно открыть (например, «Таймер» по нажатию на уведомление). */
     private var requestedTab by mutableStateOf<Tab?>(null)
 
@@ -52,7 +61,15 @@ class MainActivity : ComponentActivity() {
         showOnboarding = !onboarding.completed
         refreshSetup()
         requestedTab = tabFrom(intent)
+        language = Language.current(this)
         setContent {
+            CompositionLocalProvider(
+                LocalStrings provides stringsFor(language),
+                LocalSetLanguage provides { lang ->
+                    Language.set(this, lang)
+                    language = lang
+                },
+            ) {
             AntiOblomovTheme {
                 AntiOblomovApp(
                     serviceState = serviceState,
@@ -70,6 +87,7 @@ class MainActivity : ComponentActivity() {
                     requestedTab = requestedTab,
                     onTabOpened = { requestedTab = null },
                 )
+            }
             }
         }
     }

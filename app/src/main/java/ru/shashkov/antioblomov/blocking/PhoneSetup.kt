@@ -22,7 +22,7 @@ val phoneBrand: PhoneBrand by lazy { PhoneBrand.detect(Build.MANUFACTURER, Build
 fun readSetupState(context: Context, onboarding: OnboardingStore = OnboardingStore(context)) = SetupState(
     brand = phoneBrand,
     serviceRunning = blockingServiceState(context) == ServiceState.RUNNING,
-    notificationsAllowed = TimerNotification.allowed(context),
+    notificationsAllowed = BlockNotification.allowed(context),
     batteryUnrestricted = isBatteryUnrestricted(context),
     extraBatteryConfirmed = onboarding.extraBatteryConfirmed,
     autostartConfirmed = onboarding.autostartConfirmed,

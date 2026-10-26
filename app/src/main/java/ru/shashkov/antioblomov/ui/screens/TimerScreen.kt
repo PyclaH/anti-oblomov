@@ -72,7 +72,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import kotlinx.coroutines.delay
-import ru.shashkov.antioblomov.blocking.TimerNotification
+import ru.shashkov.antioblomov.blocking.BlockNotification
 import ru.shashkov.antioblomov.blocking.openNotificationSettings
 import ru.shashkov.antioblomov.data.SettingsStore
 import ru.shashkov.antioblomov.rules.ChangeGuard
@@ -81,6 +81,7 @@ import ru.shashkov.antioblomov.rules.TimeText
 import ru.shashkov.antioblomov.rules.TimerRules
 import ru.shashkov.antioblomov.ui.components.DurationDialog
 import ru.shashkov.antioblomov.ui.components.WaitDialog
+import ru.shashkov.antioblomov.ui.i18n.LocalStrings
 import ru.shashkov.antioblomov.ui.theme.Surface1
 import ru.shashkov.antioblomov.ui.theme.TextPrimary
 import ru.shashkov.antioblomov.ui.theme.Accent
@@ -98,24 +99,25 @@ private enum class TimerDialog { CUSTOM, EXTEND }
 @Composable
 fun TimerScreen(modifier: Modifier = Modifier) {
     val context = LocalContext.current
+    val s = LocalStrings.current
     val store = remember { SettingsStore(context) }
     var settings by remember { mutableStateOf(store.read()) }
     var now by remember { mutableStateOf(ZonedDateTime.now()) }
     var dialog by remember { mutableStateOf<TimerDialog?>(null) }
     var confirmStop by remember { mutableStateOf(false) }
-    var notificationsOn by remember { mutableStateOf(TimerNotification.allowed(context)) }
+    var notificationsOn by remember { mutableStateOf(BlockNotification.allowed(context)) }
 
     // Разрешение на уведомления (Android 13+): спрашиваем при первом запуске таймера
     val askPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {
-        notificationsOn = TimerNotification.allowed(context)
-        TimerNotification.update(context, store.read())
+        notificationsOn = BlockNotification.allowed(context)
+        BlockNotification.update(context, store.read())
     }
 
     // Кнопка «Включить уведомления»: сначала системный запрос; если Android его
     // больше не показывает (дважды отказали) — открываем настройки уведомлений
     val enablePermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
-        notificationsOn = TimerNotification.allowed(context)
-        if (granted) TimerNotification.update(context, store.read()) else openNotificationSettings(context)
+        notificationsOn = BlockNotification.allowed(context)
+        if (granted) BlockNotification.update(context, store.read()) else openNotificationSettings(context)
     }
 
     // Отсчёт — раз в секунду; заодно замечаем, если уведомления включили в настройках
@@ -123,14 +125,14 @@ fun TimerScreen(modifier: Modifier = Modifier) {
         while (true) {
             delay(1_000)
             now = ZonedDateTime.now()
-            notificationsOn = TimerNotification.allowed(context)
+            notificationsOn = BlockNotification.allowed(context)
         }
     }
 
     fun commit(change: (Settings) -> Settings) {
         settings = store.update(change)
         now = ZonedDateTime.now()
-        TimerNotification.update(context, settings, now)
+        BlockNotification.update(context, settings, now)
     }
 
     fun start(minutes: Int) {
@@ -161,16 +163,16 @@ fun TimerScreen(modifier: Modifier = Modifier) {
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            Text(text = "Таймер", style = MaterialTheme.typography.headlineMedium)
+            Text(text = s.plan.timerTitle, style = MaterialTheme.typography.headlineMedium)
             Text(
-                text = "Разовая блокировка выбранных приложений. Действует поверх расписания и не меняет его.",
+                text = s.plan.timerHint,
                 style = MaterialTheme.typography.bodySmall,
                 color = TextMuted,
             )
         }
         if (settings.blockedPackages.isEmpty()) {
             Text(
-                text = "Приложения для блокировки не выбраны — отметь их на вкладке «Приложения»",
+                text = s.plan.noAppsSelected,
                 style = MaterialTheme.typography.bodySmall,
                 color = Warn,
             )
@@ -179,7 +181,7 @@ fun TimerScreen(modifier: Modifier = Modifier) {
         TimerDial(
             fraction = fraction,
             countdown = remaining?.let(TimerRules::countdown),
-            until = endsAt?.let { "до ${TimeText.at(it, now)}" },
+            until = endsAt?.let { s.plan.until(TimeText.at(it, now, s.common)) },
             ringModifier = dialAnchor.modifier,
         )
 
@@ -188,7 +190,7 @@ fun TimerScreen(modifier: Modifier = Modifier) {
                 modifier = Modifier.fillMaxWidth().height(56.dp),
                 shape = RoundedCornerShape(18.dp),
                 onClick = { dialog = TimerDialog.EXTEND },
-            ) { Text("Продлить", style = MaterialTheme.typography.labelLarge) }
+            ) { Text(s.plan.extend, style = MaterialTheme.typography.labelLarge) }
             OutlinedButton(
                 modifier = Modifier.fillMaxWidth().height(48.dp),
                 shape = RoundedCornerShape(18.dp),
@@ -202,19 +204,19 @@ fun TimerScreen(modifier: Modifier = Modifier) {
                         commit { TimerRules.stop(it) }
                     }
                 },
-            ) { Text("Остановить · через 15 с", style = MaterialTheme.typography.bodyMedium) }
+            ) { Text(s.plan.stopIn(ChangeGuard.WAIT_SECONDS), style = MaterialTheme.typography.bodyMedium) }
         } else {
-            Text("НА СКОЛЬКО", style = Overline, color = TextMuted)
+            Text(s.plan.howLong, style = Overline, color = TextMuted)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
                 TimerRules.PRESETS_MINUTES.forEach { minutes ->
                     Chip(
-                        text = TimerRules.durationText(minutes),
+                        text = TimerRules.durationText(minutes, s.common),
                         strong = true,
                         modifier = Modifier.weight(1f),
                         onClick = { start(minutes) },
                     )
                 }
-                Chip(text = "Своё", strong = false, modifier = Modifier.weight(1.3f), onClick = { dialog = TimerDialog.CUSTOM })
+                Chip(text = s.plan.custom, strong = false, modifier = Modifier.weight(1.3f), onClick = { dialog = TimerDialog.CUSTOM })
             }
         }
 
@@ -229,11 +231,11 @@ fun TimerScreen(modifier: Modifier = Modifier) {
 
     when (dialog) {
         TimerDialog.CUSTOM -> DurationDialog(
-            title = "Своё время",
-            confirmText = "Запустить",
+            title = s.plan.customTitle,
+            confirmText = s.plan.startTimer,
             initialHours = 1,
             initialMinutes = 0,
-            preview = { minutes -> "до ${TimeText.at(ZonedDateTime.now().plusMinutes(minutes.toLong()), ZonedDateTime.now())}" },
+            preview = { minutes -> s.plan.until(TimeText.at(ZonedDateTime.now().plusMinutes(minutes.toLong()), ZonedDateTime.now(), s.common)) },
             onDismiss = { dialog = null },
             onConfirm = { minutes ->
                 dialog = null
@@ -242,20 +244,20 @@ fun TimerScreen(modifier: Modifier = Modifier) {
         )
 
         TimerDialog.EXTEND -> DurationDialog(
-            title = "Продлить на",
-            confirmText = "Продлить",
+            title = s.plan.extendBy,
+            confirmText = s.plan.extend,
             initialHours = 0,
             initialMinutes = 30,
             preview = { minutes ->
                 val t = ZonedDateTime.now()
                 val end = TimerRules.extend(settings, minutes, t).timerEndsAt!!
-                "до ${TimeText.at(Instant.ofEpochMilli(end).atZone(t.zone), t)}"
+                s.plan.until(TimeText.at(Instant.ofEpochMilli(end).atZone(t.zone), t, s.common))
             },
             onDismiss = { dialog = null },
             onConfirm = { minutes ->
                 dialog = null
                 commit { TimerRules.extend(it, minutes, ZonedDateTime.now()) }
-                Toast.makeText(context, "Продлено на ${TimerRules.durationText(minutes)}", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, s.plan.extendedBy(TimerRules.durationText(minutes, s.common)), Toast.LENGTH_SHORT).show()
             },
         )
 
@@ -264,7 +266,7 @@ fun TimerScreen(modifier: Modifier = Modifier) {
 
     if (confirmStop) {
         WaitDialog(
-            title = "Остановить таймер?",
+            title = s.plan.stopTimerQ,
             onConfirm = {
                 confirmStop = false
                 commit { TimerRules.stop(it) }
@@ -283,6 +285,7 @@ fun TimerScreen(modifier: Modifier = Modifier) {
 @Composable
 private fun TimerDial(fraction: Float?, countdown: String?, until: String?, ringModifier: Modifier = Modifier) {
     val running = fraction != null
+    val s = LocalStrings.current
     // Дуга меняется раз в секунду — плавно, без рывков
     val sweep by animateFloatAsState(fraction ?: 0f, tween(1000, easing = LinearEasing), label = "dial")
     Box(
@@ -290,7 +293,7 @@ private fun TimerDial(fraction: Float?, countdown: String?, until: String?, ring
             .fillMaxWidth()
             .height(320.dp)
             .clearAndSetSemantics {
-                contentDescription = if (running) "Таймер: осталось $countdown, $until" else "Таймер не запущен"
+                contentDescription = if (running) s.plan.dialRunning(countdown.orEmpty(), until.orEmpty()) else s.plan.dialIdle
             },
         contentAlignment = Alignment.Center,
     ) {
@@ -342,8 +345,8 @@ private fun TimerDial(fraction: Float?, countdown: String?, until: String?, ring
                 // Только обратный отсчёт (R6); «до 18:30» остаётся для экранного диктора
                 Text(countdown.orEmpty(), style = BigNumber.copy(fontSize = 44.sp, lineHeight = 48.sp))
             } else {
-                Text("НЕ ЗАПУЩЕН", style = Overline, color = TextMuted)
-                Text("выбери ниже, на сколько", style = MaterialTheme.typography.bodySmall, color = TextMuted)
+                Text(s.plan.notRunning, style = Overline, color = TextMuted)
+                Text(s.plan.pickBelow, style = MaterialTheme.typography.bodySmall, color = TextMuted)
             }
         }
     }
@@ -371,13 +374,14 @@ private fun Chip(text: String, strong: Boolean, modifier: Modifier, onClick: () 
 
 @Composable
 private fun NotificationsOff(onEnable: () -> Unit) {
+    val s = LocalStrings.current
     AppCard {
         Text(
-            text = "Уведомление с обратным отсчётом выключено — таймер работает и без него.",
+            text = s.plan.notificationsOff,
             style = MaterialTheme.typography.bodySmall,
             color = TextMuted,
         )
-        TextButton(onClick = onEnable) { Text("Включить уведомления") }
+        TextButton(onClick = onEnable) { Text(s.plan.enableNotifications) }
     }
 }
 

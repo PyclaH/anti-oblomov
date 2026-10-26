@@ -43,6 +43,8 @@ data class Settings(
     val blockedPackages: Set<String> = emptySet(),
     val timerEndsAt: Long? = null,
     val timerStartedAt: Long? = null,
+    /** Язык интерфейса (код из Lang); null — не выбран, берём язык телефона (v1.2). */
+    val language: String? = null,
 ) {
     fun intervalsOn(day: DayOfWeek): List<TimeInterval> =
         schedule[day].orEmpty().sortedBy { it.startMinute }

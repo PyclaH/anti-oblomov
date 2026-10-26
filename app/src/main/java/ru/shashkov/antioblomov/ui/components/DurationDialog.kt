@@ -33,6 +33,7 @@ import ru.shashkov.antioblomov.rules.TimerRules
 import androidx.compose.foundation.shape.RoundedCornerShape
 import ru.shashkov.antioblomov.ui.theme.Surface1
 import ru.shashkov.antioblomov.ui.theme.Warn
+import ru.shashkov.antioblomov.ui.i18n.LocalStrings
 
 /**
  * Окно «на сколько»: часы и минуты набираются цифрами с клавиатуры.
@@ -54,8 +55,9 @@ fun DurationDialog(
     val hoursFocus = remember { FocusRequester() }
     val minutesFocus = remember { FocusRequester() }
     val keyboard = LocalSoftwareKeyboardController.current
+    val s = LocalStrings.current
 
-    val check = TimerRules.parseDuration(hours.text, minutes.text)
+    val check = TimerRules.parseDuration(hours.text, minutes.text, s.plan)
     val confirm = { (check as? DurationCheck.Ok)?.let { onConfirm(it.minutes) } }
 
     LaunchedEffect(Unit) {
@@ -73,7 +75,7 @@ fun DurationDialog(
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
                     NumberField(
-                        label = "Часы",
+                        label = s.plan.hours,
                         value = hours,
                         onValueChange = { v ->
                             val typed = v.text != hours.text
@@ -89,7 +91,7 @@ fun DurationDialog(
                         modifier = Modifier.weight(1f).focusRequester(hoursFocus),
                     )
                     NumberField(
-                        label = "Минуты",
+                        label = s.plan.minutes,
                         value = minutes,
                         onValueChange = { v -> minutes = digitsOnly(v) },
                         imeAction = ImeAction.Done,
@@ -98,13 +100,13 @@ fun DurationDialog(
                     )
                 }
                 Text(
-                    text = "От 1 минуты до 12 часов. Пустое поле — 0.",
+                    text = s.plan.durationHint,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 when (check) {
                     is DurationCheck.Ok -> Text(
-                        text = "${TimerRules.durationText(check.minutes)} · ${preview(check.minutes)}",
+                        text = "${TimerRules.durationText(check.minutes, s.common)} · ${preview(check.minutes)}",
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.Bold,
                     )
@@ -119,7 +121,7 @@ fun DurationDialog(
         confirmButton = {
             TextButton(enabled = check is DurationCheck.Ok, onClick = { confirm() }) { Text(confirmText) }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Отмена") } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(s.common.cancel) } },
     )
 }
 

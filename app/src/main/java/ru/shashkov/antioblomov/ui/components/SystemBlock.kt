@@ -29,6 +29,7 @@ import androidx.compose.ui.unit.dp
 import ru.shashkov.antioblomov.blocking.ServiceState
 import ru.shashkov.antioblomov.rules.SetupChecklist
 import ru.shashkov.antioblomov.rules.SetupState
+import ru.shashkov.antioblomov.ui.i18n.LocalStrings
 import ru.shashkov.antioblomov.ui.theme.Calm
 import ru.shashkov.antioblomov.ui.theme.TextMuted
 import ru.shashkov.antioblomov.ui.theme.Warn
@@ -45,6 +46,7 @@ fun SystemBlock(
     onOpenWizard: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val s = LocalStrings.current
     val problem = serviceState != ServiceState.RUNNING || SetupChecklist.missing(setup).isNotEmpty()
     // Проблема появилась — раскрываем; пропала — сворачиваем
     var open by rememberSaveable(problem) { mutableStateOf(problem) }
@@ -66,14 +68,14 @@ fun SystemBlock(
                     .background(if (problem) Warn else Calm)
             )
             Text(
-                text = "Система · " + if (serviceState != ServiceState.RUNNING) "служба не работает" else SetupChecklist.summary(setup),
+                text = "${s.home.system} · " + if (serviceState != ServiceState.RUNNING) s.home.serviceNotWorking else SetupChecklist.summary(setup, s.setup),
                 style = MaterialTheme.typography.bodyMedium,
                 color = if (problem) Warn else MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.weight(1f),
             )
             Icon(
                 if (open) Icons.Filled.KeyboardArrowUp else Icons.Filled.KeyboardArrowDown,
-                contentDescription = if (open) "Свернуть" else "Подробнее",
+                contentDescription = if (open) s.home.collapse else s.home.details,
                 tint = TextMuted,
             )
         }
