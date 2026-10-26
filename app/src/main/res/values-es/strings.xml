@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Anti-Oblomov</string>
+
+    <string name="tab_home">Inicio</string>
+    <string name="tab_schedule">Horario</string>
+    <string name="tab_timer">Temporizador</string>
+    <string name="tab_apps">Apps</string>
+
+    <string name="soon">Próximamente</string>
+
+    <string name="accessibility_service_label">Anti-Oblomov: bloqueo</string>
+    <string name="accessibility_service_description">Detecta qué aplicación está abierta para mostrar la pantalla de bloqueo durante el tiempo de estudio. Solo se usa el nombre de la aplicación: no se leen el texto ni el contenido de la pantalla, y los datos no se envían a ningún sitio.</string>
+</resources>
