@@ -72,7 +72,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import kotlinx.coroutines.delay
-import ru.shashkov.antioblomov.blocking.TimerNotification
+import ru.shashkov.antioblomov.blocking.BlockNotification
 import ru.shashkov.antioblomov.blocking.openNotificationSettings
 import ru.shashkov.antioblomov.data.SettingsStore
 import ru.shashkov.antioblomov.rules.ChangeGuard
@@ -105,19 +105,19 @@ fun TimerScreen(modifier: Modifier = Modifier) {
     var now by remember { mutableStateOf(ZonedDateTime.now()) }
     var dialog by remember { mutableStateOf<TimerDialog?>(null) }
     var confirmStop by remember { mutableStateOf(false) }
-    var notificationsOn by remember { mutableStateOf(TimerNotification.allowed(context)) }
+    var notificationsOn by remember { mutableStateOf(BlockNotification.allowed(context)) }
 
     // Разрешение на уведомления (Android 13+): спрашиваем при первом запуске таймера
     val askPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {
-        notificationsOn = TimerNotification.allowed(context)
-        TimerNotification.update(context, store.read())
+        notificationsOn = BlockNotification.allowed(context)
+        BlockNotification.update(context, store.read())
     }
 
     // Кнопка «Включить уведомления»: сначала системный запрос; если Android его
     // больше не показывает (дважды отказали) — открываем настройки уведомлений
     val enablePermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
-        notificationsOn = TimerNotification.allowed(context)
-        if (granted) TimerNotification.update(context, store.read()) else openNotificationSettings(context)
+        notificationsOn = BlockNotification.allowed(context)
+        if (granted) BlockNotification.update(context, store.read()) else openNotificationSettings(context)
     }
 
     // Отсчёт — раз в секунду; заодно замечаем, если уведомления включили в настройках
@@ -125,14 +125,14 @@ fun TimerScreen(modifier: Modifier = Modifier) {
         while (true) {
             delay(1_000)
             now = ZonedDateTime.now()
-            notificationsOn = TimerNotification.allowed(context)
+            notificationsOn = BlockNotification.allowed(context)
         }
     }
 
     fun commit(change: (Settings) -> Settings) {
         settings = store.update(change)
         now = ZonedDateTime.now()
-        TimerNotification.update(context, settings, now)
+        BlockNotification.update(context, settings, now)
     }
 
     fun start(minutes: Int) {

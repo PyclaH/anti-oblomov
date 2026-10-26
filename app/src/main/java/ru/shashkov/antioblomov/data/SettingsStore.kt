@@ -1,5 +1,6 @@
 package ru.shashkov.antioblomov.data
 
+import ru.shashkov.antioblomov.blocking.BlockNotification
 import android.content.Context
 import android.util.AtomicFile
 import android.util.Log
@@ -22,6 +23,7 @@ import java.time.DayOfWeek
  */
 class SettingsStore(context: Context) {
 
+    private val appContext = context.applicationContext
     private val file = AtomicFile(File(context.applicationContext.filesDir, FILE_NAME))
     private var cachedBytes: ByteArray? = null
     private var cached: Settings = DEFAULT
@@ -55,6 +57,9 @@ class SettingsStore(context: Context) {
         }
         cached = settings
         cachedBytes = bytes
+        // Любая смена настроек (расписание, таймер, приложения, язык) — сразу обновить уведомление
+        // «Блокировка до …» (v1.2): иначе оно ждало бы следующей проверки службы
+        runCatching { BlockNotification.update(appContext, settings) }
     }
 
     /** Прочитать, изменить, записать. */

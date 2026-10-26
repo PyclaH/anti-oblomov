@@ -76,8 +76,8 @@ class BlockingService : AccessibilityService() {
         Log.i(TAG, "Служба блокировки подключена")
         val settings = store.read()
         scheduleBoundaryCheck(settings, ZonedDateTime.now())
-        // После перезагрузки уведомление таймера пропадает — возвращаем его
-        TimerNotification.update(this, settings)
+        // После перезагрузки уведомление пропадает — возвращаем его (если сейчас идёт блокировка)
+        BlockNotification.update(this, settings)
         handler.post(usageTick)
     }
 
@@ -107,6 +107,8 @@ class BlockingService : AccessibilityService() {
         val settings = store.read()
         val now = ZonedDateTime.now()
         Log.i(TAG, "Проверка по времени: ${BlockRules.status(settings, now)}")
+        // Началась или кончилась блокировка — уведомление «Блокировка до …» появляется или исчезает
+        BlockNotification.update(this, settings, now)
         val foreground = foregroundPackage()
         if (foreground != null && foreground !in protectedApps &&
             BlockRules.shouldBlock(foreground, settings, now)

@@ -240,7 +240,7 @@ object SetupRu : SetupStrings {
     override val openAppInfo = "Открыть «О приложении»"
 
     override val notificationsTitle = "Уведомления"
-    override val notificationsWhy = "Пока идёт блокировка по таймеру, в шторке видно, сколько осталось. Больше уведомлений приложение не присылает."
+    override val notificationsWhy = "Пока идёт блокировка — по расписанию или таймеру, — в шторке видно, до какого времени и сколько осталось. Больше уведомлений приложение не присылает."
     override val notificationsOn = "Уведомления разрешены"
     override val notificationsOff = "Уведомления выключены"
     override val allowNotifications = "Разрешить уведомления"
@@ -421,7 +421,7 @@ object SetupEn : SetupStrings {
     override val openAppInfo = "Open “App info”"
 
     override val notificationsTitle = "Notifications"
-    override val notificationsWhy = "While a timer block is on, the notification shade shows how much time is left. The app sends no other notifications."
+    override val notificationsWhy = "While blocking is on — by schedule or timer — the notification shade shows when it ends and how much time is left. The app sends no other notifications."
     override val notificationsOn = "Notifications allowed"
     override val notificationsOff = "Notifications are off"
     override val allowNotifications = "Allow notifications"
@@ -602,7 +602,7 @@ object SetupEs : SetupStrings {
     override val openAppInfo = "Abrir información de la app"
 
     override val notificationsTitle = "Notificaciones"
-    override val notificationsWhy = "Mientras dura un bloqueo con temporizador, en el panel de notificaciones verás cuánto falta. La app no envía otras notificaciones."
+    override val notificationsWhy = "Mientras dura un bloqueo, por horario o temporizador, en el panel de notificaciones verás cuándo termina y cuánto falta. La app no envía otras notificaciones."
     override val notificationsOn = "Notificaciones permitidas"
     override val notificationsOff = "Notificaciones desactivadas"
     override val allowNotifications = "Permitir notificaciones"
@@ -783,7 +783,7 @@ object SetupPt : SetupStrings {
     override val openAppInfo = "Abrir informações do app"
 
     override val notificationsTitle = "Notificações"
-    override val notificationsWhy = "Durante um bloqueio com timer, a barra de notificações mostra quanto tempo falta. O app não envia outras notificações."
+    override val notificationsWhy = "Durante um bloqueio, pela agenda ou pelo timer, a barra de notificações mostra quando ele termina e quanto tempo falta. O app não envia outras notificações."
     override val notificationsOn = "Notificações permitidas"
     override val notificationsOff = "Notificações desativadas"
     override val allowNotifications = "Permitir notificações"
@@ -964,7 +964,7 @@ object SetupDe : SetupStrings {
     override val openAppInfo = "„App-Info“ öffnen"
 
     override val notificationsTitle = "Benachrichtigungen"
-    override val notificationsWhy = "Während einer Timer-Sperre siehst du in der Benachrichtigungsleiste, wie viel Zeit noch bleibt. Andere Benachrichtigungen schickt die App nicht."
+    override val notificationsWhy = "Während einer Sperre – nach Zeitplan oder Timer – siehst du in der Benachrichtigungsleiste, wann sie endet und wie viel Zeit noch bleibt. Andere Benachrichtigungen schickt die App nicht."
     override val notificationsOn = "Benachrichtigungen erlaubt"
     override val notificationsOff = "Benachrichtigungen sind aus"
     override val allowNotifications = "Benachrichtigungen erlauben"
@@ -1145,7 +1145,7 @@ object SetupTr : SetupStrings {
     override val openAppInfo = "Uygulama bilgilerini aç"
 
     override val notificationsTitle = "Bildirimler"
-    override val notificationsWhy = "Zamanlayıcıyla engelleme sürerken bildirim panelinde ne kadar kaldığı görünür. Uygulama başka bildirim göndermez."
+    override val notificationsWhy = "Engelleme sürerken — program ya da zamanlayıcıyla — bildirim panelinde ne zaman biteceği ve ne kadar kaldığı görünür. Uygulama başka bildirim göndermez."
     override val notificationsOn = "Bildirimlere izin verildi"
     override val notificationsOff = "Bildirimler kapalı"
     override val allowNotifications = "Bildirimlere izin ver"
@@ -1326,7 +1326,7 @@ object SetupKk : SetupStrings {
     override val openAppInfo = "Қолданба туралы ақпаратты ашу"
 
     override val notificationsTitle = "Хабарландырулар"
-    override val notificationsWhy = "Таймер бойынша бұғаттау жүріп жатқанда, хабарландыру тақтасында қанша уақыт қалғаны көрінеді. Қолданба басқа хабарландыру жібермейді."
+    override val notificationsWhy = "Бұғаттау жүріп жатқанда — кесте не таймер бойынша — хабарландыру тақтасында оның қашан аяқталатыны және қанша уақыт қалғаны көрінеді. Қолданба басқа хабарландыру жібермейді."
     override val notificationsOn = "Хабарландыруларға рұқсат берілген"
     override val notificationsOff = "Хабарландырулар өшірулі"
     override val allowNotifications = "Хабарландыруларға рұқсат беру"
@@ -1507,7 +1507,7 @@ object SetupUz : SetupStrings {
     override val openAppInfo = "Ilova haqida ma’lumotni ochish"
 
     override val notificationsTitle = "Bildirishnomalar"
-    override val notificationsWhy = "Taymer bo‘yicha bloklash davom etayotganda, bildirishnomalar panelida qancha vaqt qolgani ko‘rinadi. Ilova boshqa bildirishnoma yubormaydi."
+    override val notificationsWhy = "Bloklash davom etayotganda — jadval yoki taymer bo‘yicha — bildirishnomalar panelida u qachon tugashi va qancha vaqt qolgani ko‘rinadi. Ilova boshqa bildirishnoma yubormaydi."
     override val notificationsOn = "Bildirishnomalarga ruxsat berilgan"
     override val notificationsOff = "Bildirishnomalar o‘chirilgan"
     override val allowNotifications = "Bildirishnomalarga ruxsat berish"
@@ -1684,7 +1684,7 @@ object SetupZh : SetupStrings {
     override val openAppInfo = "打开“应用信息”"
 
     override val notificationsTitle = "通知"
-    override val notificationsWhy = "计时屏蔽期间，通知栏会显示剩余时间。应用不会发送其他通知。"
+    override val notificationsWhy = "屏蔽期间（按时间表或计时器），通知栏会显示结束时间和剩余时间。应用不会发送其他通知。"
     override val notificationsOn = "已允许通知"
     override val notificationsOff = "通知已关闭"
     override val allowNotifications = "允许通知"

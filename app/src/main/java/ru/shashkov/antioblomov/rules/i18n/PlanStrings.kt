@@ -101,6 +101,7 @@ interface PlanStrings {
     fun secondsLeft(seconds: Int): String
 
     // ---- Уведомление таймера ----
+    /** Название канала уведомлений о блокировке (по расписанию и таймеру) */
     val notificationTitle: String
     val channelDescription: String
 }
@@ -177,8 +178,8 @@ object PlanRu : PlanStrings {
         else -> "секунд"
     }
 
-    override val notificationTitle = "Блокировка по таймеру"
-    override val channelDescription = "Обратный отсчёт, пока идёт блокировка по таймеру"
+    override val notificationTitle = "Блокировка"
+    override val channelDescription = "Сколько осталось до конца блокировки — по расписанию и таймеру"
 }
 
 object PlanEn : PlanStrings {
@@ -247,8 +248,8 @@ object PlanEn : PlanStrings {
     override val canConfirm = "You can confirm now"
     override fun secondsLeft(seconds: Int) = if (seconds == 1) "1 second left" else "$seconds seconds left"
 
-    override val notificationTitle = "Blocked by timer"
-    override val channelDescription = "Countdown while timer blocking is on"
+    override val notificationTitle = "Blocking"
+    override val channelDescription = "Time left until blocking ends — schedule and timer"
 }
 
 object PlanEs : PlanStrings {
@@ -317,8 +318,8 @@ object PlanEs : PlanStrings {
     override val canConfirm = "Ya puedes confirmar"
     override fun secondsLeft(seconds: Int) = if (seconds == 1) "Queda 1 segundo" else "Quedan $seconds segundos"
 
-    override val notificationTitle = "Bloqueo por temporizador"
-    override val channelDescription = "Cuenta atrás mientras dura el bloqueo por temporizador"
+    override val notificationTitle = "Bloqueo"
+    override val channelDescription = "Tiempo hasta que termine el bloqueo, por horario y temporizador"
 }
 
 object PlanPt : PlanStrings {
@@ -387,8 +388,8 @@ object PlanPt : PlanStrings {
     override val canConfirm = "Já pode confirmar"
     override fun secondsLeft(seconds: Int) = if (seconds == 1) "Falta 1 segundo" else "Faltam $seconds segundos"
 
-    override val notificationTitle = "Bloqueio por timer"
-    override val channelDescription = "Contagem regressiva enquanto o bloqueio por timer está ativo"
+    override val notificationTitle = "Bloqueio"
+    override val channelDescription = "Tempo até o fim do bloqueio, pela agenda e pelo timer"
 }
 
 object PlanDe : PlanStrings {
@@ -457,8 +458,8 @@ object PlanDe : PlanStrings {
     override val canConfirm = "Du kannst jetzt bestätigen"
     override fun secondsLeft(seconds: Int) = if (seconds == 1) "Noch 1 Sekunde" else "Noch $seconds Sekunden"
 
-    override val notificationTitle = "Sperre per Timer"
-    override val channelDescription = "Countdown, solange die Timer-Sperre läuft"
+    override val notificationTitle = "Sperre"
+    override val channelDescription = "Zeit bis zum Ende der Sperre – nach Zeitplan und Timer"
 }
 
 object PlanTr : PlanStrings {
@@ -528,8 +529,8 @@ object PlanTr : PlanStrings {
     override val canConfirm = "Artık onaylayabilirsin"
     override fun secondsLeft(seconds: Int) = "$seconds saniye kaldı"
 
-    override val notificationTitle = "Zamanlayıcıyla engelleme"
-    override val channelDescription = "Zamanlayıcıyla engelleme sürerken geri sayım"
+    override val notificationTitle = "Engelleme"
+    override val channelDescription = "Engellemenin bitmesine kalan süre — program ve zamanlayıcı"
 }
 
 object PlanKk : PlanStrings {
@@ -599,8 +600,8 @@ object PlanKk : PlanStrings {
     override val canConfirm = "Енді растауға болады"
     override fun secondsLeft(seconds: Int) = "$seconds секунд қалды"
 
-    override val notificationTitle = "Таймер бойынша бұғаттау"
-    override val channelDescription = "Таймер бойынша бұғаттау жүріп жатқанда кері санақ"
+    override val notificationTitle = "Бұғаттау"
+    override val channelDescription = "Бұғаттау аяқталғанша қалған уақыт — кесте мен таймер бойынша"
 }
 
 object PlanUz : PlanStrings {
@@ -669,8 +670,8 @@ object PlanUz : PlanStrings {
     override val canConfirm = "Endi tasdiqlash mumkin"
     override fun secondsLeft(seconds: Int) = "$seconds soniya qoldi"
 
-    override val notificationTitle = "Taymer bo‘yicha bloklash"
-    override val channelDescription = "Taymer bo‘yicha bloklash davomida teskari sanoq"
+    override val notificationTitle = "Bloklash"
+    override val channelDescription = "Bloklash tugashiga qolgan vaqt — jadval va taymer bo‘yicha"
 }
 
 object PlanZh : PlanStrings {
@@ -738,6 +739,6 @@ object PlanZh : PlanStrings {
     override val canConfirm = "现在可以确认"
     override fun secondsLeft(seconds: Int) = "还剩 $seconds 秒"
 
-    override val notificationTitle = "计时屏蔽中"
-    override val channelDescription = "计时屏蔽期间显示倒计时"
+    override val notificationTitle = "屏蔽"
+    override val channelDescription = "屏蔽结束前的剩余时间——按时间表和计时器"
 }

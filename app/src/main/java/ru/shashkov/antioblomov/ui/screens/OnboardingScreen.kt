@@ -76,7 +76,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import ru.shashkov.antioblomov.blocking.TimerNotification
+import ru.shashkov.antioblomov.blocking.BlockNotification
 import ru.shashkov.antioblomov.data.UsageCollector
 import ru.shashkov.antioblomov.blocking.openAppSettings
 import ru.shashkov.antioblomov.blocking.openGuide
@@ -323,7 +323,7 @@ private fun NotificationsPage(setup: SetupState, onRefresh: () -> Unit) {
             modifier = Modifier.fillMaxWidth(),
             onClick = {
                 val needsPermission = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
-                    !TimerNotification.allowed(context) &&
+                    !BlockNotification.allowed(context) &&
                     androidx.core.content.ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) !=
                     android.content.pm.PackageManager.PERMISSION_GRANTED
                 if (needsPermission) ask.launch(Manifest.permission.POST_NOTIFICATIONS)
