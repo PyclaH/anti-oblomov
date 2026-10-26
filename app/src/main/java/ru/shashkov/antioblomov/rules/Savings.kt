@@ -2,6 +2,8 @@ package ru.shashkov.antioblomov.rules
 
 import ru.shashkov.antioblomov.rules.i18n.CommonRu
 import ru.shashkov.antioblomov.rules.i18n.CommonStrings
+import ru.shashkov.antioblomov.rules.i18n.HomeRu
+import ru.shashkov.antioblomov.rules.i18n.HomeStrings
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
 import kotlin.math.roundToInt
@@ -93,6 +95,7 @@ object Savings {
         todayUsage: DayUsage,
         blocked: Set<String>,
         notScreenTime: Set<String>,
+        s: HomeStrings = HomeRu,
     ): SavingsReport {
         val before = history.before.filterKeys { it < history.startDate }
         val after = history.after.filterKeys { it > history.startDate && it < today }
@@ -117,14 +120,16 @@ object Savings {
             screenBeforeAvgMinutes = before.values.map(::screenSec).averageOrNull()?.toMinutes(),
             screenAfterAvgMinutes = after.values.map(::screenSec).averageOrNull()?.toMinutes(),
             screenTodayMinutes = screenSec(todayUsage).toDouble().toMinutes(),
-            milestone = beforeAvgSec?.let { b -> lastMilestone(history.startDate, today, after, b, ::blockedSec) },
+            milestone = beforeAvgSec?.let { b -> lastMilestone(history.startDate, today, after, b, ::blockedSec, s) },
         )
     }
 
-    /** Вехи: (название, последний день вехи). */
-    fun milestones(startDate: LocalDate): List<Pair<String, LocalDate>> =
-        listOf("Неделя" to startDate.plusDays(7), "Две недели" to startDate.plusDays(14)) +
-            MONTHS.mapIndexed { i, title -> title to startDate.plusMonths(i + 1L) }
+    /** Вехи: (название, последний день вехи). Названия — [HomeStrings.milestoneTitles]. */
+    fun milestones(startDate: LocalDate, s: HomeStrings = HomeRu): List<Pair<String, LocalDate>> {
+        val t = s.milestoneTitles
+        return listOf(t[0] to startDate.plusDays(7), t[1] to startDate.plusDays(14)) +
+            (1..12).map { i -> t[i + 1] to startDate.plusMonths(i.toLong()) }
+    }
 
     private fun lastMilestone(
         start: LocalDate,
@@ -132,9 +137,10 @@ object Savings {
         after: Map<LocalDate, DayUsage>,
         beforeAvgSec: Double,
         blockedSec: (DayUsage) -> Int,
+        s: HomeStrings,
     ): Milestone? {
         // Веха достигнута, когда её последний день уже закончился
-        val (title, date) = milestones(start).lastOrNull { (_, date) -> date < today } ?: return null
+        val (title, date) = milestones(start, s).lastOrNull { (_, date) -> date < today } ?: return null
         val window = after.filterKeys { it <= date }.values.map(blockedSec)
         if (window.isEmpty()) return null
         val avg = window.average()
@@ -150,11 +156,6 @@ object Savings {
 
     /** «вернул себе 63 ч — это 7 учебных дней». */
     fun schoolDays(minutes: Int): Int = minutes / SCHOOL_DAY_MINUTES
-
-    private val MONTHS = listOf(
-        "Месяц", "Два месяца", "Три месяца", "Четыре месяца", "Пять месяцев", "Полгода",
-        "Семь месяцев", "Восемь месяцев", "Девять месяцев", "Десять месяцев", "Одиннадцать месяцев", "Год",
-    )
 
     private fun List<Int>.averageOrNull(): Double? = if (isEmpty()) null else average()
     private fun Double.toMinutes(): Int = (this / 60).roundToInt()

@@ -31,6 +31,7 @@ import ru.shashkov.antioblomov.rules.Milestone
 import ru.shashkov.antioblomov.rules.Savings
 import ru.shashkov.antioblomov.rules.SavingsReport
 import ru.shashkov.antioblomov.rules.UsageText
+import ru.shashkov.antioblomov.ui.i18n.LocalStrings
 import ru.shashkov.antioblomov.ui.theme.Accent
 import ru.shashkov.antioblomov.ui.theme.Calm
 import ru.shashkov.antioblomov.ui.theme.Overline
@@ -62,11 +63,12 @@ fun StatsCard(
     modifier: Modifier = Modifier,
     picker: @Composable () -> Unit = {},
 ) {
+    val s = LocalStrings.current
     var appsOpen by rememberSaveable { mutableStateOf(false) }
 
     Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            Text("БЫЛО / СТАЛО", style = Overline, color = TextMuted, modifier = Modifier.weight(1f))
+            Text(s.home.statsTitle, style = Overline, color = TextMuted, modifier = Modifier.weight(1f))
             if (hasAccess) {
                 Row(
                     modifier = Modifier
@@ -77,7 +79,7 @@ fun StatsCard(
                     Text(appsSummary, style = MaterialTheme.typography.bodySmall, color = if (noAppsSelected) Accent else TextMuted)
                     Icon(
                         if (appsOpen) Icons.Filled.KeyboardArrowUp else Icons.Filled.KeyboardArrowDown,
-                        contentDescription = if (appsOpen) "Свернуть список приложений" else "Приложения для статистики",
+                        contentDescription = if (appsOpen) s.home.collapseAppList else s.home.statsAppsTitle,
                         tint = TextMuted,
                     )
                 }
@@ -91,15 +93,14 @@ fun StatsCard(
         when {
             !hasAccess -> AppCard {
                 Text(
-                    "Чтобы видеть, сколько времени ты проводил в соцсетях до «Анти-Обломова» и сколько теперь, " +
-                        "включи доступ к статистике. Данные остаются на телефоне.",
+                    s.home.accessExplain,
                     style = MaterialTheme.typography.bodyMedium,
                 )
-                Button(onClick = onOpenAccess) { Text("Включить доступ") }
+                Button(onClick = onOpenAccess) { Text(s.home.enableAccess) }
             }
 
             report == null || startDate == null ->
-                Text("Собираем статистику…", style = MaterialTheme.typography.bodyMedium, color = TextMuted)
+                Text(s.home.collecting, style = MaterialTheme.typography.bodyMedium, color = TextMuted)
 
             else -> Report(report, startDate, noAppsSelected)
         }
@@ -108,11 +109,13 @@ fun StatsCard(
 
 @Composable
 private fun Report(r: SavingsReport, startDate: LocalDate, noAppsSelected: Boolean) {
+    val s = LocalStrings.current
+    val c = s.common
     var details by rememberSaveable { mutableStateOf(false) }
 
     if (noAppsSelected) {
         Text(
-            "Выбери приложения для статистики выше — или включи «Активировать все».",
+            s.home.chooseAppsHint,
             style = MaterialTheme.typography.bodySmall,
             color = Accent,
         )
@@ -120,11 +123,11 @@ private fun Report(r: SavingsReport, startDate: LocalDate, noAppsSelected: Boole
 
     // Три плитки: до — после — сэкономлено, всё в среднем за день
     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        Tile("До, в день", r.beforeAvgMinutes, TextPrimary, Modifier.weight(1f))
-        Tile("После, в день", r.perDayAfterMinutes, TextPrimary, Modifier.weight(1f))
+        Tile(s.home.tileBefore, r.beforeAvgMinutes, TextPrimary, Modifier.weight(1f))
+        Tile(s.home.tileAfter, r.perDayAfterMinutes, TextPrimary, Modifier.weight(1f))
         val saved = r.perDaySavedMinutes
         Tile(
-            label = if (saved != null && saved < 0) "Больше, в день" else "Сэкономлено, в день",
+            label = if (saved != null && saved < 0) s.home.tileMore else s.home.tileSaved,
             minutes = saved,
             color = if (saved != null && saved < 0) Accent else Calm,
             modifier = Modifier.weight(1f),
@@ -142,31 +145,31 @@ private fun Report(r: SavingsReport, startDate: LocalDate, noAppsSelected: Boole
         Text(
             text = if (total != null && total > 0) {
                 val days = Savings.schoolDays(total)
-                "Всего ты вернул себе ${UsageText.minutes(total)}" + if (days > 0) " · ${UsageText.schoolDays(days)}" else ""
+                s.home.totalSaved(UsageText.minutes(total, c), if (days > 0) UsageText.schoolDays(days, c) else null)
             } else {
-                "Как считаем"
+                s.home.howWeCount
             },
             style = MaterialTheme.typography.bodySmall,
             color = if (total != null && total > 0) Calm else TextMuted,
             modifier = Modifier.weight(1f),
         )
-        Text(if (details) "Свернуть" else "Подробнее ›", style = MaterialTheme.typography.bodySmall, color = TextMuted)
+        Text(if (details) s.home.collapse else s.home.details + " ›", style = MaterialTheme.typography.bodySmall, color = TextMuted)
     }
 
     AnimatedVisibility(visible = details) {
         AppCard {
             Text(
-                (if (r.beforeDays > 0) "«До» — в среднем по ${UsageText.days(r.beforeDays)} до ${startDate.format(DATE)}. "
-                else "Истории до ${startDate.format(DATE)} в телефоне не нашлось — сравнивать не с чем. ") +
-                    (if (r.firstDay) "«После» — пока только за сегодня, с полуночи: со второго дня здесь будет среднее."
-                    else "«После» — в среднем по ${UsageText.days(r.afterDays)} после установки; день установки не считается."),
+                (if (r.beforeDays > 0) s.home.beforeExplain(UsageText.days(r.beforeDays, c), startDate.format(DATE))
+                else s.home.noHistory(startDate.format(DATE))) +
+                    (if (r.firstDay) s.home.afterFirstDay
+                    else s.home.afterExplain(UsageText.days(r.afterDays, c))),
                 style = MaterialTheme.typography.bodySmall,
                 color = TextMuted,
             )
             HorizontalDivider()
             // Честность цифр (FR-16): если общее время не снизилось, время просто перетекло в другие приложения
-            r.screenBeforeAvgMinutes?.let { Line("Всё экранное время до, в день", UsageText.minutes(it)) }
-            Line("Всё экранное время после, в день", UsageText.minutes(r.screenPerDayAfterMinutes))
+            r.screenBeforeAvgMinutes?.let { Line(s.home.screenBefore, UsageText.minutes(it, c)) }
+            Line(s.home.screenAfter, UsageText.minutes(r.screenPerDayAfterMinutes, c))
         }
     }
 
@@ -176,8 +179,9 @@ private fun Report(r: SavingsReport, startDate: LocalDate, noAppsSelected: Boole
 /** Плитка: крупная цифра, единица мельче, подпись снизу. */
 @Composable
 private fun Tile(label: String, minutes: Int?, color: Color, modifier: Modifier) {
+    val c = LocalStrings.current.common
     AppCard(modifier = modifier, padding = androidx.compose.foundation.layout.PaddingValues(horizontal = 12.dp, vertical = 14.dp), spacing = 6.dp) {
-        val (value, unit) = minutes?.let(UsageText::compact) ?: ("—" to "")
+        val (value, unit) = minutes?.let { UsageText.compact(it, c) } ?: ("—" to "")
         Text(
             buildAnnotatedString {
                 append(value)
@@ -194,15 +198,19 @@ private fun Tile(label: String, minutes: Int?, color: Color, modifier: Modifier)
 /** Веха: неделя, две недели, месяц… — сравнение за весь срок (от 7 дней). */
 @Composable
 private fun MilestoneBlock(m: Milestone) {
+    val s = LocalStrings.current
+    val c = s.common
     AppCard {
-        Text("ВЕХА · ${m.title.uppercase()}", style = Overline, color = Calm)
+        Text(s.home.milestoneOverline(m.title), style = Overline, color = Calm)
         Text(
             text = if (m.savedPerDayMinutes >= 0) {
-                "За ${UsageText.days(m.days)} с «Анти-Обломовым» — на ${UsageText.minutes(m.savedPerDayMinutes)} в день меньше, " +
-                    "чем до установки. Ты вернул себе ${UsageText.minutes(m.totalSavedMinutes.coerceAtLeast(0))}."
+                s.home.milestoneGood(
+                    days = UsageText.days(m.days, c),
+                    perDay = UsageText.minutes(m.savedPerDayMinutes, c),
+                    total = UsageText.minutes(m.totalSavedMinutes.coerceAtLeast(0), c),
+                )
             } else {
-                "За ${UsageText.days(m.days)} — на ${UsageText.minutes(-m.savedPerDayMinutes)} в день больше, чем до установки. " +
-                    "Бывает — попробуй добавить интервал в расписание."
+                s.home.milestoneBad(UsageText.days(m.days, c), UsageText.minutes(-m.savedPerDayMinutes, c))
             },
             style = MaterialTheme.typography.bodyMedium,
         )

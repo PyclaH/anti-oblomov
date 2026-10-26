@@ -38,8 +38,27 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.Icon
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import ru.shashkov.antioblomov.rules.i18n.Lang
+import ru.shashkov.antioblomov.ui.i18n.LocalSetLanguage
+import ru.shashkov.antioblomov.ui.i18n.LocalStrings
+import ru.shashkov.antioblomov.ui.theme.Accent
+import ru.shashkov.antioblomov.ui.theme.Line
+import ru.shashkov.antioblomov.ui.theme.Surface1
+import ru.shashkov.antioblomov.ui.theme.TextMuted
+import ru.shashkov.antioblomov.ui.theme.TextPrimary
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
@@ -133,9 +152,10 @@ fun HomeScreen(
     }
     val tracked = StatsApps.tracked(statsChoice, settings.blockedPackages, nonSystem)
 
+    val s = LocalStrings.current
     val today = now.toLocalDate()
-    val report = remember(history, todayUsage, tracked, notScreenTime, today) {
-        history?.let { Savings.report(it, today, todayUsage, tracked, notScreenTime) }
+    val report = remember(history, todayUsage, tracked, notScreenTime, today, s) {
+        history?.let { Savings.report(it, today, todayUsage, tracked, notScreenTime, s.home) }
     }
 
     val status = BlockRules.status(settings, now)
@@ -160,8 +180,12 @@ fun HomeScreen(
             .padding(top = 16.dp, bottom = 24.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        // Шапка: значок и название
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+        // Шапка: значок и название; справа — выбор языка
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
             Box(
                 modifier = Modifier
                     .size(28.dp)
@@ -171,22 +195,24 @@ fun HomeScreen(
             ) {
                 Image(painterResource(R.drawable.ic_launcher_foreground), contentDescription = null, modifier = Modifier.size(42.dp))
             }
-            Text(stringResource(R.string.app_name), style = MaterialTheme.typography.titleSmall)
+            Text(s.home.appName, style = MaterialTheme.typography.titleSmall, modifier = Modifier.weight(1f))
+            LanguagePill()
         }
 
         StatusRing(
-            text = HomeStatusText.ring(status, now),
+            text = HomeStatusText.ring(status, now, s.home, s.common),
             progress = BlockRules.blockedProgress(settings, now),
             nothingPlanned = status is BlockStatus.Free && status.nextBlockAt == null,
             serviceWorks = serviceWorks,
             modifier = ringAnchor.modifier,
-            description = HomeStatusText.title(status, now) + ", " + HomeStatusText.detail(status, now) +
-                if (serviceWorks) "" else ". Служба блокировки не работает",
+            description = HomeStatusText.title(status, now, s.home, s.common) + ", " +
+                HomeStatusText.detail(status, now, s.home, s.common) +
+                if (serviceWorks) "" else ". " + s.home.serviceDownShort,
         )
 
         if (!serviceWorks) {
             Text(
-                "Служба блокировки не работает — приложения сейчас не блокируются.",
+                s.home.serviceDownWarning,
                 style = MaterialTheme.typography.bodySmall,
                 color = Warn,
                 modifier = Modifier.fillMaxWidth(),
@@ -195,7 +221,7 @@ fun HomeScreen(
         }
         if (settings.blockedPackages.isEmpty()) {
             Text(
-                "Приложения для блокировки не выбраны — отметь их на вкладке «Приложения».",
+                s.home.noAppsWarning,
                 style = MaterialTheme.typography.bodySmall,
                 color = Warn,
                 modifier = Modifier.fillMaxWidth(),
@@ -211,7 +237,7 @@ fun HomeScreen(
             startDate = history?.startDate,
             noAppsSelected = tracked.isEmpty(),
             onOpenAccess = { UsageCollector.openSettings(context) },
-            appsSummary = statsAppsSummary(statsChoice, tracked),
+            appsSummary = statsAppsSummary(statsChoice, tracked, s.home),
             picker = {
                 StatsAppsPicker(
                     apps = apps,
@@ -228,5 +254,52 @@ fun HomeScreen(
 
         if (!systemProblem) SystemBlock(serviceState, setup, onOpenOnboarding)
     }
+    }
+}
+
+/**
+ * Выбор языка в шапке главной (v1.2): маленькая «таблетка» «RU ⌄»; по нажатию — список языков
+ * их собственными названиями, текущий отмечен галочкой.
+ */
+@Composable
+private fun LanguagePill() {
+    val s = LocalStrings.current
+    val setLanguage = LocalSetLanguage.current
+    var open by remember { mutableStateOf(false) }
+
+    Box {
+        Row(
+            modifier = Modifier
+                .clip(CircleShape)
+                .background(Surface1)
+                .border(1.dp, Line, CircleShape)
+                .clickable { open = true }
+                .semantics { contentDescription = s.common.language }
+                .padding(start = 12.dp, end = 10.dp, top = 6.dp, bottom = 6.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            Text(s.lang.shortCode, fontSize = 13.sp, color = TextPrimary)
+            Icon(
+                Icons.Filled.KeyboardArrowDown,
+                contentDescription = null,
+                tint = TextMuted,
+                modifier = Modifier.size(16.dp),
+            )
+        }
+        DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
+            Lang.entries.forEach { lang ->
+                DropdownMenuItem(
+                    text = { Text(lang.nativeName) },
+                    onClick = {
+                        open = false
+                        if (lang != s.lang) setLanguage(lang)
+                    },
+                    trailingIcon = {
+                        if (lang == s.lang) Icon(Icons.Filled.Check, contentDescription = null, tint = Accent)
+                    },
+                )
+            }
+        }
     }
 }

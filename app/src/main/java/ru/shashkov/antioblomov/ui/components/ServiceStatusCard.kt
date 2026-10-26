@@ -13,14 +13,17 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import ru.shashkov.antioblomov.R
 import ru.shashkov.antioblomov.blocking.ServiceState
 import ru.shashkov.antioblomov.blocking.openGuide
 import ru.shashkov.antioblomov.blocking.phoneBrand
 import ru.shashkov.antioblomov.rules.SetupGuide
 import ru.shashkov.antioblomov.blocking.openAppSettings
+import ru.shashkov.antioblomov.ui.i18n.LocalStrings
 import ru.shashkov.antioblomov.ui.theme.AntiOblomovTheme
 import ru.shashkov.antioblomov.ui.theme.Calm
 import ru.shashkov.antioblomov.ui.theme.Warn
@@ -35,30 +38,29 @@ fun ServiceStatusCard(state: ServiceState, modifier: Modifier = Modifier) {
     val context = LocalContext.current
     val autostart = SetupGuide.autostart(phoneBrand)
     val openService = rememberAccessibilityOpener()
+    val s = LocalStrings.current
+    // Название службы — как его показывает список спецвозможностей
+    val serviceLabel = stringResource(R.string.accessibility_service_label)
     run {
         Column(
             modifier = modifier.fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            Text(text = "Служба блокировки", style = MaterialTheme.typography.titleSmall)
+            Text(text = s.home.serviceTitle, style = MaterialTheme.typography.titleSmall)
             when (state) {
                 ServiceState.RUNNING -> {
-                    Status("Служба работает", ok = true)
-                    Body("Выбранные приложения блокируются по расписанию и таймеру.")
+                    Status(s.home.serviceRunning, ok = true)
+                    Body(s.home.serviceRunningBody)
                     OutlinedButton(onClick = openService) {
-                        Text("Настройки спецвозможностей")
+                        Text(s.home.accessibilitySettings)
                     }
                 }
 
                 ServiceState.STOPPED -> {
-                    Status("Служба включена, но не работает", ok = false)
-                    Body(
-                        "Её остановила система — например, после перезагрузки. Выключите и снова " +
-                            "включите «Анти-Обломов: блокировка» в спецвозможностях." +
-                            if (autostart != null) " Чтобы служба запускалась сама, проверьте «${autostart.title}» в настройке телефона ниже." else ""
-                    )
+                    Status(s.home.serviceStopped, ok = false)
+                    Body(s.home.serviceStoppedBody(serviceLabel, autostart?.title))
                     Button(onClick = openService) {
-                        Text("Спецвозможности")
+                        Text(s.home.accessibilityShort)
                     }
                     if (autostart != null) {
                         OutlinedButton(onClick = { openGuide(context, autostart) }) {
@@ -66,19 +68,16 @@ fun ServiceStatusCard(state: ServiceState, modifier: Modifier = Modifier) {
                         }
                     } else {
                         OutlinedButton(onClick = { openAppSettings(context) }) {
-                            Text("Настройки приложения")
+                            Text(s.home.appSettings)
                         }
                     }
                 }
 
                 ServiceState.OFF -> {
-                    Status("Служба выключена", ok = false)
-                    Body(
-                        "В «Специальных возможностях» найдите в списке служб " +
-                            "«Анти-Обломов: блокировка» и включите её."
-                    )
+                    Status(s.home.serviceOff, ok = false)
+                    Body(s.home.serviceOffBody(serviceLabel))
                     Button(onClick = openService) {
-                        Text("Открыть настройки")
+                        Text(s.home.openSettings)
                     }
                 }
             }
