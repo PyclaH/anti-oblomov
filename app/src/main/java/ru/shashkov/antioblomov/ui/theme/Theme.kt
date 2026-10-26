@@ -1,5 +1,8 @@
 package ru.shashkov.antioblomov.ui.theme
 
+import ru.shashkov.antioblomov.ui.i18n.LocalStrings
+import ru.shashkov.antioblomov.rules.i18n.Lang
+import androidx.compose.runtime.remember
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Shapes
@@ -53,9 +56,12 @@ private val AppShapes = Shapes(
 
 @Composable
 fun AntiOblomovTheme(content: @Composable () -> Unit) {
+    // Казахский — заголовки шрифтом Onest (в Unbounded нет казахских букв), см. typographyFor
+    val lang = LocalStrings.current.lang
+    val typography = remember(lang) { typographyFor(if (lang == Lang.KK) Onest else Unbounded) }
     MaterialTheme(
         colorScheme = AppColors,
-        typography = AppTypography,
+        typography = typography,
         shapes = AppShapes,
         content = content,
     )
