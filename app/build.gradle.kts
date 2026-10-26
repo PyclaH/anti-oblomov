@@ -6,14 +6,14 @@ plugins {
 
 android {
     namespace = "ru.shashkov.antioblomov"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "ru.shashkov.antioblomov"
         minSdk = 26 // Android 8.0
-        targetSdk = 35
-        versionCode = 1
-        versionName = "1.0"
+        targetSdk = 36
+        versionCode = 2
+        versionName = "1.1"
     }
 
     buildTypes {
