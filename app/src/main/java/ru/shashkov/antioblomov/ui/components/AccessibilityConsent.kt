@@ -19,6 +19,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import ru.shashkov.antioblomov.blocking.openAccessibilitySettings
 import ru.shashkov.antioblomov.data.OnboardingStore
+import ru.shashkov.antioblomov.ui.i18n.LocalStrings
 import ru.shashkov.antioblomov.ui.theme.Surface1
 import ru.shashkov.antioblomov.ui.theme.TextMuted
 
@@ -61,42 +62,24 @@ fun rememberAccessibilityOpener(): () -> Unit {
 
 @Composable
 private fun AccessibilityConsentDialog(onAccept: () -> Unit, onDecline: () -> Unit) {
+    val s = LocalStrings.current.setup
     AlertDialog(
         onDismissRequest = onDecline,
         containerColor = Surface1,
-        title = { Text("Служба блокировки: что она видит") },
+        title = { Text(s.consentTitle) },
         text = {
             Column(
                 modifier = Modifier.verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
-                Text(
-                    "«Анти-Обломов» использует службу специальных возможностей Android (Accessibility Service), " +
-                        "чтобы закрывать выбранные приложения во время блокировки.",
-                    style = MaterialTheme.typography.bodyMedium,
-                )
-                Text(
-                    "Какие данные: служба узнаёт, какое приложение сейчас открыто на экране (его системное название).",
-                    style = MaterialTheme.typography.bodyMedium,
-                )
-                Text(
-                    "Зачем: если это приложение в вашем списке блокировки и сейчас время блокировки, " +
-                        "поверх него показывается экран с цитатой.",
-                    style = MaterialTheme.typography.bodyMedium,
-                )
-                Text(
-                    "Служба не читает текст на экране, сообщения и пароли, ничего не сохраняет о ваших действиях " +
-                        "и ничего не передаёт: у приложения нет доступа к интернету.",
-                    style = MaterialTheme.typography.bodyMedium,
-                )
-                Text(
-                    "Выключить службу можно в любой момент в настройках спецвозможностей телефона.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = TextMuted,
-                )
+                Text(s.consentIntro, style = MaterialTheme.typography.bodyMedium)
+                Text(s.consentData, style = MaterialTheme.typography.bodyMedium)
+                Text(s.consentWhy, style = MaterialTheme.typography.bodyMedium)
+                Text(s.consentNot, style = MaterialTheme.typography.bodyMedium)
+                Text(s.consentOff, style = MaterialTheme.typography.bodySmall, color = TextMuted)
             }
         },
-        confirmButton = { Button(onClick = onAccept) { Text("Принимаю") } },
-        dismissButton = { TextButton(onClick = onDecline) { Text("Не сейчас") } },
+        confirmButton = { Button(onClick = onAccept) { Text(s.consentAccept) } },
+        dismissButton = { TextButton(onClick = onDecline) { Text(s.consentLater) } },
     )
 }
