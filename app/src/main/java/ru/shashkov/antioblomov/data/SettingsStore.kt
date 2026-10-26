@@ -74,6 +74,7 @@ class SettingsStore(context: Context) {
             put("blocked", JSONArray(s.blockedPackages.sorted()))
             s.timerEndsAt?.let { put("timerEndsAt", it) }
             s.timerStartedAt?.let { put("timerStartedAt", it) }
+            s.language?.let { put("language", it) }
             put("schedule", JSONObject().apply {
                 for ((day, intervals) in s.schedule) {
                     put(day.name, JSONArray().apply {
@@ -102,7 +103,14 @@ class SettingsStore(context: Context) {
                     }
                 }
             }
-            return Settings(schedule = schedule, blockedPackages = blocked, timerEndsAt = timer, timerStartedAt = timerStarted)
+            val language = if (json.has("language")) json.getString("language") else null
+            return Settings(
+                schedule = schedule,
+                blockedPackages = blocked,
+                timerEndsAt = timer,
+                timerStartedAt = timerStarted,
+                language = language,
+            )
         }
     }
 }

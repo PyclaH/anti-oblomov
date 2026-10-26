@@ -1,5 +1,7 @@
 package ru.shashkov.antioblomov.rules
 
+import ru.shashkov.antioblomov.rules.i18n.CommonRu
+import ru.shashkov.antioblomov.rules.i18n.CommonStrings
 import java.time.DayOfWeek
 
 /** Результат проверки интервала перед сохранением (FR-04). */
@@ -18,25 +20,9 @@ object ScheduleEditor {
     )
 
     /** Короткие подписи для кнопок дней. */
-    fun shortName(day: DayOfWeek): String = when (day) {
-        DayOfWeek.MONDAY -> "Пн"
-        DayOfWeek.TUESDAY -> "Вт"
-        DayOfWeek.WEDNESDAY -> "Ср"
-        DayOfWeek.THURSDAY -> "Чт"
-        DayOfWeek.FRIDAY -> "Пт"
-        DayOfWeek.SATURDAY -> "Сб"
-        DayOfWeek.SUNDAY -> "Вс"
-    }
+    fun shortName(day: DayOfWeek, s: CommonStrings = CommonRu): String = s.dayShort(day)
 
-    fun fullName(day: DayOfWeek): String = when (day) {
-        DayOfWeek.MONDAY -> "Понедельник"
-        DayOfWeek.TUESDAY -> "Вторник"
-        DayOfWeek.WEDNESDAY -> "Среда"
-        DayOfWeek.THURSDAY -> "Четверг"
-        DayOfWeek.FRIDAY -> "Пятница"
-        DayOfWeek.SATURDAY -> "Суббота"
-        DayOfWeek.SUNDAY -> "Воскресенье"
-    }
+    fun fullName(day: DayOfWeek, s: CommonStrings = CommonRu): String = s.dayFull(day)
 
     /**
      * Проверить интервал перед сохранением: конец должен быть позже начала.

@@ -1,5 +1,7 @@
 package ru.shashkov.antioblomov.rules
 
+import ru.shashkov.antioblomov.rules.i18n.CommonRu
+import ru.shashkov.antioblomov.rules.i18n.CommonStrings
 import java.time.ZonedDateTime
 
 /** Результат проверки длительности, набранной в часах и минутах. */
@@ -67,16 +69,8 @@ object TimerRules {
         else DurationCheck.Error("От 1 минуты до 12 часов")
     }
 
-    /** «1 ч 30 мин», «45 мин», «2 ч». */
-    fun durationText(minutes: Int): String {
-        val h = minutes / 60
-        val m = minutes % 60
-        return when {
-            h == 0 -> "$m мин"
-            m == 0 -> "$h ч"
-            else -> "$h ч $m мин"
-        }
-    }
+    /** «1 ч 30 мин», «45 мин», «2 ч» — на языке [s] (по умолчанию русском). */
+    fun durationText(minutes: Int, s: CommonStrings = CommonRu): String = s.duration(minutes)
 
     /** Обратный отсчёт: «2:59:59», меньше часа — «59:59». Доли секунды округляем вверх. */
     fun countdown(remainingMillis: Long): String {

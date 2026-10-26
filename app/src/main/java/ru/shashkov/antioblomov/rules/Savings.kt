@@ -1,5 +1,7 @@
 package ru.shashkov.antioblomov.rules
 
+import ru.shashkov.antioblomov.rules.i18n.CommonRu
+import ru.shashkov.antioblomov.rules.i18n.CommonStrings
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
 import kotlin.math.roundToInt
@@ -161,30 +163,20 @@ object Savings {
 /** Подписи времени для «Было / стало». */
 object UsageText {
     /** 135 → «2 ч 15 мин», 0 → «0 мин». */
-    fun minutes(m: Int): String = TimerRules.durationText(m)
+    fun minutes(m: Int, s: CommonStrings = CommonRu): String = s.duration(m)
 
     /** «Сэкономлено 40 мин» или честно «на 20 мин больше». */
-    fun saved(m: Int): String = if (m >= 0) minutes(m) else "−${minutes(-m)}"
+    fun saved(m: Int, s: CommonStrings = CommonRu): String = if (m >= 0) minutes(m, s) else "−${minutes(-m, s)}"
 
     /** Для плиток: 45 → («45», «мин»), 135 → («2:15», «ч»), −20 → («20», «мин») — знак показывает подпись. */
-    fun compact(m: Int): Pair<String, String> {
+    fun compact(m: Int, s: CommonStrings = CommonRu): Pair<String, String> {
         val a = kotlin.math.abs(m)
-        return if (a < 60) a.toString() to "мин" else "%d:%02d".format(a / 60, a % 60) to "ч"
+        return if (a < 60) a.toString() to s.unitMin else "%d:%02d".format(a / 60, a % 60) to s.unitHour
     }
 
     /** 1 учебный день, 2 учебных дня, 5 учебных дней. */
-    fun schoolDays(n: Int): String = "$n " + when {
-        n % 100 in 11..14 -> "учебных дней"
-        n % 10 == 1 -> "учебный день"
-        n % 10 in 2..4 -> "учебных дня"
-        else -> "учебных дней"
-    }
+    fun schoolDays(n: Int, s: CommonStrings = CommonRu): String = s.schoolDays(n)
 
     /** 1 день, 3 дня, 5 дней. */
-    fun days(n: Int): String = "$n " + when {
-        n % 100 in 11..14 -> "дней"
-        n % 10 == 1 -> "день"
-        n % 10 in 2..4 -> "дня"
-        else -> "дней"
-    }
+    fun days(n: Int, s: CommonStrings = CommonRu): String = s.days(n)
 }
