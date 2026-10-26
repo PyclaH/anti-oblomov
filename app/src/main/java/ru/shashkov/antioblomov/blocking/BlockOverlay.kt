@@ -53,8 +53,10 @@ class BlockOverlay(
     fun show(appName: String?, until: String? = null) {
         if (view != null) return
         // Тексты — на языке приложения (v1.2); служба читает его из настроек при каждом показе
-        val s = Language.strings(service).apps
-        val v = buildView(appName ?: s.thisApp, until, Quotes.random(), s)
+        val strings = Language.strings(service)
+        val s = strings.apps
+        // Цитата — на том же языке (v1.2): для каждого языка свой проверенный список
+        val v = buildView(appName ?: s.thisApp, until, Quotes.random(strings.lang), s)
         windowManager.addView(v, fullScreenParams())
         view = v
     }

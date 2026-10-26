@@ -5,10 +5,10 @@
     <string name="tab_home">Басты бет</string>
     <string name="tab_schedule">Кесте</string>
     <string name="tab_timer">Таймер</string>
-    <string name="tab_apps">Қосымшалар</string>
+    <string name="tab_apps">Қолданбалар</string>
 
     <string name="soon">Жақында</string>
 
     <string name="accessibility_service_label">Анти-Обломов: бұғаттау</string>
-    <string name="accessibility_service_description">Оқу уақытында бұғаттау экранын көрсету үшін қай қосымша ашық екенін анықтайды. Тек қосымшаның атауы пайдаланылады: экрандағы мәтін мен мазмұн оқылмайды, деректер ешқайда жіберілмейді.</string>
+    <string name="accessibility_service_description">Оқу уақытында бұғаттау экранын көрсету үшін қай қолданба ашық екенін анықтайды. Тек қолданбаның атауы пайдаланылады: экрандағы мәтін мен мазмұн оқылмайды, деректер ешқайда жіберілмейді.</string>
 </resources>

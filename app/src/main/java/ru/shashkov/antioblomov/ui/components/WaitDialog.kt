@@ -142,9 +142,10 @@ private fun WaitWindow(title: String, onConfirm: () -> Unit, onDismiss: () -> Un
 
 @Composable
 private fun WaitScreen(title: String, onConfirm: () -> Unit, onDismiss: () -> Unit) {
-    val quote = remember { Quotes.random() }
-    var left by remember { mutableIntStateOf(ChangeGuard.WAIT_SECONDS) }
     val s = LocalStrings.current
+    // Цитата на языке интерфейса (v1.2)
+    val quote = remember(s.lang) { Quotes.random(s.lang) }
+    var left by remember { mutableIntStateOf(ChangeGuard.WAIT_SECONDS) }
 
     LaunchedEffect(Unit) {
         while (left > 0) {

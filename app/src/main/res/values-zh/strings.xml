@@ -3,7 +3,7 @@
     <string name="app_name">反奥勃洛莫夫</string>
 
     <string name="tab_home">首页</string>
-    <string name="tab_schedule">日程</string>
+    <string name="tab_schedule">时间表</string>
     <string name="tab_timer">计时器</string>
     <string name="tab_apps">应用</string>
 

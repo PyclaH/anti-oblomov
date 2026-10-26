@@ -397,9 +397,9 @@ object HomePt : HomeStrings {
 
     override val freeTime = "Tempo livre"
     override fun blockedUntil(at: String) = "Bloqueio até $at"
-    override val bySchedule = "pelo horário"
+    override val bySchedule = "pela agenda"
     override val byTimer = "pelo timer"
-    override val byScheduleAndTimer = "pelo horário e pelo timer"
+    override val byScheduleAndTimer = "pela agenda e pelo timer"
     override val noBlocksScheduled = "nenhum bloqueio programado"
     override fun nextBlock(day: String, time: String, tomorrow: Boolean) = when {
         tomorrow -> "próximo bloqueio amanhã às $time"
@@ -444,7 +444,7 @@ object HomePt : HomeStrings {
     override fun milestoneGood(days: String, perDay: String, total: String) =
         "Em $days com o Anti-Oblomov: $perDay a menos por dia do que antes da instalação. Você recuperou $total."
     override fun milestoneBad(days: String, perDay: String) =
-        "Em $days: $perDay a mais por dia do que antes da instalação. Acontece — tente adicionar um intervalo ao horário."
+        "Em $days: $perDay a mais por dia do que antes da instalação. Acontece — tente adicionar um intervalo à agenda."
 
     override val appsAllExceptSystem = "Todos, exceto os do sistema"
     override val appsNone = "Nenhum escolhido"
@@ -468,7 +468,7 @@ object HomePt : HomeStrings {
     override val serviceNotWorking = "o serviço não está funcionando"
     override val serviceTitle = "Serviço de bloqueio"
     override val serviceRunning = "O serviço está funcionando"
-    override val serviceRunningBody = "Os apps escolhidos são bloqueados pelo horário e pelo timer."
+    override val serviceRunningBody = "Os apps escolhidos são bloqueados pela agenda e pelo timer."
     override val accessibilitySettings = "Configurações de acessibilidade"
     override val serviceStopped = "O serviço está ativado, mas não funciona"
     override fun serviceStoppedBody(label: String, autostart: String?) =
