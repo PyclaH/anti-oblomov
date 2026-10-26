@@ -10,6 +10,7 @@ import android.os.Looper
 import android.os.SystemClock
 import android.util.Log
 import android.view.accessibility.AccessibilityEvent
+import ru.shashkov.antioblomov.data.Language
 import ru.shashkov.antioblomov.data.ProtectedApps
 import ru.shashkov.antioblomov.data.SettingsStore
 import ru.shashkov.antioblomov.data.UsageCollector
@@ -144,7 +145,9 @@ class BlockingService : AccessibilityService() {
             Log.i(TAG, "Блокирую $pkg")
         }
         val until = (BlockRules.status(settings, now) as? BlockStatus.Blocked)?.until
-        overlay.show(appLabel(pkg), until?.let { untilText(it, now) })
+        // «14:00», «завтра 01:30» — на языке приложения; «на паузе до …» собирает экран блокировки
+        val common = Language.strings(this).common
+        overlay.show(appLabel(pkg), until?.let { TimeText.at(it, now, common) })
         pausePlayback()
         performGlobalAction(GLOBAL_ACTION_HOME)
     }
@@ -188,9 +191,10 @@ class BlockingService : AccessibilityService() {
         focusRequest?.let { audioManager.abandonAudioFocusRequest(it) }
     }
 
-    private fun appLabel(pkg: String): String = runCatching {
+    /** null — название узнать не удалось: экран блокировки напишет «Это приложение» на языке приложения. */
+    private fun appLabel(pkg: String): String? = runCatching {
         packageManager.getApplicationLabel(packageManager.getApplicationInfo(pkg, 0)).toString()
-    }.getOrDefault("Это приложение")
+    }.getOrNull()
 
     override fun onInterrupt() = Unit
 
@@ -218,8 +222,5 @@ class BlockingService : AccessibilityService() {
         private const val BOUNDARY_SLACK_MS = 500L
 
         private val TIME = DateTimeFormatter.ofPattern("HH:mm")
-
-        /** «до 14:00», «до завтра 01:30», «до Чт 10:00». */
-        fun untilText(until: ZonedDateTime, now: ZonedDateTime): String = "до ${TimeText.at(until, now)}"
     }
 }

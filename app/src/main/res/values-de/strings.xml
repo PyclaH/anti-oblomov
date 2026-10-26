@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Anti-Oblomov</string>
+
+    <string name="tab_home">Start</string>
+    <string name="tab_schedule">Zeitplan</string>
+    <string name="tab_timer">Timer</string>
+    <string name="tab_apps">Apps</string>
+
+    <string name="soon">Bald verfügbar</string>
+
+    <string name="accessibility_service_label">Anti-Oblomov: Sperre</string>
+    <string name="accessibility_service_description">Erkennt, welche App geöffnet ist, um während der Lernzeit den Sperrbildschirm anzuzeigen. Verwendet wird nur der Name der App: Text und Bildschirminhalte werden nicht gelesen, Daten werden nirgendwohin übertragen.</string>
+</resources>

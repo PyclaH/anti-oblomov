@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Anti-Oblomov</string>
+
+    <string name="tab_home">Ana sayfa</string>
+    <string name="tab_schedule">Program</string>
+    <string name="tab_timer">Zamanlayıcı</string>
+    <string name="tab_apps">Uygulamalar</string>
+
+    <string name="soon">Yakında</string>
+
+    <string name="accessibility_service_label">Anti-Oblomov: engelleme</string>
+    <string name="accessibility_service_description">Ders saatlerinde engelleme ekranını göstermek için hangi uygulamanın açık olduğunu belirler. Yalnızca uygulamanın adı kullanılır: ekrandaki metin ve içerik okunmaz, hiçbir veri hiçbir yere gönderilmez.</string>
+</resources>

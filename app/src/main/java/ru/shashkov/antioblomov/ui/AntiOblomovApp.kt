@@ -4,7 +4,6 @@ import ru.shashkov.antioblomov.ui.components.WaitRequest
 import ru.shashkov.antioblomov.ui.components.WaitOverlay
 import ru.shashkov.antioblomov.ui.components.LocalWaitHost
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.padding
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.animateColorAsState
@@ -58,9 +57,9 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.res.stringResource
+import ru.shashkov.antioblomov.ui.i18n.LocalStrings
+import ru.shashkov.antioblomov.rules.i18n.AppsStrings
 import androidx.compose.ui.tooling.preview.Preview
-import ru.shashkov.antioblomov.R
 import ru.shashkov.antioblomov.blocking.ServiceState
 import ru.shashkov.antioblomov.ui.screens.AppsScreen
 import ru.shashkov.antioblomov.rules.PhoneBrand
@@ -71,12 +70,12 @@ import ru.shashkov.antioblomov.ui.screens.ScheduleScreen
 import ru.shashkov.antioblomov.ui.screens.TimerScreen
 import ru.shashkov.antioblomov.ui.theme.AntiOblomovTheme
 
-/** Вкладки нижнего меню. */
-enum class Tab(@StringRes val title: Int, val icon: ImageVector) {
-    HOME(R.string.tab_home, Icons.Outlined.Home),
-    SCHEDULE(R.string.tab_schedule, Icons.Outlined.DateRange),
-    TIMER(R.string.tab_timer, Icons.Outlined.PlayArrow),
-    APPS(R.string.tab_apps, Icons.Outlined.Lock),
+/** Вкладки нижнего меню. Подпись — на языке приложения (v1.2): `tab.title(s.apps)`. */
+enum class Tab(val title: (AppsStrings) -> String, val icon: ImageVector) {
+    HOME({ it.tabHome }, Icons.Outlined.Home),
+    SCHEDULE({ it.tabSchedule }, Icons.Outlined.DateRange),
+    TIMER({ it.tabTimer }, Icons.Outlined.PlayArrow),
+    APPS({ it.tabApps }, Icons.Outlined.Lock),
 }
 
 /**
@@ -162,6 +161,7 @@ private fun BottomCapsule(current: Tab, onSelect: (Tab) -> Unit) {
             .padding(start = 32.dp, end = 32.dp, bottom = 12.dp, top = 8.dp),
         contentAlignment = Alignment.Center,
     ) {
+        val s = LocalStrings.current
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -176,7 +176,7 @@ private fun BottomCapsule(current: Tab, onSelect: (Tab) -> Unit) {
         ) {
             Tab.entries.forEach { tab ->
                 val selected = tab == current
-                val title = stringResource(tab.title)
+                val title = tab.title(s.apps)
                 // Подсветка нажатия — та же подложка, что у выбранной вкладки, во всю кнопку.
                 // Стандартная «волна» не годится: при нажатии вкладка расширяется под подпись,
                 // а волна остаётся размером со старую кнопку — края не подсвечивались.

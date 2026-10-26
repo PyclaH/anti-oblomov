@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">反奥勃洛莫夫</string>
+
+    <string name="tab_home">首页</string>
+    <string name="tab_schedule">日程</string>
+    <string name="tab_timer">计时器</string>
+    <string name="tab_apps">应用</string>
+
+    <string name="soon">即将推出</string>
+
+    <string name="accessibility_service_label">反奥勃洛莫夫：屏蔽</string>
+    <string name="accessibility_service_description">识别当前打开的是哪个应用，以便在学习时间显示屏蔽界面。仅使用应用名称：不读取屏幕上的文字和内容，也不会向任何地方发送数据。</string>
+</resources>

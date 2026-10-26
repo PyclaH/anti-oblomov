@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Anti-Oblomov</string>
+
+    <string name="tab_home">Bosh sahifa</string>
+    <string name="tab_schedule">Jadval</string>
+    <string name="tab_timer">Taymer</string>
+    <string name="tab_apps">Ilovalar</string>
+
+    <string name="soon">Tez orada</string>
+
+    <string name="accessibility_service_label">Anti-Oblomov: bloklash</string>
+    <string name="accessibility_service_description">O‘qish vaqtida bloklash ekranini ko‘rsatish uchun qaysi ilova ochiq ekanini aniqlaydi. Faqat ilova nomidan foydalaniladi: ekrandagi matn va kontent o‘qilmaydi, ma’lumotlar hech qayerga yuborilmaydi.</string>
+</resources>

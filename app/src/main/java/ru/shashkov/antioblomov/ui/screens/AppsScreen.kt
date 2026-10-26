@@ -45,7 +45,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import ru.shashkov.antioblomov.R
 import ru.shashkov.antioblomov.data.AppsCache
 import ru.shashkov.antioblomov.data.InstalledApp
 import ru.shashkov.antioblomov.data.InstalledApps
@@ -66,7 +65,7 @@ import ru.shashkov.antioblomov.ui.theme.Surface1
 import ru.shashkov.antioblomov.ui.theme.TextMuted
 import ru.shashkov.antioblomov.ui.theme.TextPrimary
 import ru.shashkov.antioblomov.ui.theme.Warn
-import androidx.compose.ui.res.stringResource
+import ru.shashkov.antioblomov.ui.i18n.LocalStrings
 
 /**
  * Экран «Приложения»: какие приложения блокировать (FR-06, FR-07).
@@ -79,6 +78,7 @@ import androidx.compose.ui.res.stringResource
 @Composable
 fun AppsScreen(modifier: Modifier = Modifier) {
     val context = LocalContext.current
+    val s = LocalStrings.current
     val store = remember { SettingsStore(context) }
     val iconPx = with(LocalDensity.current) { 40.dp.roundToPx() }
 
@@ -118,7 +118,7 @@ fun AppsScreen(modifier: Modifier = Modifier) {
 
     pending?.let { (packageName, block) ->
         WaitDialog(
-            title = if (block) "Добавить приложение в блокировку?" else "Убрать приложение из блокировки?",
+            title = if (block) s.apps.waitAddTitle else s.apps.waitRemoveTitle,
             onConfirm = {
                 commit(packageName, block)
                 pending = null
@@ -140,16 +140,14 @@ fun AppsScreen(modifier: Modifier = Modifier) {
         ) {
             // Заголовок — во всю ширину строки, счётчик — под ним (R4, замечание п. 1: «я» переносилась)
             Text(
-                text = stringResource(R.string.tab_apps),
+                text = s.apps.tabApps,
                 style = MaterialTheme.typography.headlineMedium,
                 maxLines = 1,
                 modifier = Modifier.fillMaxWidth(),
             )
             count?.let { CountChip(it) }
             Text(
-                text = if (count == 0)
-                    "Ничего не выбрано — расписание и таймер ничего не блокируют. Отметь, что блокировать."
-                else "Отметь, что блокировать по расписанию и таймеру.",
+                text = if (count == 0) s.apps.hintEmpty else s.apps.hint,
                 style = MaterialTheme.typography.bodySmall,
                 color = if (count == 0) Warn else TextMuted,
             )
@@ -159,12 +157,12 @@ fun AppsScreen(modifier: Modifier = Modifier) {
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
                 shape = RoundedCornerShape(16.dp),
-                placeholder = { Text("Поиск", color = TextMuted) },
+                placeholder = { Text(s.apps.search, color = TextMuted) },
                 leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null, tint = TextMuted) },
                 trailingIcon = {
                     if (query.isNotEmpty()) {
                         IconButton(onClick = { query = "" }) {
-                            Icon(Icons.Filled.Clear, contentDescription = "Очистить поиск", tint = TextMuted)
+                            Icon(Icons.Filled.Clear, contentDescription = s.apps.clearSearch, tint = TextMuted)
                         }
                     }
                 },
@@ -183,7 +181,7 @@ fun AppsScreen(modifier: Modifier = Modifier) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     CircularProgressIndicator()
-                    Text("Загружаю список приложений…", style = MaterialTheme.typography.bodyMedium)
+                    Text(s.apps.loading, style = MaterialTheme.typography.bodyMedium)
                 }
             }
             return@Column
@@ -194,7 +192,7 @@ fun AppsScreen(modifier: Modifier = Modifier) {
 
         if (sections.isEmpty) {
             Text(
-                text = "Ничего не найдено",
+                text = s.apps.notFound,
                 modifier = Modifier.padding(20.dp),
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -205,9 +203,9 @@ fun AppsScreen(modifier: Modifier = Modifier) {
         // Ключ — имя пакета: при отметке строка плавно переезжает в «Заблокированные»
         // и обратно (animateItem), а не исчезает и появляется заново.
         LazyColumn(modifier = Modifier.fillMaxSize()) {
-            section("Заблокированные", sections.blocked, byPackage, blocked, ::toggle)
-            section("Часто отвлекают", sections.distracting, byPackage, blocked, ::toggle)
-            section("Все приложения", sections.others, byPackage, blocked, ::toggle)
+            section(s.apps.sectionBlocked, sections.blocked, byPackage, blocked, ::toggle)
+            section(s.apps.sectionDistracting, sections.distracting, byPackage, blocked, ::toggle)
+            section(s.apps.sectionAll, sections.others, byPackage, blocked, ::toggle)
         }
     }
     }
@@ -236,8 +234,10 @@ private fun LazyListScope.section(
 
 @Composable
 private fun SectionHeader(title: String, modifier: Modifier = Modifier) {
+    // Заглавные — по правилам языка приложения (в турецком i → İ, а не I)
+    val locale = java.util.Locale.forLanguageTag(LocalStrings.current.lang.code)
     Text(
-        text = title.uppercase(),
+        text = title.uppercase(locale),
         modifier = modifier.padding(start = 20.dp, end = 20.dp, top = 20.dp, bottom = 6.dp),
         style = Overline,
         color = TextMuted,
@@ -247,8 +247,9 @@ private fun SectionHeader(title: String, modifier: Modifier = Modifier) {
 /** «Заблокировано: 3» — или янтарное «Ничего не выбрано». */
 @Composable
 private fun CountChip(count: Int) {
+    val s = LocalStrings.current
     Text(
-        text = if (count == 0) "Ничего не выбрано" else "Заблокировано: $count",
+        text = if (count == 0) s.apps.nothingSelected else s.apps.blockedCount(count),
         style = MaterialTheme.typography.labelMedium,
         color = if (count == 0) Warn else TextPrimary,
         modifier = Modifier
