@@ -1,0 +1,84 @@
+Анти-Обломов
+Copyright © 2026 Руслан Шашков (Ruslan Shashkov). Все права защищены.
+
+Правообладатель: Руслан Шашков, г. Иркутск. Связь с правообладателем:
+https://github.com/PyclaH
+
+1. Настоящая программа для ЭВМ «Анти-Обломов» — исходный код, сборки
+   (APK, AAB), графика, иконки, тексты интерфейса, переводы, подборка
+   цитат и документация в этом репозитории (далее — «Программа») —
+   охраняется авторским правом (часть 4 ГК РФ, Бернская конвенция).
+   Исключительное право на Программу принадлежит правообладателю.
+
+2. Без письменного разрешения правообладателя ЗАПРЕЩАЕТСЯ:
+   а) копировать исходный код Программы или его части в другие проекты;
+   б) изменять Программу и распространять изменённые версии;
+   в) распространять Программу или её сборки, в том числе публиковать
+      их в магазинах приложений (RuStore, Google Play и др.), на сайтах
+      и в каналах;
+   г) использовать Программу, её части, название «Анти-Обломов»,
+      иконку или оформление в коммерческих целях;
+   д) выдавать Программу или её части за свою работу.
+
+3. РАЗРЕШАЕТСЯ без дополнительного согласия:
+   а) просматривать исходный код на GitHub и делать форк в пределах
+      GitHub в объёме, предусмотренном Условиями использования GitHub
+      (GitHub Terms of Service, раздел D.5); это не даёт права
+      использовать код за пределами GitHub;
+   б) скачивать официальные сборки из релизов этого репозитория
+      и магазинов приложений и пользоваться ими на своих устройствах;
+   в) цитировать небольшие фрагменты кода и документации в учебных,
+      научных и обзорных целях с указанием автора и ссылки на источник
+      (ст. 1274 ГК РФ).
+
+4. Сторонние компоненты (шрифты, библиотеки) распространяются на условиях
+   своих лицензий — см. файл THIRD_PARTY_NOTICES.md. Настоящая лицензия
+   на них не распространяется и их условия не ограничивает.
+
+5. ПРОГРАММА ПРЕДОСТАВЛЯЕТСЯ «КАК ЕСТЬ», БЕЗ КАКИХ-ЛИБО ГАРАНТИЙ.
+   Правообладатель не отвечает за убытки, связанные с использованием
+   Программы, в пределах, допускаемых законом.
+
+По вопросам использования Программы — пишите правообладателю.
+
+------------------------------------------------------------------------
+
+Anti-Oblomov
+Copyright © 2026 Ruslan Shashkov. All rights reserved.
+
+This is an English translation provided for convenience; in case of
+discrepancy the Russian text above prevails.
+
+1. The "Anti-Oblomov" software — source code, builds (APK, AAB),
+   graphics, icons, UI texts, translations, the selection of quotes and
+   documentation in this repository (the "Software") — is protected by
+   copyright. All exclusive rights belong to the copyright holder.
+
+2. Without prior written permission of the copyright holder you may NOT:
+   a) copy the source code or any part of it into other projects;
+   b) modify the Software or distribute modified versions;
+   c) distribute the Software or its builds, including publishing them
+      in app stores (RuStore, Google Play, etc.), on websites or channels;
+   d) use the Software, its parts, the name "Anti-Oblomov", the icon or
+      the design for commercial purposes;
+   e) present the Software or its parts as your own work.
+
+3. You MAY, without further permission:
+   a) view the source code on GitHub and fork it within GitHub to the
+      extent provided by the GitHub Terms of Service (section D.5); this
+      grants no right to use the code outside GitHub;
+   b) download official builds from this repository's releases and from
+      app stores and use them on your own devices;
+   c) quote short fragments of code and documentation for educational,
+      research or review purposes with attribution and a link to the
+      source.
+
+4. Third-party components (fonts, libraries) are licensed under their own
+   terms — see THIRD_PARTY_NOTICES.md. This license does not apply to them
+   and does not restrict their terms.
+
+5. THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND. To the
+   extent permitted by law, the copyright holder is not liable for any
+   damages arising from the use of the Software.
+
+Contact the copyright holder: https://github.com/PyclaH
