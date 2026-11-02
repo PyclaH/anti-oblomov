@@ -199,7 +199,7 @@ footer a{text-decoration:none}footer a:hover{color:var(--ink)}
 
 <header id="hdr"><div class="wrap bar">
   <a class="logo" href="#top"><img src="icon-192.png" alt="">Анти-Обломов</a>
-  <nav class="nav"><a class="opt" href="#demo">Как работает</a><a class="opt" href="#install">Установка</a><a class="opt" href="#faq">Вопросы</a><a class="btn btn-p btn-s dl-link" href="#install">Скачать</a></nav>
+  <nav class="nav"><a class="opt" href="#demo">Как работает</a><a class="opt" href="#install">Установка</a><a class="opt" href="#faq">Вопросы</a><a class="opt" href="https://vk.ru/club242872755" target="_blank" rel="noopener">ВКонтакте</a><a class="btn btn-p btn-s dl-link" href="#install">Скачать</a></nav>
 </div></header>
 
 <main id="top">
@@ -304,7 +304,7 @@ footer a{text-decoration:none}footer a:hover{color:var(--ink)}
       <div class="kicker">IPHONE</div>
       <h2 style="font-size:clamp(30px,4.2vw,48px)">Пока только<br><span class="tl">для Android</span></h2>
       <p>Apple разрешает ставить приложения только через App Store и TestFlight, а блокировать другие приложения — только через «Экранное время» с отдельного разрешения Apple. Поэтому скачать файл для iPhone, как для Android, нельзя, а версия для iPhone — отдельный большой проект. Мы вернёмся к нему позже и обязательно расскажем, если он начнётся.</p>
-      <a class="btn btn-g" id="news-btn" href="#" style="margin-top:12px;display:none">Узнать первым</a>
+      <a class="btn btn-g" id="news-btn" href="#" target="_blank" rel="noopener" style="margin-top:12px;display:none">Узнать первым во ВКонтакте</a>
     </div>
     <div class="road">
       <div class="rs done"><b>ГОТОВО</b>Android: расписание, таймер, цитаты</div>
@@ -330,20 +330,20 @@ footer a{text-decoration:none}footer a:hover{color:var(--ink)}
 <section class="final"><div class="wrap">
   <h2 class="reveal">Теперь<br><span class="acc">или никогда</span></h2>
   <div class="q reveal">«Теперь или никогда!» — И. А. Гончаров, «Обломов»</div>
-  <div class="cta reveal" style="justify-content:center"><a class="btn btn-p dl-link" href="https://github.com/PyclaH/anti-oblomov/releases/latest">Скачать для Android</a></div>
+  <div class="cta reveal" style="justify-content:center"><a class="btn btn-p dl-link" href="https://github.com/PyclaH/anti-oblomov/releases/latest">Скачать для Android</a><a class="btn btn-g" href="https://vk.ru/club242872755" target="_blank" rel="noopener">Мы во ВКонтакте</a></div>
 </div></section>
 </main>
 
 <footer><div class="wrap row">
   <span>© 2026 Анти-Обломов. Все права защищены.</span>
-  <nav><a href="https://github.com/PyclaH/anti-oblomov/blob/main/docs/privacy-policy.md">Конфиденциальность</a><a href="https://github.com/PyclaH/anti-oblomov/blob/main/LICENSE">Лицензия</a><a href="https://github.com/PyclaH/anti-oblomov/releases">Все версии</a><a href="https://dalink.to/antioblomov">Поддержать</a></nav>
+  <nav><a href="https://github.com/PyclaH/anti-oblomov/blob/main/docs/privacy-policy.md">Конфиденциальность</a><a href="https://github.com/PyclaH/anti-oblomov/blob/main/LICENSE">Лицензия</a><a href="https://github.com/PyclaH/anti-oblomov/releases">Все версии</a><a href="https://vk.ru/club242872755" target="_blank" rel="noopener">ВКонтакте</a><a href="https://dalink.to/antioblomov">Поддержать</a></nav>
 </div></footer>
 
 <script>
 /* ===== Настройки ===== */
 const CONFIG = {
   repo: 'PyclaH/anti-oblomov',
-  newsUrl: ''          // ссылка на сообщество ВКонтакте — появится кнопка «Узнать первым»
+  newsUrl: 'https://vk.ru/club242872755'   // сообщество ВКонтакте — кнопка «Узнать первым» в блоке про iPhone
 };
 const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
 const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
