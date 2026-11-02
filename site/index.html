@@ -210,7 +210,7 @@ footer a{text-decoration:none}footer a:hover{color:var(--ink)}
     <a class="btn btn-p" id="dl-main" href="https://github.com/PyclaH/anti-oblomov/releases/latest">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0l-5-5m5 5l5-5M5 21h14"/></svg>
       <span id="dl-text">Скачать для Android</span></a>
-    <a class="btn btn-g" href="#ios" id="ios-btn">iPhone — скоро</a>
+    <a class="btn btn-g" href="#ios" id="ios-btn">А для iPhone?</a>
     <div class="cta-note" id="dl-note">APK · Android 8 и новее</div>
   </div>
   <div class="qr reveal"><img src="qr.svg" alt="QR-код со ссылкой на этот сайт"><p><b>Наведи камеру телефона</b>Откроется эта страница — скачивание начнётся с телефона.</p></div>
@@ -302,15 +302,14 @@ footer a{text-decoration:none}footer a:hover{color:var(--ink)}
   <div class="ios reveal">
     <div>
       <div class="kicker">IPHONE</div>
-      <h2 style="font-size:clamp(30px,4.2vw,48px)">Версия для iPhone<br><span class="tl">в работе</span></h2>
-      <p>Apple разрешает ставить приложения только через App Store и TestFlight, а блокировать другие приложения — только через «Экранное время» с отдельного разрешения Apple. Поэтому скачать файл для iPhone, как для Android, нельзя. Мы готовим версию и сообщим, когда она появится.</p>
+      <h2 style="font-size:clamp(30px,4.2vw,48px)">Пока только<br><span class="tl">для Android</span></h2>
+      <p>Apple разрешает ставить приложения только через App Store и TestFlight, а блокировать другие приложения — только через «Экранное время» с отдельного разрешения Apple. Поэтому скачать файл для iPhone, как для Android, нельзя, а версия для iPhone — отдельный большой проект. Мы вернёмся к нему позже и обязательно расскажем, если он начнётся.</p>
       <a class="btn btn-g" id="news-btn" href="#" style="margin-top:12px;display:none">Узнать первым</a>
     </div>
     <div class="road">
       <div class="rs done"><b>ГОТОВО</b>Android: расписание, таймер, цитаты</div>
-      <div class="rs now"><b>СЕЙЧАС</b>iPhone: перенос на «Экранное время»</div>
-      <div class="rs"><b>ДАЛЕЕ</b>Бета в TestFlight по ссылке</div>
-      <div class="rs"><b>ПОТОМ</b>App Store</div>
+      <div class="rs now"><b>СКОРО</b>Android: RuStore и Google Play</div>
+      <div class="rs"><b>ПОЗЖЕ</b>iPhone: возможно, через App Store</div>
     </div>
   </div>
 </div></section>
@@ -370,7 +369,7 @@ const isIOS = /iPhone|iPad|iPod/i.test(ua) || (navigator.platform === 'MacIntel'
 if (!isAndroid && !isIOS) document.body.classList.add('desktop');
 if (isIOS) {
   $('#dl-text').textContent = 'Скачать для Android';
-  $('#dl-note').textContent = 'Похоже, у тебя iPhone: версия для него пока в работе — подробности ниже.';
+  $('#dl-note').textContent = 'Похоже, у тебя iPhone: версии для iPhone пока нет — почему, рассказываем ниже.';
   $('#ios-btn').classList.replace('btn-g','btn-p'); $('#dl-main').classList.replace('btn-p','btn-g');
   $('#ios-btn').parentNode.insertBefore($('#ios-btn'), $('#dl-main'));
 }
