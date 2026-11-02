@@ -1,9 +1,5 @@
 package ru.shashkov.antioblomov.ui.components
 
-import android.content.ActivityNotFoundException
-import android.content.Intent
-import android.net.Uri
-import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -25,7 +21,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -43,7 +38,7 @@ import ru.shashkov.antioblomov.ui.theme.Accent
 import ru.shashkov.antioblomov.ui.theme.Night0
 
 /** Страница доната проекта (DonationAlerts). */
-const val DONATE_URL = "https://www.donationalerts.com/r/antioblomov"
+const val DONATE_URL = "https://dalink.to/antioblomov"
 
 /** С какой экономии (минут в день) упоминаем её в панели. */
 const val THANK_THRESHOLD_MINUTES = 15
@@ -63,15 +58,9 @@ fun ThankAuthorCard(
     modifier: Modifier = Modifier,
     url: String = DONATE_URL,
 ) {
-    val context = LocalContext.current
     val s = LocalStrings.current
-    val open = {
-        try {
-            context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
-        } catch (e: ActivityNotFoundException) {
-            Toast.makeText(context, s.home.noBrowser, Toast.LENGTH_LONG).show()
-        }
-    }
+    // С VPN сначала предупреждаем: DonationAlerts может не показать оплату в рублях (v1.2.1)
+    val open = rememberDonateOpener(url)
 
     AppCard(modifier = modifier, onClick = open, padding = PaddingValues(horizontal = 14.dp, vertical = 12.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {

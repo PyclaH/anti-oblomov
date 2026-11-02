@@ -32,6 +32,7 @@ class HomeStringsTest {
         h.appsAllExceptSystem, h.appsNone, h.appsAsBlockList(3), h.appsChosen(3), h.activateAll, h.activateAllSub,
         h.searchApps, h.clearSearch, h.loadingApps, h.nothingChosen, h.nothingFound,
         h.noBrowser, h.thankAuthor, h.youSave("5"), h.freeNoAds, h.support,
+        h.vpnTitle, h.vpnBody, h.vpnSettings, h.vpnOpenAnyway,
         h.system, h.serviceNotWorking, h.serviceTitle, h.serviceRunning, h.serviceRunningBody,
         h.accessibilitySettings, h.serviceStopped, h.serviceStoppedBody("L", null), h.serviceStoppedBody("L", "A"),
         h.accessibilityShort, h.appSettings, h.serviceOff, h.serviceOffBody("L"), h.openSettings,
