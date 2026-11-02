@@ -43,7 +43,7 @@ import ru.shashkov.antioblomov.ui.theme.Accent
 import ru.shashkov.antioblomov.ui.theme.Night0
 
 /** Страница доната проекта (DonationAlerts). */
-const val DONATE_URL = "https://www.donationalerts.com/r/antioblomov"
+const val DONATE_URL = "https://dalink.to/antioblomov"
 
 /** С какой экономии (минут в день) упоминаем её в панели. */
 const val THANK_THRESHOLD_MINUTES = 15
