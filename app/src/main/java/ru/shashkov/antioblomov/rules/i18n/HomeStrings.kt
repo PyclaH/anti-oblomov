@@ -91,6 +91,12 @@ interface HomeStrings {
     /** «Поддержать ›» */
     val support: String
 
+    // Предупреждение о VPN перед страницей доната (v1.2.1): с VPN DonationAlerts может не показать оплату в рублях
+    val vpnTitle: String
+    val vpnBody: String
+    val vpnSettings: String
+    val vpnOpenAnyway: String
+
     // Блок «Система» и служба
     val system: String
     val serviceNotWorking: String
@@ -184,6 +190,10 @@ object HomeRu : HomeStrings {
     override fun youSave(time: String) = "Ты возвращаешь себе $time в день"
     override val freeNoAds = "Приложение бесплатное и без рекламы"
     override val support = "Поддержать ›"
+    override val vpnTitle = "Похоже, включён VPN"
+    override val vpnBody = "С включённым VPN страница доната может не показать оплату в рублях — картой российского банка и через СБП. Выключи VPN на время оплаты."
+    override val vpnSettings = "Открыть настройки VPN"
+    override val vpnOpenAnyway = "Всё равно открыть"
 
     override val system = "Система"
     override val serviceNotWorking = "служба не работает"
@@ -279,6 +289,10 @@ object HomeEn : HomeStrings {
     override fun youSave(time: String) = "You get back $time a day"
     override val freeNoAds = "The app is free and ad-free"
     override val support = "Support ›"
+    override val vpnTitle = "Looks like a VPN is on"
+    override val vpnBody = "With a VPN on, the donation page may not offer payment in rubles — by Russian bank card or via SBP. Turn off the VPN while you pay."
+    override val vpnSettings = "Open VPN settings"
+    override val vpnOpenAnyway = "Open anyway"
 
     override val system = "System"
     override val serviceNotWorking = "service isn't running"
@@ -371,6 +385,10 @@ object HomeEs : HomeStrings {
     override fun youSave(time: String) = "Recuperas $time al día"
     override val freeNoAds = "La app es gratis y sin anuncios"
     override val support = "Apoyar ›"
+    override val vpnTitle = "Parece que hay una VPN activa"
+    override val vpnBody = "Con la VPN activada, la página de donación puede no mostrar el pago en rublos (con tarjeta de un banco ruso o por SBP). Desactiva la VPN mientras pagas."
+    override val vpnSettings = "Abrir ajustes de VPN"
+    override val vpnOpenAnyway = "Abrir de todos modos"
 
     override val system = "Sistema"
     override val serviceNotWorking = "el servicio no funciona"
@@ -463,6 +481,10 @@ object HomePt : HomeStrings {
     override fun youSave(time: String) = "Você recupera $time por dia"
     override val freeNoAds = "O app é gratuito e sem anúncios"
     override val support = "Apoiar ›"
+    override val vpnTitle = "Parece que há uma VPN ativa"
+    override val vpnBody = "Com a VPN ativada, a página de doação pode não mostrar o pagamento em rublos (com cartão de banco russo ou pelo SBP). Desative a VPN enquanto paga."
+    override val vpnSettings = "Abrir configurações de VPN"
+    override val vpnOpenAnyway = "Abrir mesmo assim"
 
     override val system = "Sistema"
     override val serviceNotWorking = "o serviço não está funcionando"
@@ -555,6 +577,10 @@ object HomeDe : HomeStrings {
     override fun youSave(time: String) = "Du gewinnst $time am Tag zurück"
     override val freeNoAds = "Die App ist kostenlos und werbefrei"
     override val support = "Unterstützen ›"
+    override val vpnTitle = "Anscheinend ist ein VPN aktiv"
+    override val vpnBody = "Mit aktivem VPN zeigt die Spendenseite möglicherweise keine Zahlung in Rubel an (per Karte einer russischen Bank oder über SBP). Schalte das VPN zum Bezahlen aus."
+    override val vpnSettings = "VPN-Einstellungen öffnen"
+    override val vpnOpenAnyway = "Trotzdem öffnen"
 
     override val system = "System"
     override val serviceNotWorking = "Dienst läuft nicht"
@@ -648,6 +674,10 @@ object HomeTr : HomeStrings {
     override fun youSave(time: String) = "Günde kendine $time kazandırıyorsun"
     override val freeNoAds = "Uygulama ücretsiz ve reklamsız"
     override val support = "Destekle ›"
+    override val vpnTitle = "Görünüşe göre VPN açık"
+    override val vpnBody = "VPN açıkken bağış sayfası ruble ile ödeme seçeneğini (Rus banka kartı veya SBP ile) göstermeyebilir. Ödeme yaparken VPN’i kapat."
+    override val vpnSettings = "VPN ayarlarını aç"
+    override val vpnOpenAnyway = "Yine de aç"
 
     override val system = "Sistem"
     override val serviceNotWorking = "hizmet çalışmıyor"
@@ -741,6 +771,10 @@ object HomeKk : HomeStrings {
     override fun youSave(time: String) = "Күніне өзіңе $time қайтарып жатырсың"
     override val freeNoAds = "Қолданба тегін және жарнамасыз"
     override val support = "Қолдау ›"
+    override val vpnTitle = "VPN қосулы сияқты"
+    override val vpnBody = "VPN қосулы болса, демеу беті рубльмен төлеуді (Ресей банкінің картасымен немесе СБП арқылы) көрсетпеуі мүмкін. Төлеген кезде VPN-ді өшір."
+    override val vpnSettings = "VPN баптауларын ашу"
+    override val vpnOpenAnyway = "Бәрібір ашу"
 
     override val system = "Жүйе"
     override val serviceNotWorking = "қызмет жұмыс істемейді"
@@ -833,6 +867,10 @@ object HomeUz : HomeStrings {
     override fun youSave(time: String) = "Kuniga o‘zingga $time qaytaryapsan"
     override val freeNoAds = "Ilova bepul va reklamasiz"
     override val support = "Qo‘llab-quvvatlash ›"
+    override val vpnTitle = "VPN yoqilganga o‘xshaydi"
+    override val vpnBody = "VPN yoqilgan bo‘lsa, xayriya sahifasida rublda to‘lov (Rossiya banki kartasi yoki SBP orqali) ko‘rinmasligi mumkin. To‘lov paytida VPN’ni o‘chirib qo‘y."
+    override val vpnSettings = "VPN sozlamalarini ochish"
+    override val vpnOpenAnyway = "Baribir ochish"
 
     override val system = "Tizim"
     override val serviceNotWorking = "xizmat ishlamayapti"
@@ -925,6 +963,10 @@ object HomeZh : HomeStrings {
     override fun youSave(time: String) = "你每天为自己找回 ${time}"
     override val freeNoAds = "应用免费且无广告"
     override val support = "支持 ›"
+    override val vpnTitle = "似乎已开启 VPN"
+    override val vpnBody = "开启 VPN 时，捐赠页面可能不会显示卢布支付方式（俄罗斯银行卡或 SBP）。付款时请先关闭 VPN。"
+    override val vpnSettings = "打开 VPN 设置"
+    override val vpnOpenAnyway = "仍然打开"
 
     override val system = "系统"
     override val serviceNotWorking = "服务未运行"
